@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// -----------------------------------------------------
+// MULTI-TENANT CORE
+// Todas as tabelas principais devem pertencer a uma Clinic
+// -----------------------------------------------------
+
+model Clinic {
+  id              String   @id @default(uuid())
+  name            String
+  type            ClinicType // MEDICA ou ODONTOLOGICA
+  ownerName       String
+  phone           String
+  email           String   @unique
+  cnpj            String?
+  address         String?
+  city            String?
+  state           String?
+  zipCode         String?
+  status          ClinicStatus @default(PENDING_PAYMENT)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relações Multi-Tenant
+  users           User[]
+  doctors         Doctor[]
+  specialties     Specialty[]
+  schedules       Schedule[]
+  appointments    Appointment[]
+  stripeSubs      StripeSubscription?
+  n8nDeployment   N8nDeployment?
+  googleCalendar  GoogleCalendarOAuth?
+  whatsapp        WhatsAppConfig?
+  onboardingLogs  OnboardingLog[]
+}
+
+enum ClinicType {
+  MEDICA
+  ODONTOLOGICA
+}
+
+enum ClinicStatus {
+  PENDING_PAYMENT
+  ONBOARDING
+  ACTIVE
+  SUSPENDED
+  CANCELED
+}
+
+// -----------------------------------------------------
+// AUTH & USERS
+// -----------------------------------------------------
+model User {
+  id        String   @id @default(uuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  email     String   @unique
+  name      String?
+  role      UserRole @default(ADMIN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
+// -----------------------------------------------------
+// DOCTORS E ESPECIALIDADES
+// -----------------------------------------------------
+model Doctor {
+  id            String   @id @default(uuid())
+  clinicId      String
+  clinic        Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  name          String
+  specialtyId   String?
+  specialty     Specialty? @relation(fields: [specialtyId], references: [id])
+  registry      String?  // CRM ou CRO
+  phone         String?
+  email         String?
+  receiveNotifs Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Specialty {
+  id        String   @id @default(uuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  name      String
+  doctors   Doctor[]
+}
+
+// -----------------------------------------------------
+// AGENDAMENTOS E HORÁRIOS
+// -----------------------------------------------------
+model Schedule {
+  id             String   @id @default(uuid())
+  clinicId       String
+  clinic         Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  dayOfWeek      Int      // 0 a 6
+  startTime      String   // "08:00"
+  endTime        String   // "18:00"
+  breakStart     String?  // "12:00"
+  breakEnd       String?  // "13:00"
+  avgConsultTime Int      // em minutos
+  consultPrice   Float?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Appointment {
+  id          String   @id @default(uuid())
+  clinicId    String
+  clinic      Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patientName String
+  patientPhone String
+  date        DateTime
+  status      String   // CONFIRMED, CANCELED, RESCHEDULED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// -----------------------------------------------------
+// INTEGRAÇÕES E CONFIGURAÇÕES
+// -----------------------------------------------------
+model GoogleCalendarOAuth {
+  id           String   @id @default(uuid())
+  clinicId     String   @unique
+  clinic       Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  calendarId   String?
+  accessToken  String
+  refreshToken String
+  authEmail    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model N8nDeployment {
+  id            String   @id @default(uuid())
+  clinicId      String   @unique
+  clinic        Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  workflowId    String?
+  webhookUrl    String?
+  isActive      Boolean  @default(false)
+  deployedAt    DateTime?
+  memoryPrefix  String?  // Ex: "CLINIC_ID_558199..."
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model WhatsAppConfig {
+  id           String   @id @default(uuid())
+  clinicId     String   @unique
+  clinic       Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  phoneNumber  String?
+  instanceId   String?
+  token        String?
+  isConnected  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model StripeSubscription {
+  id                   String   @id @default(uuid())
+  clinicId             String   @unique
+  clinic               Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  status               String   // active, past_due, canceled
+  monthlyPrice         Float    @default(397.0)
+  currentPeriodEnd     DateTime?
+  lastPaymentDate      DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+// -----------------------------------------------------
+// LOGS DO AGENTE DE IMPLANTAÇÃO
+// -----------------------------------------------------
+model OnboardingLog {
+  id          String   @id @default(uuid())
+  clinicId    String
+  clinic      Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  step        String   // STRIPE, DB, N8N, OAUTH, WHATSAPP, TEST
+  status      String   // SUCCESS, FAILED, RETRYING
+  message     String?
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+}
