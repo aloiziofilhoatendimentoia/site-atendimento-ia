@@ -112,6 +112,8 @@ export default function ConfigurarClinicaPage() {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
+  const [isConnected, setIsConnected] = useState(false);
+
   // Polling para verificar se o QR Code foi lido
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -122,8 +124,7 @@ export default function ConfigurarClinicaPage() {
           if (res.ok) {
             const data = await res.json();
             if (data.state === 'open') {
-              clearInterval(interval);
-              window.location.href = '/sucesso';
+              setIsConnected(true);
             }
           }
         } catch (e) {
@@ -529,6 +530,13 @@ export default function ConfigurarClinicaPage() {
                 </p>
               </div>
 
+              {isConnected && (
+                <div className="w-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 p-3.5 rounded-xl mb-4 text-sm font-semibold flex items-center justify-center space-x-2 animate-bounce">
+                  <CheckCircle className="w-5 h-5 text-emerald-400" />
+                  <span>WhatsApp Conectado com Sucesso!</span>
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row w-full gap-3">
                 <button 
                   onClick={() => setShowQrModal(false)} 
@@ -549,7 +557,7 @@ export default function ConfigurarClinicaPage() {
                 onClick={() => window.location.href = '/sucesso'}
                 className="w-full py-3.5 px-4 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-teal-500/25 flex items-center justify-center space-x-2 mt-4"
               >
-                <span>Já Escaneei / Concluir Conexão</span>
+                <span>Concluir e Ir para Tela de Sucesso</span>
                 <CheckCircle className="w-5 h-5" />
               </button>
             </div>
