@@ -229,13 +229,10 @@ export default function ConfigurarClinicaPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erro ao conectar com o banco de dados.');
 
-      if (data.evolutionQrCode) {
-        setQrBase64(data.evolutionQrCode);
-        setInstanceName(whatsappClinica.replace(/\D/g, ''));
-        setShowQrModal(true);
-      } else {
-        window.location.href = '/sucesso';
-      }
+      const defaultQr = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://api-whatsapp.atendimentoiaclinicas.tech/manager`;
+      setQrBase64(data.evolutionQrCode || defaultQr);
+      setInstanceName(whatsappClinica.replace(/\D/g, '') || 'NumeroDeTestes');
+      setShowQrModal(true);
     } catch (err: any) {
       setErrorMessage(err.message || 'Falha ao salvar as configurações no servidor.');
     } finally {
