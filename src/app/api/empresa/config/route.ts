@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     const payload = await request.json();
     const nomeClinica = payload?.clinica?.nomeClinica || 'Sem Nome';
     const whatsappClinica = payload?.clinica?.whatsappClinica || 'Não informado';
-    const endereco = payload?.suporte?.endereco || 'Não informado';
+    const endereco = payload?.clinica?.endereco || payload?.suporte?.endereco || 'Não informado';
     const tempoConsulta = payload?.horarios?.tempoConsulta ? `${payload.horarios.tempoConsulta} min` : 'Não informado';
     const valorConsulta = payload?.horarios?.valorConsulta || 'R$ 0,00';
     
