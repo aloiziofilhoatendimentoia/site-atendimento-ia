@@ -120,13 +120,24 @@ export async function POST(request: Request) {
       supabaseStatus = 'Chaves do Supabase Ausentes';
     }
 
+    let rawAgendamento = String(payload?.integracoes?.whatsappReceberAgendamento || payload?.integracoes?.whatsappHumano || '').replace(/\D/g, '');
+    if (rawAgendamento.length === 10 || rawAgendamento.length === 11) {
+      rawAgendamento = '55' + rawAgendamento;
+    }
+    // Se o número tem 13 dígitos (ex: 5581979066573), criar também a versão sem o 9º dígito (558179066573) para compatibilidade WhatsApp
+    let rawAgendamentoAlt = rawAgendamento;
+    if (rawAgendamento.length === 13 && rawAgendamento.startsWith('55') && rawAgendamento[4] === '9') {
+      rawAgendamentoAlt = rawAgendamento.substring(0, 4) + rawAgendamento.substring(5);
+    }
+
     const payloadWebhook = {
       ...payload,
       clinicName: nomeClinica, // Mantido para retrocompatibilidade
       nome_da_clinica: nomeClinica,
       whatsapp_ia: payload?.clinica?.whatsappClinica || 'Não informado',
       whatsapp_humano: payload?.integracoes?.whatsappHumano || 'Não informado',
-      whatsapp_agendamento: payload?.integracoes?.whatsappReceberAgendamento || 'Não informado',
+      whatsapp_agendamento: rawAgendamento || 'Não informado',
+      whatsapp_agendamento_alt: rawAgendamentoAlt || 'Não informado',
       profissionais_formatados: especialistasStr,
       canais_escolhidos: canaisStr,
       dias_atendimento: diasStr,
