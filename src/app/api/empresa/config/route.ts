@@ -68,20 +68,15 @@ export async function POST(request: Request) {
 
     let diasStr = 'Não informado';
     let horarioStr = 'Não informado';
-    let horariosDetalhadosStr = 'Não informado';
 
     if (payload?.horarios?.blocosHorario && Array.isArray(payload.horarios.blocosHorario) && payload.horarios.blocosHorario.length > 0) {
-      const blocosValidos = payload.horarios.blocosHorario.filter((b: any) => b.dias && b.dias.length > 0);
-      if (blocosValidos.length > 0) {
-        diasStr = blocosValidos.map((b: any) => b.dias.join(', ')).join(' | ');
-        
-        if (blocosValidos.length === 1) {
-          const b1 = blocosValidos[0];
-          horarioStr = `das ${b1.inicio || '08:00'} às ${b1.fim || '18:00'}`;
-          horariosDetalhadosStr = `${b1.dias.join(', ')}: das ${b1.inicio || '08:00'} às ${b1.fim || '18:00'}`;
+      const blocos = payload.horarios.blocosHorario.filter((b: any) => b.dias && b.dias.length > 0);
+      if (blocos.length > 0) {
+        if (blocos.length === 1) {
+          diasStr = blocos[0].dias.join(', ');
+          horarioStr = `das ${blocos[0].inicio || '08:00'} às ${blocos[0].fim || '18:00'}`;
         } else {
-          horarioStr = blocosValidos.map((b: any) => `${b.dias.join(', ')} (das ${b.inicio || '08:00'} às ${b.fim || '18:00'})`).join('\n');
-          horariosDetalhadosStr = blocosValidos.map((b: any) => `• ${b.dias.join(', ')}: das ${b.inicio || '08:00'} às ${b.fim || '18:00'}`).join('\n');
+          diasStr = blocos.map((b: any) => `${b.dias.join(', ')}: das ${b.inicio || '08:00'} às ${b.fim || '18:00'}`).join('\n');
         }
       }
     }
@@ -120,29 +115,17 @@ export async function POST(request: Request) {
       supabaseStatus = 'Chaves do Supabase Ausentes';
     }
 
-    let rawAgendamento = String(payload?.integracoes?.whatsappReceberAgendamento || payload?.integracoes?.whatsappHumano || '').replace(/\D/g, '');
-    if (rawAgendamento.length === 10 || rawAgendamento.length === 11) {
-      rawAgendamento = '55' + rawAgendamento;
-    }
-    // Se o número tem 13 dígitos (ex: 5581979066573), criar também a versão sem o 9º dígito (558179066573) para compatibilidade WhatsApp
-    let rawAgendamentoAlt = rawAgendamento;
-    if (rawAgendamento.length === 13 && rawAgendamento.startsWith('55') && rawAgendamento[4] === '9') {
-      rawAgendamentoAlt = rawAgendamento.substring(0, 4) + rawAgendamento.substring(5);
-    }
-
     const payloadWebhook = {
       ...payload,
       clinicName: nomeClinica, // Mantido para retrocompatibilidade
       nome_da_clinica: nomeClinica,
       whatsapp_ia: payload?.clinica?.whatsappClinica || 'Não informado',
       whatsapp_humano: payload?.integracoes?.whatsappHumano || 'Não informado',
-      whatsapp_agendamento: rawAgendamento || 'Não informado',
-      whatsapp_agendamento_alt: rawAgendamentoAlt || 'Não informado',
+      whatsapp_agendamento: payload?.integracoes?.whatsappReceberAgendamento || 'Não informado',
       profissionais_formatados: especialistasStr,
       canais_escolhidos: canaisStr,
       dias_atendimento: diasStr,
       horarios_atendimento: horarioStr,
-      horarios_detalhados: horariosDetalhadosStr,
       intervalo_consulta: payload?.horarios?.tempoConsulta ? `${payload.horarios.tempoConsulta} minutos` : 'Não informado',
       valor_consulta: payload?.horarios?.valorConsulta || 'R$ 0,00'
     };
