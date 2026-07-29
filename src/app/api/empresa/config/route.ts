@@ -68,10 +68,22 @@ export async function POST(request: Request) {
 
     let diasStr = 'Não informado';
     let horarioStr = 'Não informado';
-    if (payload?.horarios?.blocosHorario && payload.horarios.blocosHorario.length > 0) {
-      const b1 = payload.horarios.blocosHorario[0];
-      if (b1.dias && b1.dias.length > 0) diasStr = b1.dias.join(', ');
-      if (b1.inicio && b1.fim) horarioStr = `das ${b1.inicio} às ${b1.fim}`;
+    let horariosDetalhadosStr = 'Não informado';
+
+    if (payload?.horarios?.blocosHorario && Array.isArray(payload.horarios.blocosHorario) && payload.horarios.blocosHorario.length > 0) {
+      const blocosValidos = payload.horarios.blocosHorario.filter((b: any) => b.dias && b.dias.length > 0);
+      if (blocosValidos.length > 0) {
+        diasStr = blocosValidos.map((b: any) => b.dias.join(', ')).join(' | ');
+        
+        if (blocosValidos.length === 1) {
+          const b1 = blocosValidos[0];
+          horarioStr = `das ${b1.inicio || '08:00'} às ${b1.fim || '18:00'}`;
+          horariosDetalhadosStr = `${b1.dias.join(', ')}: das ${b1.inicio || '08:00'} às ${b1.fim || '18:00'}`;
+        } else {
+          horarioStr = blocosValidos.map((b: any) => `${b.dias.join(', ')} (das ${b.inicio || '08:00'} às ${b.fim || '18:00'})`).join('\n');
+          horariosDetalhadosStr = blocosValidos.map((b: any) => `• ${b.dias.join(', ')}: das ${b.inicio || '08:00'} às ${b.fim || '18:00'}`).join('\n');
+        }
+      }
     }
 
     // 1. SALVAR NO SUPABASE (TABELA CLIENTES ATENDIMENTO IA SITE)
@@ -119,6 +131,7 @@ export async function POST(request: Request) {
       canais_escolhidos: canaisStr,
       dias_atendimento: diasStr,
       horarios_atendimento: horarioStr,
+      horarios_detalhados: horariosDetalhadosStr,
       intervalo_consulta: payload?.horarios?.tempoConsulta ? `${payload.horarios.tempoConsulta} minutos` : 'Não informado',
       valor_consulta: payload?.horarios?.valorConsulta || 'R$ 0,00'
     };
