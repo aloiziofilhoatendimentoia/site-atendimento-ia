@@ -1,0 +1,7 @@
+node_modules
+.next
+.git
+.env*
+CRM PAGAMENTO E LOGIN
+*.log
+*.ps1
