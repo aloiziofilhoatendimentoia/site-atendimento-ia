@@ -109,9 +109,10 @@ export async function POST(request: Request) {
     if (payload?.horarios?.blocosHorario && Array.isArray(payload.horarios.blocosHorario) && payload.horarios.blocosHorario.length > 0) {
       const blocos = payload.horarios.blocosHorario.filter((b: any) => b.dias && b.dias.length > 0);
       if (blocos.length > 0) {
-        diasStr = blocos.map((b: any) => b.dias.join(', ')).join(' | ');
-        horarioStr = blocos.map((b: any) => `das ${b.inicio || '08:00'} às ${b.fim || '18:00'}`).join(' | ');
-        horariosFormatadosStr = blocos.map((b: any) => `• ${b.dias.join(', ')}: das ${b.inicio || '08:00'} às ${b.fim || '18:00'}`).join('\n');
+        const linhasFormatadas = blocos.map((b: any) => `• ${b.dias.join(', ')}: das ${b.inicio || '08:00'} às ${b.fim || '18:00'}`);
+        horariosFormatadosStr = linhasFormatadas.join('\n');
+        diasStr = linhasFormatadas.join('\n');
+        horarioStr = blocos.map((b: any) => `${b.dias.join(', ')} (das ${b.inicio || '08:00'} às ${b.fim || '18:00'})`).join(' | ');
       }
     }
 
