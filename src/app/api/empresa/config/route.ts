@@ -66,20 +66,7 @@ export async function POST(request: Request) {
     if (payload?.integracoes?.opcoesAgendamento?.calendar) canaisArr.push("Google Calendar");
     const canaisStr = canaisArr.length > 0 ? canaisArr.join(" e ") : 'Nenhum';
 
-    let diasStr = 'Não informado';
-    let horarioStr = 'Não informado';
 
-    if (payload?.horarios?.blocosHorario && Array.isArray(payload.horarios.blocosHorario) && payload.horarios.blocosHorario.length > 0) {
-      const blocos = payload.horarios.blocosHorario.filter((b: any) => b.dias && b.dias.length > 0);
-      if (blocos.length > 0) {
-        if (blocos.length === 1) {
-          diasStr = blocos[0].dias.join(', ');
-          horarioStr = `das ${blocos[0].inicio || '08:00'} às ${blocos[0].fim || '18:00'}`;
-        } else {
-          diasStr = blocos.map((b: any) => `${b.dias.join(', ')}: das ${b.inicio || '08:00'} às ${b.fim || '18:00'}`).join('\n');
-        }
-      }
-    }
 
     // 1. SALVAR NO SUPABASE (TABELA CLIENTES ATENDIMENTO IA SITE)
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -115,6 +102,19 @@ export async function POST(request: Request) {
       supabaseStatus = 'Chaves do Supabase Ausentes';
     }
 
+    let diasStr = 'Não informado';
+    let horarioStr = 'Não informado';
+    let horariosFormatadosStr = 'Não informado';
+
+    if (payload?.horarios?.blocosHorario && Array.isArray(payload.horarios.blocosHorario) && payload.horarios.blocosHorario.length > 0) {
+      const blocos = payload.horarios.blocosHorario.filter((b: any) => b.dias && b.dias.length > 0);
+      if (blocos.length > 0) {
+        diasStr = blocos.map((b: any) => b.dias.join(', ')).join(' | ');
+        horarioStr = blocos.map((b: any) => `das ${b.inicio || '08:00'} às ${b.fim || '18:00'}`).join(' | ');
+        horariosFormatadosStr = blocos.map((b: any) => `• ${b.dias.join(', ')}: das ${b.inicio || '08:00'} às ${b.fim || '18:00'}`).join('\n');
+      }
+    }
+
     const payloadWebhook = {
       ...payload,
       clinicName: nomeClinica, // Mantido para retrocompatibilidade
@@ -126,6 +126,7 @@ export async function POST(request: Request) {
       canais_escolhidos: canaisStr,
       dias_atendimento: diasStr,
       horarios_atendimento: horarioStr,
+      horarios_formatados: horariosFormatadosStr,
       intervalo_consulta: payload?.horarios?.tempoConsulta ? `${payload.horarios.tempoConsulta} minutos` : 'Não informado',
       valor_consulta: payload?.horarios?.valorConsulta || 'R$ 0,00'
     };
