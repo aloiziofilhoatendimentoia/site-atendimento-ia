@@ -9,12 +9,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Faltando o parâmetro instanceName' }, { status: 400 });
     }
 
-    const evoUrl = process.env.EVOLUTION_API_URL || '';
-    const evoKey = process.env.EVOLUTION_API_KEY || '';
-
-    if (!evoUrl || !evoKey) {
-      return NextResponse.json({ error: 'Chaves do servidor ausentes' }, { status: 500 });
-    }
+    const evoUrl = process.env.EVOLUTION_API_URL || 'https://api-whatsapp.atendimentoiaclinicas.tech';
+    const evoKey = process.env.EVOLUTION_API_KEY || 'atendimentoia_mestre_evolution_2026';
 
     // Para gerar um novo QR Code de uma instância que já existe (e não está conectada), 
     // bate-se na rota /instance/connect

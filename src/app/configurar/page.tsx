@@ -547,6 +547,14 @@ export default function ConfigurarClinicaPage() {
                   <RefreshCw className={`w-4 h-4 ${qrLoading ? 'animate-spin' : ''}`} /> <span>Gerar Novamente</span>
                 </button>
               </div>
+
+              <button 
+                onClick={() => window.location.href = '/sucesso'}
+                className="w-full py-3.5 px-4 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-teal-500/25 flex items-center justify-center space-x-2 mt-4"
+              >
+                <span>Já Escaneei / Concluir Conexão</span>
+                <CheckCircle className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
