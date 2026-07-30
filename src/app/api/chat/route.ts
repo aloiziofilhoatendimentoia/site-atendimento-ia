@@ -101,7 +101,9 @@ export async function POST(req: Request) {
     const diaMatch = normMsg.match(/\b(dia\s+\d{1,2}|amanha|hoje|segunda|terca|quarta|quinta|sexta|sabado|\d{1,2}\/\d{1,2})\b/i);
     const diaCitado = diaMatch ? diaMatch[0] : "solicitado";
     
-    let fallbackReply = "Entendi! Sou a Fernanda da Clínica Vitae.\n\nComo posso te ajudar hoje? 😊";
+    let fallbackReply = messages.length > 1
+      ? "Entendi! Como posso te ajudar com o seu agendamento na Clínica Vitae? 😊"
+      : "Olá, sou a Fernanda, assistente do Dr. Roberto da Clínica Vitae. Em que posso te ajudar hoje?";
 
     if (/\b(funcionamento|funciona|atendimento|aberto|abre|expediente)\b/.test(normMsg)) {
       fallbackReply = "Nosso horário de funcionamento é de Segunda a Sexta, das 08:00 às 18:00, e aos Sábados, das 08:00 às 12:00.\n\nDomingos e feriados estamos fechados. 😊";
@@ -109,11 +111,13 @@ export async function POST(req: Request) {
       fallbackReply = "Vou verificar em nossa agenda, só um instante\n\nTemos horário disponível às 09:00 e às 11:00 horas";
     } else if (/\b(tarde)\b/.test(normMsg)) {
       fallbackReply = "Vou verificar em nossa agenda, só um instante\n\nTemos horários disponíveis às 14:00 e às 16:00 horas";
-    } else if (/\b(disponivel|disponiveis|livre|livres|vaga|vagas|horarios|horario)\b/.test(normMsg) && !diaMatch) {
+    } else if (/\b(disponivel|disponiveis|livre|livres|vaga|vagas)\b/.test(normMsg)) {
       fallbackReply = "Vou verificar em nossa agenda, só um instante\n\nTemos horários disponíveis pela manhã às 09:00 e às 11:00 horas e pela tarde às 14:00 e às 16:00 horas";
-    } else if (diaMatch || /\b(agendar|marcar|reagendar|remarcar|consulta)\b/.test(normMsg)) {
+    } else if (diaMatch) {
       fallbackReply = `Vou verificar a disponibilidade de horário para o ${diaCitado} em nossa agenda...\n\nProntinho! Consultei nossa agenda e o horário para o ${diaCitado} está disponível.\n\nGostaria de confirmar o seu agendamento para este dia e horário?`;
-    } else if (/\b(sim|pode|ok|confirma|confirmar|positivo|claro)\b/.test(normMsg)) {
+    } else if (/\b(agend|agendar|agendamento|marcar|reagendar|remarcar|consulta|consultas|horario|horarios)\b/.test(normMsg)) {
+      fallbackReply = "Vou verificar em nossa agenda, só um instante\n\nTemos horários disponíveis pela manhã às 09:00 e às 11:00 horas e pela tarde às 14:00 e às 16:00 horas.\n\nQual dia e horário você prefere?";
+    } else if (/\b(sim|pode|ok|confirma|confirmar|positivo|claro|pode ser)\b/.test(normMsg)) {
       fallbackReply = "Agendamento confirmado com sucesso!\n\nA equipe da Clínica Vitae aguarda você de braços abertos. Posso ajudar com mais alguma dúvida?";
     } else if (/\b(obrigado|obrigada|valeu|perfeito|nada)\b/.test(normMsg)) {
       fallbackReply = "Fico à disposição! Se precisar de algo mais, estou por aqui. 😊";
