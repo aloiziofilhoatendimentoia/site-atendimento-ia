@@ -97,13 +97,26 @@ export async function POST(req: Request) {
     const isManha = /\b(manha|cedo|matutino)\b/i.test(normMsg.replace(/\bamanha\b/gi, ""));
     const isTarde = /\b(tarde|vespertino)\b/i.test(normMsg);
     
-    let fallbackReply = messages.length > 1
-      ? "Entendi! Como posso te ajudar com o seu agendamento na Clínica Vitae? 😊"
-      : "Olá, sou a Fernanda, assistente do Dr. Roberto da Clínica Vitae. Em que posso te ajudar hoje?";
+    let fallbackReply = "Olá! Como posso te ajudar hoje? Quer agendar uma consulta, saber o endereço da clínica ou consultar nossos horários?";
 
-    if (/\b(funcionamento|funciona|atendimento|aberto|abre|expediente)\b/.test(normMsg)) {
-      fallbackReply = "Nosso horário de funcionamento é de Segunda a Sexta, das 08:00 às 18:00, e aos Sábados, das 08:00 às 12:00.\n\nDomingos e feriados estamos fechados. 😊";
-    } else if (diaMatch) {
+    // 1. Saudação simples (oi, olá, bom dia, boa tarde)
+    if (/^(oi|ola|bom dia|boa tarde|boa noite|oii|oie|opa)[\s!.]*$/i.test(normMsg)) {
+      fallbackReply = "Olá! Em que posso te ajudar hoje? Gostaria de agendar uma consulta, saber nosso endereço ou consultar nossos horários de funcionamento?";
+    }
+    // 2. Endereço e Localização
+    else if (/\b(endereco|localizacao|onde fica|onde e|como chegar|mapa|rua)\b/i.test(normMsg)) {
+      fallbackReply = "Ficamos localizados na Rua do Cajueiro, 83 - Peixinhos, Olinda - PE.\n\nLink do Google Maps: https://maps.app.goo.gl/ZCwjazLo6mooZjxVA?g_st=aw\n\nGostaria de agendar uma consulta conosco?";
+    }
+    // 3. Valor, Preço e Especialidades
+    else if (/\b(valor|preco|quanto custa|quanto e|especialidade|especialidades|medico|doutor|convenio)\b/i.test(normMsg)) {
+      fallbackReply = "A consulta médica na Clínica Vitae com nossos especialistas (como o Dr. Roberto) tem o valor de R$ 120,00, com 60 minutos de atendimento personalizado.\n\nQuer verificar os horários para agendar?";
+    }
+    // 4. Horário de Funcionamento da Clínica
+    else if (/\b(funcionamento|funciona|atendimento|aberto|abre|expediente)\b/i.test(normMsg)) {
+      fallbackReply = "Nosso horário de funcionamento é de Segunda a Sexta, das 08:00 às 18:00, e aos Sábados, das 08:00 às 12:00.\n\nDomingos e feriados estamos fechados. 😊\n\nQual dia e horário você prefere para a sua consulta?";
+    }
+    // 5. Agendamento com dia citado
+    else if (diaMatch) {
       if (isManha) {
         fallbackReply = `Vou verificar a disponibilidade em nossa agenda para ${diaCitado} pela manhã, só um instante...\n\nTemos horários disponíveis para ${diaCitado} às 09:00 e às 11:00 horas pela manhã.\n\nQual destes dois horários fica melhor para você?`;
       } else if (isTarde) {
@@ -111,17 +124,24 @@ export async function POST(req: Request) {
       } else {
         fallbackReply = `Vou verificar a disponibilidade em nossa agenda para ${diaCitado}, só um instante...\n\nTemos horários disponíveis para ${diaCitado} às 09:00 e às 11:00 horas pela manhã, e às 14:00 e às 16:00 horas pela tarde.\n\nQual horário fica melhor para você?`;
       }
-    } else if (isManha) {
+    }
+    // 6. Consulta por período apenas (sem dia específico)
+    else if (isManha) {
       fallbackReply = "Vou verificar em nossa agenda os horários disponíveis pela manhã, só um instante...\n\nTemos horários disponíveis às 09:00 e às 11:00 horas pela manhã.\n\nQual dia e horário você prefere?";
     } else if (isTarde) {
       fallbackReply = "Vou verificar em nossa agenda os horários disponíveis pela tarde, só um instante...\n\nTemos horários disponíveis às 14:00 e às 16:00 horas pela tarde.\n\nQual dia e horário você prefere?";
-    } else if (/\b(agend|agendar|agendamento|marcar|reagendar|remarcar|consulta|consultas)\b/.test(normMsg)) {
-      // Quando o usuário APENAS diz que quer agendar (SEM ESPECIFICAR O DIA NEM PERÍODO):
+    }
+    // 7. Pedido genérico de agendamento (sem dia nem período)
+    else if (/\b(agend|agendar|agendamento|marcar|reagendar|remarcar|consulta|consultas)\b/i.test(normMsg)) {
       fallbackReply = "Claro! Qual dia e horário você prefere para o seu agendamento?";
-    } else if (/\b(sim|pode|ok|confirma|confirmar|positivo|claro|pode ser)\b/.test(normMsg)) {
-      fallbackReply = "Agendamento confirmado com sucesso!\n\nA equipe da Clínica Vitae aguarda você de braços abertos. Posso ajudar com mais alguma dúvida?";
-    } else if (/\b(obrigado|obrigada|valeu|perfeito|nada)\b/.test(normMsg)) {
-      fallbackReply = "Fico à disposição! Se precisar de algo mais, estou por aqui. 😊";
+    }
+    // 8. Confirmação
+    else if (/\b(sim|pode|ok|confirma|confirmar|positivo|claro|pode ser|09:00|11:00|14:00|16:00|9h|11h|14h|16h)\b/i.test(normMsg)) {
+      fallbackReply = "Agendamento confirmado com sucesso! 🎉\n\nA equipe da Clínica Vitae aguarda você de braços abertos. Posso ajudar com mais alguma dúvida?";
+    }
+    // 9. Agradecimento e despedida
+    else if (/\b(obrigado|obrigada|valeu|perfeito|nada|tchau|ate logo)\b/i.test(normMsg)) {
+      fallbackReply = "Fico à disposição! Se precisar de algo mais, estou por aqui. Tenha um ótimo dia! 😊";
     }
 
     return NextResponse.json({ reply: fallbackReply });
