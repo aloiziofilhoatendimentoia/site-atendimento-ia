@@ -30,27 +30,26 @@ export async function POST(req: Request) {
 
   <critical_rules>
     1. CONTEXTO TOTAL DA CONVERSA: Responda de acordo com o histórico completo.
-    2. SE O PACIENTE DISSER APENAS QUE QUER AGENDAR (Sem informar o dia nem o período):
-       - Responda apenas de forma direta em 1 balão: "Claro! Qual dia e horário você prefere para o seu agendamento?"
-       - NUNCA diga "vou verificar na agenda" se o paciente não informou nenhum dia.
+    2. SE O PACIENTE DISSER O DIA E O HORÁRIO JUNTOS (ex: "quero agendar para o dia 31 às 14h"):
+       - BALÃO 1: "Vou verificar a disponibilidade do horário das [horário] para o [dia] em nossa agenda, só um instante..."
+       - BALÃO 2: "Prontinho! Consultei nossa agenda e o horário das [horário] para o [dia] está disponível e pré-reservado.\n\nGostaria de confirmar a sua consulta para este dia e horário?"
+       - NUNCA pergunte "qual horário fica melhor" se o paciente já informou o horário!
 
-    3. REGRAS DE HORÁRIOS DISPONÍVEIS POR PERÍODO (APÓS INFORMAR O DIA OU PERÍODO):
+    3. SE O PACIENTE DISSER APENAS QUE QUER AGENDAR (Sem informar dia nem horário):
+       - Responda apenas em 1 balão: "Claro! Qual dia e horário você prefere para o seu agendamento?"
+
+    4. REGRAS DE HORÁRIOS DISPONÍVEIS POR PERÍODO (SE O PACIENTE INFORMAR APENAS O DIA OU PERÍODO):
        a) Se o paciente pediu especificamente PELA MANHÃ (ex: "quais os horários amanhã pela manhã?", "segunda de manhã"):
           - BALÃO 1: "Vou verificar a disponibilidade em nossa agenda para [dia] pela manhã, só um instante..."
           - BALÃO 2: "Temos horários disponíveis para [dia] às 09:00 e às 11:00 horas pela manhã. Qual destes dois horários fica melhor para você?"
-          - NUNCA cite horários da tarde (14h/16h) se o paciente pediu pela manhã!
 
        b) Se o paciente pediu especificamente PELA TARDE (ex: "quais os horários amanhã pela tarde?", "segunda de tarde"):
           - BALÃO 1: "Vou verificar a disponibilidade em nossa agenda para [dia] pela tarde, só um instante..."
           - BALÃO 2: "Temos horários disponíveis para [dia] às 14:00 e às 16:00 horas pela tarde. Qual destes dois horários fica melhor para você?"
-          - NUNCA cite horários da manhã (9h/11h) se o paciente pediu pela tarde!
 
-       c) Se o paciente pediu horários SEM especificar se quer manhã ou tarde (ex: "quais os horários disponíveis amanhã?"):
+       c) Se o paciente pediu horários SEM especificar se quer manhã ou tarde:
           - BALÃO 1: "Vou verificar a disponibilidade em nossa agenda para [dia], só um instante..."
           - BALÃO 2: "Temos horários disponíveis para [dia] às 09:00 e às 11:00 horas pela manhã, e às 14:00 e às 16:00 horas pela tarde. Qual horário fica melhor para você?"
-
-    4. SE O PACIENTE PERGUNTAR PELO HORÁRIO DE FUNCIONAMENTO DA CLÍNICA:
-       - Responda: "Nosso horário de funcionamento é de Segunda a Sexta, das 08:00 às 18:00, e aos Sábados, das 08:00 às 12:00.\n\nDomingos e feriados estamos fechados. 😊"
 
     5. REGRA OBRIGATÓRIA DE MENSAGENS SEPARADAS (\n\n):
        - Separe sempre os balões com Enter duplo (\n\n).
@@ -94,6 +93,9 @@ export async function POST(req: Request) {
     const diaMatch = normMsg.match(/\b(dia\s+\d{1,2}|amanha|hoje|segunda|terca|quarta|quinta|sexta|sabado|\d{1,2}\/\d{1,2})\b/i);
     const diaCitado = diaMatch ? diaMatch[0] : "";
 
+    const horaMatch = normMsg.match(/\b(09:00|11:00|14:00|16:00|09h|11h|14h|16h|9h|as 14|as 9|as 11|as 16|\d{1,2}\s*h|\d{1,2}\s*horas?)\b/i);
+    const horaCitada = horaMatch ? horaMatch[0] : "";
+
     const isManha = /\b(manha|cedo|matutino)\b/i.test(normMsg.replace(/\bamanha\b/gi, ""));
     const isTarde = /\b(tarde|vespertino)\b/i.test(normMsg);
     
@@ -115,7 +117,11 @@ export async function POST(req: Request) {
     else if (/\b(funcionamento|funciona|atendimento|aberto|abre|expediente)\b/i.test(normMsg)) {
       fallbackReply = "Nosso horário de funcionamento é de Segunda a Sexta, das 08:00 às 18:00, e aos Sábados, das 08:00 às 12:00.\n\nDomingos e feriados estamos fechados. 😊\n\nQual dia e horário você prefere para a sua consulta?";
     }
-    // 5. Agendamento com dia citado
+    // 5. Se o paciente informou o DIA E O HORÁRIO JUNTOS
+    else if (diaMatch && horaCitada) {
+      fallbackReply = `Vou verificar a disponibilidade do horário das ${horaCitada} para o ${diaCitado} em nossa agenda, só um instante...\n\nProntinho! Consultei nossa agenda e o horário das ${horaCitada} para o ${diaCitado} está disponível e pré-reservado.\n\nGostaria de confirmar a sua consulta para este dia e horário?`;
+    }
+    // 6. Agendamento com dia citado (sem horário ainda)
     else if (diaMatch) {
       if (isManha) {
         fallbackReply = `Vou verificar a disponibilidade em nossa agenda para ${diaCitado} pela manhã, só um instante...\n\nTemos horários disponíveis para ${diaCitado} às 09:00 e às 11:00 horas pela manhã.\n\nQual destes dois horários fica melhor para você?`;
