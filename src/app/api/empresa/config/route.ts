@@ -50,7 +50,10 @@ export async function POST(request: Request) {
   try {
     const payload = await request.json();
     const nomeClinica = payload?.clinica?.nomeClinica || 'Sem Nome';
+    const nomeSecretaria = payload?.clinica?.nomeSecretaria || 'Secretária Virtual';
     const whatsappClinica = payload?.clinica?.whatsappClinica || 'Não informado';
+    const whatsappHumano = payload?.integracoes?.whatsappHumano || 'Não informado';
+    const whatsappReceberAgendamento = payload?.integracoes?.whatsappReceberAgendamento || 'Não informado';
     const endereco = payload?.clinica?.endereco || payload?.suporte?.endereco || 'Não informado';
     const tempoConsulta = payload?.horarios?.tempoConsulta ? `${payload.horarios.tempoConsulta} min` : 'Não informado';
     const valorConsulta = payload?.horarios?.valorConsulta || 'R$ 0,00';
@@ -81,7 +84,10 @@ export async function POST(request: Request) {
           .insert([
             {
               nome_clinica: nomeClinica,
+              nome_secretaria: nomeSecretaria,
               telefone_principal: whatsappClinica,
+              whatsapp_humano: whatsappHumano,
+              whatsapp_agendamento: whatsappReceberAgendamento,
               endereco: endereco,
               especialistas: especialistasStr,
               canais_escolhidos: canaisStr

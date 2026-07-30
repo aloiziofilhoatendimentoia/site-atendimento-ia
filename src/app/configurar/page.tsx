@@ -48,6 +48,7 @@ export default function ConfigurarClinicaPage() {
 
   // 1. DADOS DA CLÍNICA
   const [nomeClinica, setNomeClinica] = useState('');
+  const [nomeSecretaria, setNomeSecretaria] = useState('Secretária Virtual');
   const [endereco, setEndereco] = useState('');
   const [whatsappClinica, setWhatsappClinica] = useState(''); // Número onde a IA vai responder clientes
   const [especialistas, setEspecialistas] = useState<Especialista[]>([{ nome: '', especialidade: '' }]);
@@ -165,8 +166,8 @@ export default function ConfigurarClinicaPage() {
   const handleNextTab = () => {
     setErrorMessage('');
     if (currentTab === 'clinica') {
-      if (!nomeClinica || !endereco || !whatsappClinica || especialistas.some(e => !e.nome || !e.especialidade)) {
-        setErrorMessage('Preencha os dados da clínica, incluindo nome, endereço e todos os especialistas listados.');
+      if (!nomeClinica || !nomeSecretaria || !endereco || !whatsappClinica || especialistas.some(e => !e.nome || !e.especialidade)) {
+        setErrorMessage('Preencha os dados da clínica, nome da secretária(o), endereço e especialistas.');
         return;
       }
       setCurrentTab('integracoes');
@@ -190,8 +191,8 @@ export default function ConfigurarClinicaPage() {
   const handleSalvarConfiguracoes = async () => {
     setErrorMessage('');
     
-    if (!nomeClinica || !endereco || !whatsappClinica || especialistas.some(e => !e.nome || !e.especialidade)) {
-      setErrorMessage('Preencha os dados da clínica, incluindo nome, endereço e todos os especialistas listados.');
+    if (!nomeClinica || !nomeSecretaria || !endereco || !whatsappClinica || especialistas.some(e => !e.nome || !e.especialidade)) {
+      setErrorMessage('Preencha os dados da clínica, nome da secretária(o), endereço e especialistas.');
       setCurrentTab('clinica');
       return;
     }
@@ -215,7 +216,7 @@ export default function ConfigurarClinicaPage() {
 
     try {
       const payload = {
-        clinica: { nomeClinica, endereco, whatsappClinica, especialistas },
+        clinica: { nomeClinica, nomeSecretaria, endereco, whatsappClinica, especialistas },
         integracoes: { opcoesAgendamento, emailCalendar, whatsappHumano, whatsappReceberAgendamento, googleConnected },
         horarios: { tempoConsulta, valorConsulta, blocosHorario },
         googleTokens: googleTokens
@@ -311,16 +312,21 @@ export default function ConfigurarClinicaPage() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-300 mb-2">Nome da Clínica</label>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">Nome da Clínica *</label>
                     <input type="text" value={nomeClinica} onChange={(e) => setNomeClinica(e.target.value)} placeholder="Clínica Vitae" className="w-full bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-colors" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">Nome da Secretária(o) Virtual *</label>
+                    <input type="text" value={nomeSecretaria} onChange={(e) => setNomeSecretaria(e.target.value)} placeholder="Ex: Sofia, Dra. Clara, Secretária Julia" className="w-full bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-colors" />
+                    <p className="text-xs text-gray-500 mt-1">O nome com o qual a IA se apresentará aos pacientes.</p>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-300 mb-2">WhatsApp Oficial da Clínica *</label>
                     <input type="text" value={whatsappClinica} onChange={(e) => setWhatsappClinica(e.target.value)} placeholder="(11) 99999-9999" className="w-full bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-colors" />
                     <p className="text-xs text-gray-500 mt-1">O número onde a IA responderá os clientes.</p>
                   </div>
-                  <div className="col-span-1 md:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-300 mb-2">Endereço Físico do Consultório</label>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">Endereço Físico do Consultório *</label>
                     <input type="text" value={endereco} onChange={(e) => setEndereco(e.target.value)} placeholder="Avenida Paulista, 1000 - Sala 42" className="w-full bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-colors" />
                   </div>
                 </div>
