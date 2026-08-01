@@ -84,9 +84,8 @@ export default function LandingPage() {
            const frase = frases[i];
            setIsTyping(true); // Liga a barrinha para a frase atual
            
-           // Cálculo estético DOBRADO de tempo de digitação. 
-           // Mínimo de 5 segundos, e vai aumentando. Máximo de 14 segundos para textos gigantes.
-           const readingDelay = Math.min(Math.max(5000, frase.length * 60), 14000);
+           // Tempo de digitação otimizado 40% mais rápido para resposta dinâmica
+           const readingDelay = Math.min(Math.max(3000, frase.length * 35), 8000);
            
            await new Promise(resolve => setTimeout(resolve, readingDelay)); // Espera digitando
            
@@ -179,7 +178,12 @@ export default function LandingPage() {
               
               <div className="flex flex-col space-y-5">
                 <p className="text-xl sm:text-2xl text-slate-700 leading-relaxed font-medium max-w-xl mx-auto lg:mx-0 flex flex-wrap items-center justify-center lg:justify-start gap-2">
-                  <span>Inteligência Artificial trabalhando para sua clínica. Equipe menor, mais agendamento de consultas.</span>
+                  <span>
+                    <strong className="text-teal-600 font-extrabold bg-teal-50 px-3.5 py-1 rounded-xl border border-teal-200 shadow-sm inline-block my-1">
+                      Inteligência Artificial
+                    </strong>{' '}
+                    trabalhando para a sua clínica: equipe menor e mais agendamentos de consultas.
+                  </span>
                   <span className="inline-flex items-center gap-2 mt-1">
                     {/* Ícone WhatsApp Oficial Verde */}
                     <svg viewBox="0 0 24 24" className="w-8 h-8 fill-[#25D366]" xmlns="http://www.w3.org/2000/svg">
@@ -197,7 +201,7 @@ export default function LandingPage() {
 
                 <div className="flex flex-col lg:flex-row items-center space-y-2 lg:space-y-0 lg:space-x-3 text-teal-700 font-bold text-xl pt-4 lg:pt-2 justify-center lg:justify-start">
                   <span className="bg-teal-100/80 px-4 py-2 rounded-full border border-teal-200 shadow-sm animate-pulse">
-                    Teste nossa secretária virtual ao lado
+                    Teste nossa secretária virtual
                   </span>
                   {/* Seta gigante que gira dependendo de mobile ou desktop */}
                   <ArrowRight className="w-10 h-10 text-teal-600 hidden lg:block animate-bounce-x" style={{ animation: 'bounce-x 1s infinite' }} />
@@ -392,7 +396,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               { t: "Responde pacientes em 2 segundos (24h)", i: Clock },
-              { t: "Agenda consultas na hora via Zap", i: Calendar },
+              { t: "Agenda consultas na hora via WhatsApp", i: Calendar },
               { t: "Confirma presença sem intervenção", i: CheckCircle2 },
               { t: "Reagenda horários inteligentemente", i: ArrowRight },
               { t: "Integra com Google Calendar ao vivo", i: Check },
