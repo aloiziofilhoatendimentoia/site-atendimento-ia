@@ -331,7 +331,7 @@ export default function LandingPage() {
       </section>
 
       {/* SEÇÃO PROBLEMA - COM ENFASE ABSURDA */}
-      <section className="py-24 bg-red-50 relative overflow-hidden">
+      <section id="beneficios" className="py-24 bg-red-50 relative overflow-hidden">
         {/* Adicionando Elementos de Tensão Visual (Listras, alertas) */}
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 via-rose-600 to-red-500"></div>
         <div className="absolute top-10 left-10 opacity-10">
@@ -415,8 +415,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA FINAL */}
-      <section className="py-20 bg-[#004A7F]">
+      {/* CTA FINAL / PLANOS */}
+      <section id="planos" className="py-20 bg-[#004A7F]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
             Descubra Como Sua Clínica Pode Atender Pacientes 24 Horas por Dia

@@ -8,6 +8,7 @@ import {
   Calendar, 
   CheckCircle,
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
   Stethoscope,
   Plus,
@@ -161,6 +162,15 @@ export default function ConfigurarClinicaPage() {
   const handleGoogleLogin = () => {
     // Abre a rota de Auth que geramos no backend para iniciar o OAuth Real
     window.open('/api/auth/google', '_blank', 'width=500,height=600');
+  };
+
+  const handlePrevTab = () => {
+    setErrorMessage('');
+    if (currentTab === 'integracoes') {
+      setCurrentTab('clinica');
+    } else if (currentTab === 'horarios') {
+      setCurrentTab('integracoes');
+    }
   };
 
   const handleNextTab = () => {
@@ -483,13 +493,26 @@ export default function ConfigurarClinicaPage() {
 
             {/* BOTÕES DE AÇÃO RODAPÉ */}
             <div className="mt-10 pt-6 border-t border-[#27272a] flex items-center justify-between">
-              <div className="flex items-center space-x-2 text-xs text-gray-500">
-                <ShieldCheck className="w-4 h-4" /><span>Dados Protegidos</span>
+              <div>
+                {currentTab !== 'clinica' ? (
+                  <button 
+                    type="button"
+                    onClick={handlePrevTab} 
+                    className="px-5 py-3 bg-[#181a1f] hover:bg-[#27272a] text-gray-300 font-semibold rounded-xl border border-gray-800 transition-colors flex items-center space-x-2"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Voltar Etapa</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center space-x-2 text-xs text-gray-500">
+                    <ShieldCheck className="w-4 h-4" /><span>Dados Protegidos</span>
+                  </div>
+                )}
               </div>
               
               <div className="flex space-x-3">
                 {currentTab !== 'horarios' ? (
-                  <button onClick={handleNextTab} className="px-6 py-3 bg-[#27272a] hover:bg-[#3f3f46] text-white font-semibold rounded-xl transition-colors flex items-center space-x-2">
+                  <button onClick={handleNextTab} className="px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl transition-colors flex items-center space-x-2 shadow-lg">
                     <span>Próxima Etapa</span><ArrowRight className="w-4 h-4" />
                   </button>
                 ) : (
