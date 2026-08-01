@@ -605,11 +605,29 @@ export default function ConfigurarClinicaPage() {
               </div>
 
               <button 
-                onClick={() => window.location.href = '/sucesso'}
-                className="w-full py-3.5 px-4 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-teal-500/25 flex items-center justify-center space-x-2 mt-4"
+                type="button"
+                onClick={() => {
+                  if (!isConnected) return;
+                  window.location.href = '/sucesso';
+                }}
+                disabled={!isConnected}
+                className={`w-full py-3.5 px-4 font-bold rounded-xl transition-all shadow-lg flex items-center justify-center space-x-2 mt-4 ${
+                  isConnected 
+                    ? 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white cursor-pointer hover:shadow-teal-500/25' 
+                    : 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-60 border border-gray-700'
+                }`}
               >
-                <span>Concluir e Ir para Tela de Sucesso</span>
-                <CheckCircle className="w-5 h-5" />
+                {isConnected ? (
+                  <>
+                    <span>Concluir e Ir para Tela de Sucesso</span>
+                    <CheckCircle className="w-5 h-5" />
+                  </>
+                ) : (
+                  <>
+                    <span>Aguardando leitura do QR Code pelo WhatsApp...</span>
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                  </>
+                )}
               </button>
             </div>
           </div>
