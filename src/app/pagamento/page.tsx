@@ -61,16 +61,8 @@ export default function PagamentoPage() {
 
   return (
     <div className="min-h-screen bg-[#08090a] text-gray-100 font-sans flex flex-col items-center pt-6 px-4">
-      {/* NAVEGAÇÃO / BOTÃO VOLTAR */}
-      <div className="w-full max-w-4xl flex items-center justify-between mb-8">
-        <button 
-          type="button"
-          onClick={handleVoltarInicio}
-          className="inline-flex items-center text-sm font-semibold text-gray-400 hover:text-teal-400 transition-colors bg-[#121417] px-4 py-2 rounded-xl border border-gray-800 cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          <span>Voltar para o Início</span>
-        </button>
+      {/* HEADER LOGO */}
+      <div className="w-full max-w-4xl flex items-center justify-center mb-8">
         <Logo size="md" />
       </div>
       

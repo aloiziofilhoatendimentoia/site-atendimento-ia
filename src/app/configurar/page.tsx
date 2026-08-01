@@ -284,10 +284,6 @@ function ConfigurarFormContent() {
             <div className="h-6 w-px bg-[#27272a] mx-2 hidden sm:block"></div>
             <span className="text-sm font-semibold text-teal-500 hidden sm:block tracking-wide uppercase">Painel Médico de Implantação</span>
           </div>
-          <Link href="/pagamento" className="flex items-center text-sm font-semibold text-gray-400 hover:text-teal-400 transition-colors bg-[#181a1f] px-3.5 py-2 rounded-xl border border-gray-800">
-            <ArrowLeft className="w-4 h-4 mr-1.5" />
-            <span>Voltar para Pagamento</span>
-          </Link>
         </div>
       </nav>
 
@@ -513,36 +509,9 @@ function ConfigurarFormContent() {
 
             {/* BOTÕES DE AÇÃO RODAPÉ */}
             <div className="mt-10 pt-6 border-t border-[#27272a] flex items-center justify-between">
-              <div>
-                {currentTab === 'clinica' && (
-                  <Link 
-                    href="/pagamento"
-                    className="px-5 py-3 bg-[#181a1f] hover:bg-[#27272a] text-gray-300 font-semibold rounded-xl border border-gray-800 transition-colors flex items-center space-x-2"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>Voltar para Pagamento</span>
-                  </Link>
-                )}
-                {currentTab === 'integracoes' && (
-                  <button 
-                    type="button"
-                    onClick={(e) => handlePrevTab(e)} 
-                    className="px-5 py-3 bg-[#181a1f] hover:bg-[#27272a] text-gray-300 font-semibold rounded-xl border border-gray-800 transition-colors flex items-center space-x-2 cursor-pointer"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>Voltar para Etapa 1 (Dados da Clínica)</span>
-                  </button>
-                )}
-                {currentTab === 'horarios' && (
-                  <button 
-                    type="button"
-                    onClick={(e) => handlePrevTab(e)} 
-                    className="px-5 py-3 bg-[#181a1f] hover:bg-[#27272a] text-gray-300 font-semibold rounded-xl border border-gray-800 transition-colors flex items-center space-x-2 cursor-pointer"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>Voltar para Etapa 2 (Conexões Vitais)</span>
-                  </button>
-                )}
+              <div className="flex items-center space-x-2 text-xs text-gray-400">
+                <ShieldCheck className="w-4 h-4 text-teal-400" />
+                <span>Dados Protegidos | Use as setas do navegador para voltar</span>
               </div>
               
               <div className="flex space-x-3">
@@ -601,22 +570,11 @@ function ConfigurarFormContent() {
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row w-full gap-3">
-                <button 
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setShowQrModal(false);
-                    goToTab('horarios');
-                  }} 
-                  className="flex-1 py-3 px-4 bg-[#27272a] hover:bg-[#3f3f46] text-white font-semibold rounded-xl transition-colors flex items-center justify-center space-x-2 cursor-pointer"
-                >
-                  <XCircle className="w-4 h-4" /> <span>Voltar para Edição</span>
-                </button>
+              <div className="w-full">
                 <button 
                   onClick={handleRegenerateQr}
                   disabled={qrLoading}
-                  className="flex-1 py-3 px-4 bg-teal-600/10 border border-teal-500/30 hover:bg-teal-600/20 text-teal-400 font-semibold rounded-xl transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
+                  className="w-full py-3 px-4 bg-teal-600/10 border border-teal-500/30 hover:bg-teal-600/20 text-teal-400 font-semibold rounded-xl transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
                 >
                   <RefreshCw className={`w-4 h-4 ${qrLoading ? 'animate-spin' : ''}`} /> <span>Gerar Novamente</span>
                 </button>
