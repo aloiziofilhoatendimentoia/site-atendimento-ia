@@ -20,9 +20,11 @@ export default function PagamentoPage() {
     router.push('/');
   };
 
+  const isEmailValid = email.trim().length > 3 && email.includes('@') && email.includes('.');
+
   const handlePagarCartao = async () => {
-    if (!email) {
-      setError('Por favor, informe um e-mail válido para a licença.');
+    if (!isEmailValid) {
+      setError('Por favor, informe um e-mail válido para a licença (ex: doutor@clinica.com.br).');
       return;
     }
     setError('');
@@ -46,8 +48,8 @@ export default function PagamentoPage() {
   };
 
   const handlePagarPix = () => {
-    if (!email) {
-      setError('Por favor, informe um e-mail válido para a licença.');
+    if (!isEmailValid) {
+      setError('Por favor, informe um e-mail válido para a licença (ex: doutor@clinica.com.br).');
       return;
     }
     setError('');
@@ -58,8 +60,6 @@ export default function PagamentoPage() {
       setLoading(false);
     }, 1500);
   };
-
-  const isEmailValid = email.trim().length > 3 && email.includes('@') && email.includes('.');
 
   return (
     <div className="min-h-screen bg-[#08090a] text-gray-100 font-sans flex flex-col items-center pt-6 px-4">
