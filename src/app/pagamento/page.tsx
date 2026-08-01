@@ -220,8 +220,8 @@ export default function PagamentoPage() {
               </div>
               
               {/* Botão para Simular o Pagamento Aprovado no Fluxo Pix */}
-              <Link href="/sucesso" className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold text-center rounded-xl transition-colors">
-                Simular Pagamento Confirmado
+              <Link href="/configurar" className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold text-center rounded-xl transition-colors">
+                Simular Pagamento Confirmado e Configurar Clínica
               </Link>
             </div>
           )}
