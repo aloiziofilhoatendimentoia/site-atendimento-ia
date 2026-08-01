@@ -603,8 +603,13 @@ function ConfigurarFormContent() {
 
               <div className="flex flex-col sm:flex-row w-full gap-3">
                 <button 
-                  onClick={() => setShowQrModal(false)} 
-                  className="flex-1 py-3 px-4 bg-[#27272a] hover:bg-[#3f3f46] text-white font-semibold rounded-xl transition-colors flex items-center justify-center space-x-2"
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowQrModal(false);
+                    goToTab('horarios');
+                  }} 
+                  className="flex-1 py-3 px-4 bg-[#27272a] hover:bg-[#3f3f46] text-white font-semibold rounded-xl transition-colors flex items-center justify-center space-x-2 cursor-pointer"
                 >
                   <XCircle className="w-4 h-4" /> <span>Voltar para Edição</span>
                 </button>
