@@ -164,12 +164,16 @@ export default function ConfigurarClinicaPage() {
     window.open('/api/auth/google', '_blank', 'width=500,height=600');
   };
 
-  const handlePrevTab = () => {
+  const handlePrevTab = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setErrorMessage('');
-    if (currentTab === 'integracoes') {
-      setCurrentTab('clinica');
-    } else if (currentTab === 'horarios') {
+    if (currentTab === 'horarios') {
       setCurrentTab('integracoes');
+    } else if (currentTab === 'integracoes') {
+      setCurrentTab('clinica');
     }
   };
 
@@ -267,7 +271,10 @@ export default function ConfigurarClinicaPage() {
             <div className="h-6 w-px bg-[#27272a] mx-2 hidden sm:block"></div>
             <span className="text-sm font-semibold text-teal-500 hidden sm:block tracking-wide uppercase">Painel Médico de Implantação</span>
           </div>
-          <Link href="/" className="text-sm text-gray-400 hover:text-white transition-colors">Sair</Link>
+          <Link href="/" className="flex items-center text-sm font-semibold text-gray-400 hover:text-teal-400 transition-colors bg-[#181a1f] px-3.5 py-2 rounded-xl border border-gray-800">
+            <ArrowLeft className="w-4 h-4 mr-1.5" />
+            <span>Voltar ao Início</span>
+          </Link>
         </div>
       </nav>
 
@@ -494,16 +501,27 @@ export default function ConfigurarClinicaPage() {
             {/* BOTÕES DE AÇÃO RODAPÉ */}
             <div className="mt-10 pt-6 border-t border-[#27272a] flex items-center justify-between">
               <div>
-                {currentTab !== 'clinica' ? (
+                {currentTab === 'integracoes' && (
                   <button 
                     type="button"
                     onClick={handlePrevTab} 
-                    className="px-5 py-3 bg-[#181a1f] hover:bg-[#27272a] text-gray-300 font-semibold rounded-xl border border-gray-800 transition-colors flex items-center space-x-2"
+                    className="px-5 py-3 bg-[#181a1f] hover:bg-[#27272a] text-gray-300 font-semibold rounded-xl border border-gray-800 transition-colors flex items-center space-x-2 cursor-pointer"
                   >
                     <ArrowLeft className="w-4 h-4" />
-                    <span>Voltar Etapa</span>
+                    <span>Voltar para Etapa 1 (Dados da Clínica)</span>
                   </button>
-                ) : (
+                )}
+                {currentTab === 'horarios' && (
+                  <button 
+                    type="button"
+                    onClick={handlePrevTab} 
+                    className="px-5 py-3 bg-[#181a1f] hover:bg-[#27272a] text-gray-300 font-semibold rounded-xl border border-gray-800 transition-colors flex items-center space-x-2 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Voltar para Etapa 2 (Conexões Vitais)</span>
+                  </button>
+                )}
+                {currentTab === 'clinica' && (
                   <div className="flex items-center space-x-2 text-xs text-gray-500">
                     <ShieldCheck className="w-4 h-4" /><span>Dados Protegidos</span>
                   </div>
