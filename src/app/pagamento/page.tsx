@@ -59,6 +59,8 @@ export default function PagamentoPage() {
     }, 1500);
   };
 
+  const isEmailValid = email.trim().length > 3 && email.includes('@') && email.includes('.');
+
   return (
     <div className="min-h-screen bg-[#08090a] text-gray-100 font-sans flex flex-col items-center pt-6 px-4">
       {/* HEADER LOGO */}
@@ -122,7 +124,7 @@ export default function PagamentoPage() {
           <h2 className="text-2xl font-bold text-white mb-6">Pagamento Seguro</h2>
           
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-400 mb-2">E-mail para Licença e Acesso</label>
+            <label className="block text-sm font-medium text-gray-400 mb-2">E-mail para Licença e Acesso *</label>
             <input 
               type="email"
               value={email}
@@ -130,10 +132,14 @@ export default function PagamentoPage() {
               placeholder="doutor@clinica.com.br"
               className="w-full bg-[#181a1f] border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-colors"
             />
+            {!isEmailValid && (
+              <p className="text-xs text-amber-400 mt-1">Preencha um e-mail válido para liberar o botão de pagamento.</p>
+            )}
           </div>
 
           <div className="flex space-x-4 mb-6">
             <button 
+              type="button"
               onClick={() => setTab('cartao')}
               className={`flex-1 py-3 rounded-lg flex items-center justify-center space-x-2 border transition-colors ${tab === 'cartao' ? 'bg-teal-600/10 border-teal-500 text-teal-400' : 'bg-transparent border-gray-800 text-gray-400 hover:text-white'}`}
             >
@@ -141,6 +147,7 @@ export default function PagamentoPage() {
               <span className="font-semibold">Cartão</span>
             </button>
             <button 
+              type="button"
               onClick={() => setTab('pix')}
               className={`flex-1 py-3 rounded-lg flex items-center justify-center space-x-2 border transition-colors ${tab === 'pix' ? 'bg-teal-600/10 border-teal-500 text-teal-400' : 'bg-transparent border-gray-800 text-gray-400 hover:text-white'}`}
             >
@@ -161,9 +168,14 @@ export default function PagamentoPage() {
                 Você será redirecionado para o ambiente seguro da Stripe para inserir os dados do cartão.
               </p>
               <button 
+                type="button"
                 onClick={handlePagarCartao}
-                disabled={loading}
-                className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl flex items-center justify-center transition-colors disabled:opacity-50"
+                disabled={loading || !isEmailValid}
+                className={`w-full py-4 font-bold rounded-xl flex items-center justify-center transition-colors ${
+                  isEmailValid && !loading 
+                    ? 'bg-teal-600 hover:bg-teal-500 text-white cursor-pointer shadow-lg' 
+                    : 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-60 border border-gray-700'
+                }`}
               >
                 {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (
                   <>
@@ -181,9 +193,14 @@ export default function PagamentoPage() {
                 Aprovação instantânea. A liberação do seu painel é automática após o pagamento.
               </p>
               <button 
+                type="button"
                 onClick={handlePagarPix}
-                disabled={loading}
-                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl flex items-center justify-center transition-colors disabled:opacity-50"
+                disabled={loading || !isEmailValid}
+                className={`w-full py-4 font-bold rounded-xl flex items-center justify-center transition-colors ${
+                  isEmailValid && !loading 
+                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer shadow-lg' 
+                    : 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-60 border border-gray-700'
+                }`}
               >
                 {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (
                   <>

@@ -244,9 +244,6 @@ export default function LandingPage() {
                   
                   {/* Header Chat */}
                   <div className="bg-[#008069] text-white p-3 pt-8 flex items-center space-x-3 z-10 shadow-sm">
-                    <button className="flex items-center text-white/90">
-                      <ChevronRight className="w-6 h-6 rotate-180" />
-                    </button>
                     <div className="relative">
                       <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center overflow-hidden border border-[#00A884]">
                         {/* Imagem de perfil gerada pela IA (logo-vitae.png) */}
