@@ -271,9 +271,9 @@ export default function ConfigurarClinicaPage() {
             <div className="h-6 w-px bg-[#27272a] mx-2 hidden sm:block"></div>
             <span className="text-sm font-semibold text-teal-500 hidden sm:block tracking-wide uppercase">Painel Médico de Implantação</span>
           </div>
-          <Link href="/" className="flex items-center text-sm font-semibold text-gray-400 hover:text-teal-400 transition-colors bg-[#181a1f] px-3.5 py-2 rounded-xl border border-gray-800">
+          <Link href="/pagamento" className="flex items-center text-sm font-semibold text-gray-400 hover:text-teal-400 transition-colors bg-[#181a1f] px-3.5 py-2 rounded-xl border border-gray-800">
             <ArrowLeft className="w-4 h-4 mr-1.5" />
-            <span>Voltar ao Início</span>
+            <span>Voltar para Pagamento</span>
           </Link>
         </div>
       </nav>
@@ -501,10 +501,19 @@ export default function ConfigurarClinicaPage() {
             {/* BOTÕES DE AÇÃO RODAPÉ */}
             <div className="mt-10 pt-6 border-t border-[#27272a] flex items-center justify-between">
               <div>
+                {currentTab === 'clinica' && (
+                  <Link 
+                    href="/pagamento"
+                    className="px-5 py-3 bg-[#181a1f] hover:bg-[#27272a] text-gray-300 font-semibold rounded-xl border border-gray-800 transition-colors flex items-center space-x-2"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Voltar para Pagamento</span>
+                  </Link>
+                )}
                 {currentTab === 'integracoes' && (
                   <button 
                     type="button"
-                    onClick={handlePrevTab} 
+                    onClick={(e) => handlePrevTab(e)} 
                     className="px-5 py-3 bg-[#181a1f] hover:bg-[#27272a] text-gray-300 font-semibold rounded-xl border border-gray-800 transition-colors flex items-center space-x-2 cursor-pointer"
                   >
                     <ArrowLeft className="w-4 h-4" />
@@ -514,27 +523,22 @@ export default function ConfigurarClinicaPage() {
                 {currentTab === 'horarios' && (
                   <button 
                     type="button"
-                    onClick={handlePrevTab} 
+                    onClick={(e) => handlePrevTab(e)} 
                     className="px-5 py-3 bg-[#181a1f] hover:bg-[#27272a] text-gray-300 font-semibold rounded-xl border border-gray-800 transition-colors flex items-center space-x-2 cursor-pointer"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     <span>Voltar para Etapa 2 (Conexões Vitais)</span>
                   </button>
                 )}
-                {currentTab === 'clinica' && (
-                  <div className="flex items-center space-x-2 text-xs text-gray-500">
-                    <ShieldCheck className="w-4 h-4" /><span>Dados Protegidos</span>
-                  </div>
-                )}
               </div>
               
               <div className="flex space-x-3">
                 {currentTab !== 'horarios' ? (
-                  <button onClick={handleNextTab} className="px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl transition-colors flex items-center space-x-2 shadow-lg">
+                  <button type="button" onClick={handleNextTab} className="px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl transition-colors flex items-center space-x-2 shadow-lg cursor-pointer">
                     <span>Próxima Etapa</span><ArrowRight className="w-4 h-4" />
                   </button>
                 ) : (
-                  <button onClick={handleSalvarConfiguracoes} disabled={saving} className="px-8 py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-teal-500/25 flex items-center space-x-2 disabled:opacity-50">
+                  <button type="button" onClick={handleSalvarConfiguracoes} disabled={saving} className="px-8 py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-teal-500/25 flex items-center space-x-2 disabled:opacity-50 cursor-pointer">
                     {saving ? <span>Criando Cérebro...</span> : <><span>Finalizar e Ligar IA</span><CheckCircle className="w-5 h-5" /></>}
                   </button>
                 )}
