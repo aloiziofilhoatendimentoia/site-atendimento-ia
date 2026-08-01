@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Logo from '@/components/Logo';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   Building2, 
   MessageCircle, 
@@ -35,8 +36,18 @@ interface BlocoHorario {
   fim: string;
 }
 
-export default function ConfigurarClinicaPage() {
-  const [currentTab, setCurrentTab] = useState<Tab>('clinica');
+function ConfigurarFormContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const stepParam = searchParams.get('step') || '1';
+
+  const currentTab: Tab = stepParam === '3' ? 'horarios' : stepParam === '2' ? 'integracoes' : 'clinica';
+
+  const goToTab = (tab: Tab) => {
+    setErrorMessage('');
+    const stepNum = tab === 'horarios' ? '3' : tab === 'integracoes' ? '2' : '1';
+    router.push(`/configurar?step=${stepNum}`);
+  };
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successModal, setSuccessModal] = useState(false);
@@ -171,9 +182,11 @@ export default function ConfigurarClinicaPage() {
     }
     setErrorMessage('');
     if (currentTab === 'horarios') {
-      setCurrentTab('integracoes');
+      goToTab('integracoes');
     } else if (currentTab === 'integracoes') {
-      setCurrentTab('clinica');
+      goToTab('clinica');
+    } else if (currentTab === 'clinica') {
+      router.push('/pagamento');
     }
   };
 
@@ -184,7 +197,7 @@ export default function ConfigurarClinicaPage() {
         setErrorMessage('Preencha os dados da clínica, nome da secretária(o), endereço e especialistas.');
         return;
       }
-      setCurrentTab('integracoes');
+      goToTab('integracoes');
     } else if (currentTab === 'integracoes') {
       if (!opcoesAgendamento.whatsapp && !opcoesAgendamento.calendar) {
         setErrorMessage('Escolha pelo menos uma opção de agendamento (WhatsApp ou Google Calendar).');
@@ -198,7 +211,7 @@ export default function ConfigurarClinicaPage() {
         setErrorMessage('Para agendar via Google Calendar, é obrigatório conectar a conta Google.');
         return;
       }
-      setCurrentTab('horarios');
+      goToTab('horarios');
     }
   };
 
@@ -207,22 +220,22 @@ export default function ConfigurarClinicaPage() {
     
     if (!nomeClinica || !nomeSecretaria || !endereco || !whatsappClinica || especialistas.some(e => !e.nome || !e.especialidade)) {
       setErrorMessage('Preencha os dados da clínica, nome da secretária(o), endereço e especialistas.');
-      setCurrentTab('clinica');
+      goToTab('clinica');
       return;
     }
     if (!opcoesAgendamento.whatsapp && !opcoesAgendamento.calendar) {
       setErrorMessage('Escolha pelo menos uma opção de agendamento (WhatsApp ou Google Calendar).');
-      setCurrentTab('integracoes');
+      goToTab('integracoes');
       return;
     }
     if (opcoesAgendamento.calendar && !googleConnected) {
       setErrorMessage('Para agendar via Google Calendar, é obrigatório conectar a conta Google.');
-      setCurrentTab('integracoes');
+      goToTab('integracoes');
       return;
     }
     if (!tempoConsulta || !valorConsulta || blocosHorario.some(b => b.dias.length === 0 || !b.inicio || !b.fim)) {
       setErrorMessage('Preencha os valores da consulta e os dias e horários de todos os blocos de expediente.');
-      setCurrentTab('horarios');
+      goToTab('horarios');
       return;
     }
 
@@ -284,7 +297,7 @@ export default function ConfigurarClinicaPage() {
         <div className="w-full lg:w-72 flex-shrink-0 flex flex-col space-y-2">
           <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest px-4 mb-2">Etapas de Implantação</h2>
           
-          <button type="button" onClick={(e) => { e.preventDefault(); setCurrentTab('clinica'); }} className={`flex items-center space-x-3 w-full p-4 rounded-xl text-left transition-all ${currentTab === 'clinica' ? 'bg-teal-600/10 border border-teal-500/50 text-teal-400' : 'hover:bg-[#18181b] border border-transparent text-gray-400'}`}>
+          <button type="button" onClick={(e) => { e.preventDefault(); goToTab('clinica'); }} className={`flex items-center space-x-3 w-full p-4 rounded-xl text-left transition-all ${currentTab === 'clinica' ? 'bg-teal-600/10 border border-teal-500/50 text-teal-400' : 'hover:bg-[#18181b] border border-transparent text-gray-400'}`}>
             <div className={`p-2 rounded-lg ${currentTab === 'clinica' ? 'bg-teal-500/20 text-teal-400' : 'bg-[#27272a] text-gray-400'}`}><Stethoscope className="w-5 h-5" /></div>
             <div>
               <p className="font-semibold text-sm">1. Dados da Clínica</p>
@@ -292,7 +305,7 @@ export default function ConfigurarClinicaPage() {
             </div>
           </button>
 
-          <button type="button" onClick={(e) => { e.preventDefault(); setCurrentTab('integracoes'); }} className={`flex items-center space-x-3 w-full p-4 rounded-xl text-left transition-all ${currentTab === 'integracoes' ? 'bg-blue-600/10 border border-blue-500/50 text-blue-400' : 'hover:bg-[#18181b] border border-transparent text-gray-400'}`}>
+          <button type="button" onClick={(e) => { e.preventDefault(); goToTab('integracoes'); }} className={`flex items-center space-x-3 w-full p-4 rounded-xl text-left transition-all ${currentTab === 'integracoes' ? 'bg-blue-600/10 border border-blue-500/50 text-blue-400' : 'hover:bg-[#18181b] border border-transparent text-gray-400'}`}>
             <div className={`p-2 rounded-lg ${currentTab === 'integracoes' ? 'bg-blue-500/20 text-blue-400' : 'bg-[#27272a] text-gray-400'}`}><MessageCircle className="w-5 h-5" /></div>
             <div>
               <p className="font-semibold text-sm">2. Conexões Vitais</p>
@@ -300,7 +313,7 @@ export default function ConfigurarClinicaPage() {
             </div>
           </button>
 
-          <button type="button" onClick={(e) => { e.preventDefault(); setCurrentTab('horarios'); }} className={`flex items-center space-x-3 w-full p-4 rounded-xl text-left transition-all ${currentTab === 'horarios' ? 'bg-purple-600/10 border border-purple-500/50 text-purple-400' : 'hover:bg-[#18181b] border border-transparent text-gray-400'}`}>
+          <button type="button" onClick={(e) => { e.preventDefault(); goToTab('horarios'); }} className={`flex items-center space-x-3 w-full p-4 rounded-xl text-left transition-all ${currentTab === 'horarios' ? 'bg-purple-600/10 border border-purple-500/50 text-purple-400' : 'hover:bg-[#18181b] border border-transparent text-gray-400'}`}>
             <div className={`p-2 rounded-lg ${currentTab === 'horarios' ? 'bg-purple-500/20 text-purple-400' : 'bg-[#27272a] text-gray-400'}`}><Calendar className="w-5 h-5" /></div>
             <div>
               <p className="font-semibold text-sm">3. Regras da Agenda</p>
@@ -635,5 +648,17 @@ export default function ConfigurarClinicaPage() {
       )}
 
     </div>
+  );
+}
+
+export default function ConfigurarClinicaPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#08090a] text-white flex items-center justify-center font-bold">
+        Carregando painel de implantação...
+      </div>
+    }>
+      <ConfigurarFormContent />
+    </Suspense>
   );
 }
