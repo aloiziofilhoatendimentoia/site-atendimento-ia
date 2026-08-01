@@ -126,7 +126,6 @@ export default function LandingPage() {
           {/* LADO ESQUERDO: LINKS */}
           <div className="hidden md:flex space-x-6 lg:space-x-8 items-center flex-1 justify-start">
             <a href="#solucoes" className="text-slate-600 hover:text-teal-600 font-medium transition-colors whitespace-nowrap">Soluções</a>
-            <a href="#beneficios" className="text-slate-600 hover:text-teal-600 font-medium transition-colors whitespace-nowrap">Benefícios</a>
             <a href="#simulador" className="text-slate-600 hover:text-teal-600 font-medium transition-colors whitespace-nowrap">Simule Agora</a>
             <a href="#planos" className="text-slate-600 hover:text-teal-600 font-medium transition-colors whitespace-nowrap">Planos</a>
           </div>
