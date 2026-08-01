@@ -51,6 +51,8 @@ export async function POST(req: Request) {
           - BALÃO 1: "Vou verificar a disponibilidade em nossa agenda para [dia], só um instante..."
           - BALÃO 2: "Temos horários disponíveis para [dia] às 09:00 e às 11:00 horas pela manhã, e às 14:00 e às 16:00 horas pela tarde. Qual horário fica melhor para você?"
 
+    6. SE O AGENDAMENTO JÁ FOI CONFIRMADO ANTERIORMENTE na conversa (o robô enviou "Agendamento confirmado com sucesso" ou similar): NUNCA ofereça, sugira ou pergunte se o paciente gostaria de agendar uma consulta. Em vez disso, apenas tire a dúvida solicitada de forma direta e pergunte se precisa de mais alguma informação sobre a consulta.
+
     5. REGRA OBRIGATÓRIA DE MENSAGENS SEPARADAS (\n\n):
        - Separe sempre os balões com Enter duplo (\n\n).
   </critical_rules>
@@ -90,6 +92,11 @@ export async function POST(req: Request) {
     const lastMsgText = messages[messages.length - 1].text.toLowerCase();
     const normMsg = lastMsgText.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
+    const hasConfirmedAppointment = messages.some((m: any) => 
+      m.sender === 'bot' && 
+      (m.text.includes('confirmado com sucesso') || m.text.includes('agendamento confirmado') || m.text.includes('Agendamento confirmado'))
+    );
+
     const diaMatch = normMsg.match(/\b(dia\s+\d{1,2}|amanha|hoje|segunda|terca|quarta|quinta|sexta|sabado|\d{1,2}\/\d{1,2})\b/i);
     const diaCitado = diaMatch ? diaMatch[0] : "";
 
@@ -99,23 +106,33 @@ export async function POST(req: Request) {
     const isManha = /\b(manha|cedo|matutino)\b/i.test(normMsg.replace(/\bamanha\b/gi, ""));
     const isTarde = /\b(tarde|vespertino)\b/i.test(normMsg);
     
-    let fallbackReply = "Olá! Como posso te ajudar hoje? Quer agendar uma consulta, saber o endereço da clínica ou consultar nossos horários?";
+    let fallbackReply = hasConfirmedAppointment 
+      ? "Olá! Como posso te ajudar hoje? Ficou alguma dúvida sobre o seu agendamento?"
+      : "Olá! Como posso te ajudar hoje? Quer agendar uma consulta, saber o endereço da clínica ou consultar nossos horários?";
 
     // 1. Saudação simples (oi, olá, bom dia, boa tarde)
     if (/^(oi|ola|bom dia|boa tarde|boa noite|oii|oie|opa)[\s!.]*$/i.test(normMsg)) {
-      fallbackReply = "Olá! Em que posso te ajudar hoje? Gostaria de agendar uma consulta, saber nosso endereço ou consultar nossos horários de funcionamento?";
+      fallbackReply = hasConfirmedAppointment
+        ? "Olá! Em que posso te ajudar hoje? Ficou alguma dúvida sobre a sua consulta marcada ou quer saber mais sobre a clínica?"
+        : "Olá! Em que posso te ajudar hoje? Gostaria de agendar uma consulta, saber nosso endereço ou consultar nossos horários de funcionamento?";
     }
     // 2. Endereço e Localização
     else if (/\b(endereco|localizacao|onde fica|onde e|como chegar|mapa|rua)\b/i.test(normMsg)) {
-      fallbackReply = "Ficamos localizados na Rua do Cajueiro, 83 - Peixinhos, Olinda - PE.\n\nLink do Google Maps: https://maps.app.goo.gl/ZCwjazLo6mooZjxVA?g_st=aw\n\nGostaria de agendar uma consulta conosco?";
+      fallbackReply = hasConfirmedAppointment
+        ? "Ficamos localizados na Rua do Cajueiro, 83 - Peixinhos, Olinda - PE.\n\nLink do Google Maps: https://maps.app.goo.gl/ZCwjazLo6mooZjxVA?g_st=aw"
+        : "Ficamos localizados na Rua do Cajueiro, 83 - Peixinhos, Olinda - PE.\n\nLink do Google Maps: https://maps.app.goo.gl/ZCwjazLo6mooZjxVA?g_st=aw\n\nGostaria de agendar uma consulta conosco?";
     }
     // 3. Valor, Preço e Especialidades
     else if (/\b(valor|preco|quanto custa|quanto e|especialidade|especialidades|medico|doutor|convenio)\b/i.test(normMsg)) {
-      fallbackReply = "A consulta médica na Clínica Vitae com nossos especialistas (como o Dr. Roberto) tem o valor de R$ 120,00, com 60 minutos de atendimento personalizado.\n\nQuer verificar os horários para agendar?";
+      fallbackReply = hasConfirmedAppointment
+        ? "A consulta médica na Clínica Vitae com nossos especialistas (como o Dr. Roberto) tem o valor de R$ 120,00, com 60 minutos de atendimento personalizado."
+        : "A consulta médica na Clínica Vitae com nossos especialistas (como o Dr. Roberto) tem o valor de R$ 120,00, com 60 minutos de atendimento personalizado.\n\nQuer verificar os horários para agendar?";
     }
     // 4. Horário de Funcionamento da Clínica
     else if (/\b(funcionamento|funciona|atendimento|aberto|abre|expediente)\b/i.test(normMsg)) {
-      fallbackReply = "Nosso horário de funcionamento é de Segunda a Sexta, das 08:00 às 18:00, e aos Sábados, das 08:00 às 12:00.\n\nDomingos e feriados estamos fechados. 😊\n\nQual dia e horário você prefere para a sua consulta?";
+      fallbackReply = hasConfirmedAppointment
+        ? "Nosso horário de funcionamento é de Segunda a Sexta, das 08:00 às 18:00, e aos Sábados, das 08:00 às 12:00.\n\nDomingos e feriados estamos fechados. 😊"
+        : "Nosso horário de funcionamento é de Segunda a Sexta, das 08:00 às 18:00, e aos Sábados, das 08:00 às 12:00.\n\nDomingos e feriados estamos fechados. 😊\n\nQual dia e horário você prefere para a sua consulta?";
     }
     // 5. Se o paciente informou o DIA E O HORÁRIO JUNTOS
     else if (diaMatch && horaCitada) {
