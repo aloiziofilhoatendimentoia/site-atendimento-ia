@@ -8,7 +8,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Nenhuma mensagem enviada.' }, { status: 400 });
     }
 
-    const apiKey = process.env.GOOGLE_API_KEY || 'AIzaSyAPexPO6rFOmoMUcUtn4TNsrihrbCk6d-A';
+    const apiKey = process.env.GOOGLE_API_KEY || '';
 
     // 1. Formatar o histórico completo da conversa para a API do Gemini manter contexto perfeito
     const contents = messages.map((m: { sender: string; text: string }) => ({
