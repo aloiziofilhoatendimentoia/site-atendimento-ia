@@ -43,6 +43,16 @@ function ConfigurarFormContent() {
 
   const currentTab: Tab = stepParam === '3' ? 'horarios' : stepParam === '2' ? 'integracoes' : 'clinica';
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isPaid = window.sessionStorage.getItem('licenca_paga') === 'true';
+      const hasEmpresaId = searchParams.get('empresa_id') || searchParams.get('session_id');
+      if (!isPaid && !hasEmpresaId) {
+        router.replace('/pagamento');
+      }
+    }
+  }, [searchParams, router]);
+
   const goToTab = (tab: Tab) => {
     setErrorMessage('');
     const stepNum = tab === 'horarios' ? '3' : tab === 'integracoes' ? '2' : '1';

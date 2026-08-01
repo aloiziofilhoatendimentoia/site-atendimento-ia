@@ -40,6 +40,9 @@ export default function PagamentoPage() {
       
       if (!stripeRes.ok) throw new Error(stripeData.error || 'Erro ao gerar pagamento.');
       
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem('licenca_paga', 'true');
+      }
       window.location.href = stripeData.url;
     } catch (err: any) {
       setError(err.message || 'Erro de conexão.');
@@ -229,7 +232,15 @@ export default function PagamentoPage() {
               </div>
               
               {/* Botão para Simular o Pagamento Aprovado no Fluxo Pix */}
-              <Link href="/configurar" className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold text-center rounded-xl transition-colors">
+              <Link 
+                href="/configurar" 
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.sessionStorage.setItem('licenca_paga', 'true');
+                  }
+                }}
+                className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold text-center rounded-xl transition-colors"
+              >
                 Simular Pagamento Confirmado e Configurar Clínica
               </Link>
             </div>

@@ -36,6 +36,16 @@ export default function LandingPage() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Evita voltar na primeira página (bloqueia seta voltar do navegador)
+    window.history.pushState(null, '', window.location.href);
+    const preventBack = () => {
+      window.history.pushState(null, '', window.location.href);
+    };
+    window.addEventListener('popstate', preventBack);
+    return () => window.removeEventListener('popstate', preventBack);
+  }, []);
+
+  useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
