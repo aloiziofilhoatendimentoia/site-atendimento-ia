@@ -122,11 +122,17 @@ export async function POST(req: Request) {
         ? "Ficamos localizados na Rua do Cajueiro, 83 - Peixinhos, Olinda - PE.\n\nLink do Google Maps: https://maps.app.goo.gl/ZCwjazLo6mooZjxVA?g_st=aw"
         : "Ficamos localizados na Rua do Cajueiro, 83 - Peixinhos, Olinda - PE.\n\nLink do Google Maps: https://maps.app.goo.gl/ZCwjazLo6mooZjxVA?g_st=aw\n\nGostaria de agendar uma consulta conosco?";
     }
-    // 3. Valor, Preço e Especialidades
-    else if (/\b(valor|preco|quanto custa|quanto e|especialidade|especialidades|medico|doutor|convenio)\b/i.test(normMsg)) {
+    // 3. Especialidades e Médicos
+    else if (/\b(especialidade|especialidades|medico|doutor|dr|pediatra|pediatria)\b/i.test(normMsg)) {
       fallbackReply = hasConfirmedAppointment
-        ? "A consulta médica na Clínica Vitae com nossos especialistas (como o Dr. Roberto) tem o valor de R$ 120,00, com 60 minutos de atendimento personalizado."
-        : "A consulta médica na Clínica Vitae com nossos especialistas (como o Dr. Roberto) tem o valor de R$ 120,00, com 60 minutos de atendimento personalizado.\n\nQuer verificar os horários para agendar?";
+        ? "A Clínica Vitae é especializada em pediatria e atendimento médico infantil com foco no desenvolvimento das crianças."
+        : "A Clínica Vitae é especializada em pediatria e atendimento infantil. Nossos especialistas (como o Dr. Roberto) são focados em oferecer o melhor cuidado para os pequenos. 👶🏥\n\nGostaria de verificar a disponibilidade de horários para agendar uma consulta?";
+    }
+    // 3b. Valor, Preço e Convênios
+    else if (/\b(valor|preco|quanto custa|quanto e|preco|particular|convenio|consulta)\b/i.test(normMsg)) {
+      fallbackReply = hasConfirmedAppointment
+        ? "A consulta médica particular na Clínica Vitae tem o valor de R$ 120,00, com 60 minutos de atendimento personalizado."
+        : "A consulta médica na Clínica Vitae tem o valor de R$ 120,00 (particular), com 60 minutos de atendimento personalizado. No momento atendemos particular, mas fornecemos recibo para reembolso. 😉\n\nQuer verificar os horários para agendar?";
     }
     // 4. Horário de Funcionamento da Clínica
     else if (/\b(funcionamento|funciona|atendimento|aberto|abre|expediente)\b/i.test(normMsg)) {
