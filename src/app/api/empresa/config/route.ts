@@ -156,110 +156,33 @@ export async function POST(request: Request) {
       }
     }
 
-    // 2. Duplicação (Clone) do Workflow Demonstração na conta do N8N
-    const N8N_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4ZTY1YzYyNi1jYjE4LTQ3NjMtOWYwOC1kNzkyYmRhMGFkNDEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYjA5Yjc1ZTAtY2QyNS00YTc4LWE2YWQtOTJhMmVlNGU4MGVkIiwiaWF0IjoxNzg0MDA0OTk2fQ.X53Lx3__CnG9iaeqsyNvb5lHEukiy_uyQw9bpaG_YIA';
-    const N8N_DEMO_ID = 'OLsd2Rtp3wQ3gHeB';
-    const N8N_BASE_URL = 'https://n8n.atendimentoiaclinicas.tech/api/v1';
-    let cloneStatus = 'Não Clonado';
-
+    // 2. Enviar mensagem detalhada de nova clínica configurada via Z-API ao dono
+    let cloneStatus = 'Ignorado (Todas clínicas num mesmo workflow)';
     try {
-      // 2.1 Criar Credencial do Google no N8N se os tokens foram fornecidos
-      let googleCredentialId = null;
-      let credName = `Google Calendar - ${nomeClinica}`;
-      
-      if (payload.googleTokens && payload.googleTokens.refresh_token) {
-        const credBody = {
-          name: credName,
-          type: "googleCalendarOAuth2Api",
-          nodesAccess: [{ nodeType: "n8n-nodes-base.googleCalendar", date: new Date().toISOString() }],
-          data: {
-            oauthTokenData: {
-              access_token: payload.googleTokens.access_token,
-              refresh_token: payload.googleTokens.refresh_token,
-              scope: "https://www.googleapis.com/auth/calendar email profile",
-              token_type: "Bearer",
-              expiry_date: payload.googleTokens.expiry_date
-            },
-            clientId: process.env.GOOGLE_CLIENT_ID || '',
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET || ''
-          }
-        };
+      const profsText = especialistas.map((e: any) => ` - ${e.nome} (${e.especialidade})`).join('\n');
+      const mensagemFormatada = `📋 *NOVA CLÍNICA CONFIGURADA COM SUCESSO!*\n\n` +
+        `*Nome da Clínica:* ${nomeClinica}\n` +
+        `*Secretária(o):* ${nomeSecretaria}\n` +
+        `*Endereço:* ${endereco}\n` +
+        `*WhatsApp IA:* ${whatsappClinica}\n\n` +
+        `👨‍⚕️ *PROFISSIONAIS CADASTRADOS:*\n${profsText || 'Nenhum'}\n\n` +
+        `⚙️ *CONFIGURAÇÃO DE AGENDA:*\n` +
+        ` - Horários: ${horarioStr}\n` +
+        ` - Intervalo: ${payload?.horarios?.tempoConsulta || '30'} minutos\n` +
+        ` - Valor da Consulta: R$ ${payload?.horarios?.valorConsulta || '0,00'}\n` +
+        ` - WhatsApp Receber Agenda: ${whatsappReceberAgendamento || 'Não configurado'}`;
 
-        const credRes = await fetch(`${N8N_BASE_URL}/credentials`, {
-          method: 'POST',
-          headers: { 'X-N8N-API-KEY': N8N_API_KEY, 'Content-Type': 'application/json' },
-          body: JSON.stringify(credBody)
-        });
-        if (credRes.ok) {
-          const credData = await credRes.json();
-          googleCredentialId = credData.id;
-        }
-      }
-
-      // 2.2 Baixar o workflow original
-      const getRes = await fetch(`${N8N_BASE_URL}/workflows/${N8N_DEMO_ID}`, {
-        method: 'GET',
-        headers: { 'X-N8N-API-KEY': N8N_API_KEY }
+      await fetch("https://api.z-api.io/instances/3F59285D2F34B3BDBEDF8292A550B686/token/AF68A3D8D69F03D8AF3FE3E3/send-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: "5581979066573", // Celular do dono
+          message: mensagemFormatada,
+          delayTyping: 2
+        })
       });
-      
-      if (getRes.ok) {
-        const demoWorkflow = await getRes.json();
-        
-        // 2.3 Substituir IDs de Credencial nos Nós do Google e Injetar Credenciais Master (Redis, Z-API, Gemini)
-        let mappedNodes = demoWorkflow.nodes;
-        mappedNodes = mappedNodes.map((node: any) => {
-          let newNode = { ...node };
-          
-          // A. Injetar Credencial Master do Redis
-          if (newNode.type.toLowerCase().includes('redis') || (newNode.credentials && newNode.credentials.redis)) {
-            newNode.credentials = { ...newNode.credentials, redis: { id: "Sh0bvRdlLRBVgxYU", name: "Redis custo zero" } };
-          }
-          
-          // B. Injetar Credencial Master do HTTP Request (Z-API e afins)
-          if (newNode.credentials && newNode.credentials.httpHeaderAuth) {
-            newNode.credentials = { ...newNode.credentials, httpHeaderAuth: { id: "OPEJI2t9V8WS0Nju", name: "Header Auth account" } };
-          }
-          
-          // C. Injetar Credencial Master do Google Gemini
-          if (newNode.type.toLowerCase().includes('googlepalm') || (newNode.credentials && newNode.credentials.googlePalmApi)) {
-            newNode.credentials = { ...newNode.credentials, googlePalmApi: { id: "tOMXobUMfC8Ns9MD", name: "Google Gemini(PaLM) Api account" } };
-          }
-
-          // D. Injetar Credencial Específica do Google Calendar do Cliente
-          if (googleCredentialId && (newNode.type === 'n8n-nodes-base.googleCalendar' || (newNode.credentials && newNode.credentials.googleCalendarOAuth2Api))) {
-            newNode.credentials = {
-              ...newNode.credentials,
-              googleCalendarOAuth2Api: { id: googleCredentialId, name: credName }
-            };
-          }
-          
-          return newNode;
-        });
-
-        // Modificar para os dados da nova clínica e limpar IDs
-        const newWorkflow = {
-          name: `Atendimento IA - ${nomeClinica}`,
-          nodes: mappedNodes,
-          connections: demoWorkflow.connections,
-          settings: { executionOrder: 'v1' }
-        };
-        
-        // Criar o Novo Workflow Clonado
-        const postRes = await fetch(`${N8N_BASE_URL}/workflows`, {
-          method: 'POST',
-          headers: { 
-            'X-N8N-API-KEY': N8N_API_KEY,
-            'Content-Type': 'application/json' 
-          },
-          body: JSON.stringify(newWorkflow)
-        });
-        
-        cloneStatus = postRes.ok ? 'Sucesso' : 'Falha na Criação';
-      } else {
-        cloneStatus = 'Demonstração Não Encontrada';
-      }
-    } catch (error: any) {
-      cloneStatus = 'Erro na API N8N: ' + error.message;
+    } catch (zErr: any) {
+      console.error("Falha ao notificar Z-API sobre configuração:", zErr.message || zErr);
     }
 
     // 3. Criação de Instância na Evolution API

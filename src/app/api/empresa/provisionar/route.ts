@@ -26,46 +26,19 @@ export async function POST(req: Request) {
       }
     }
 
-    // 2. Duplicar o Workflow Demonstração na API do N8N
-    const n8nApiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4ZTY1YzYyNi1jYjE4LTQ3NjMtOWYwOC1kNzkyYmRhMGFkNDEiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiYjA5Yjc1ZTAtY2QyNS00YTc4LWE2YWQtOTJhMmVlNGU4MGVkIiwiaWF0IjoxNzg0MDA0OTk2fQ.X53Lx3__CnG9iaeqsyNvb5lHEukiy_uyQw9bpaG_YIA';
-    const n8nBaseApiUrl = 'https://n8n.atendimentoiaclinicas.tech/api/v1/workflows';
-    const demoWorkflowId = 'OLsd2Rtp3wQ3gHeB'; // O ID do workflow Demonstração (extraído de logs anteriores)
-
+    // 2. Enviar mensagem direta para o celular do dono via Z-API (Notificação de novo cadastro iniciado)
     try {
-      // Baixar o workflow original
-      const resOriginal = await fetch(`${n8nBaseApiUrl}/${demoWorkflowId}`, {
-        headers: { 'X-N8N-API-KEY': n8nApiKey }
+      await fetch("https://api.z-api.io/instances/3F59285D2F34B3BDBEDF8292A550B686/token/AF68A3D8D69F03D8AF3FE3E3/send-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: "5581979066573", // Celular do dono
+          message: `💰 *NOVO PAGAMENTO E CADASTRO INICIADO!*\n\nUma nova clínica realizou o pagamento e iniciou o cadastro no site.\n\n*ID da Empresa:* ${empresaId}\n\nAguardando configuração dos dados pelo cliente...`,
+          delayTyping: 2
+        })
       });
-      
-      if (resOriginal.ok) {
-        const originalWorkflow = await resOriginal.json();
-        
-        // Criar cópia modificando o nome
-        const novoWorkflowPayload = {
-          name: `Cliente Produto - Clinica ${empresaId} (Clone)`,
-          nodes: originalWorkflow.nodes,
-          connections: originalWorkflow.connections,
-          settings: originalWorkflow.settings,
-          staticData: null,
-          meta: originalWorkflow.meta,
-          tags: originalWorkflow.tags
-        };
-
-        const resCreate = await fetch(n8nBaseApiUrl, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'X-N8N-API-KEY': n8nApiKey 
-          },
-          body: JSON.stringify(novoWorkflowPayload)
-        });
-
-        if (!resCreate.ok) {
-          console.error('Erro na N8N API ao duplicar:', await resCreate.text());
-        }
-      }
-    } catch (err) {
-      console.error('Erro de conexão ao tentar duplicar workflow no n8n:', err);
+    } catch (zErr: any) {
+      console.error("Falha ao notificar Z-API sobre pagamento:", zErr.message || zErr);
     }
 
     return NextResponse.json({ success: true, message: 'Provisionamento iniciado com sucesso.' });
