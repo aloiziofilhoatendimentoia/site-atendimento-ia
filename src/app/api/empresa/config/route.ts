@@ -84,10 +84,7 @@ export async function POST(request: Request) {
           .insert([
             {
               nome_clinica: nomeClinica,
-              nome_secretaria: nomeSecretaria,
               telefone_principal: whatsappClinica,
-              whatsapp_humano: whatsappHumano,
-              whatsapp_agendamento: whatsappReceberAgendamento,
               endereco: endereco,
               especialistas: especialistasStr,
               canais_escolhidos: canaisStr
