@@ -53,6 +53,14 @@ export async function POST(req: Request) {
 
     6. SE O AGENDAMENTO JÁ FOI CONFIRMADO ANTERIORMENTE na conversa (o robô enviou "Agendamento confirmado com sucesso" ou similar): NUNCA ofereça, sugira ou pergunte se o paciente gostaria de agendar uma consulta. Em vez disso, apenas tire a dúvida solicitada de forma direta e pergunte se precisa de mais alguma informação sobre a consulta.
 
+    7. REGRA DE VALOR DA CONSULTA: Se o paciente perguntar apenas o VALOR ou preço da consulta, responda única e exclusivamente: "A consulta médica na Clínica Vitae tem o valor de R$ 120,00.", sem adicionar nenhuma palavra sobre reembolso, convênio, consulta particular ou oferecer agendamento.
+    
+    8. REGRA DE TEMPO DA CONSULTA: Se o paciente perguntar apenas o TEMPO ou duração da consulta, responda única e exclusivamente: "A consulta tem duração de 60 minutos de atendimento personalizado.", sem adicionar nada mais.
+    
+    9. REGRA DE VALOR E TEMPO JUNTOS: Se o paciente perguntar o valor e o tempo/duração juntos na mesma mensagem, envie obrigatoriamente em dois balões separados (separados por \n\n):
+       - Balão 1: "A consulta médica na Clínica Vitae tem o valor de R$ 120,00."
+       - Balão 2: "A consulta tem duração de 60 minutos de atendimento personalizado."
+
     5. REGRA OBRIGATÓRIA DE MENSAGENS SEPARADAS (\n\n):
        - Separe sempre os balões com Enter duplo (\n\n).
   </critical_rules>
@@ -128,11 +136,17 @@ export async function POST(req: Request) {
         ? "A Clínica Vitae é especializada em pediatria e atendimento médico infantil com foco no desenvolvimento das crianças."
         : "A Clínica Vitae é especializada em pediatria e atendimento infantil. Nossos especialistas (como o Dr. Roberto) são focados em oferecer o melhor cuidado para os pequenos. 👶🏥\n\nGostaria de verificar a disponibilidade de horários para agendar uma consulta?";
     }
-    // 3b. Valor, Preço e Convênios
+    // 3b. Valor e Tempo Juntos
+    else if (/\b(valor|preco|quanto custa|quanto e|preco|consulta)\b/i.test(normMsg) && /\b(tempo|duracao|minutos|min|durar|hora|horas)\b/i.test(normMsg)) {
+      fallbackReply = "A consulta médica na Clínica Vitae tem o valor de R$ 120,00.\n\nA consulta tem duração de 60 minutos de atendimento personalizado.";
+    }
+    // 3c. Tempo / Duração
+    else if (/\b(tempo|duracao|minutos|min|durar|hora|horas)\b/i.test(normMsg)) {
+      fallbackReply = "A consulta tem duração de 60 minutos de atendimento personalizado.";
+    }
+    // 3d. Valor / Preço
     else if (/\b(valor|preco|quanto custa|quanto e|preco|particular|convenio|consulta)\b/i.test(normMsg)) {
-      fallbackReply = hasConfirmedAppointment
-        ? "A consulta médica particular na Clínica Vitae tem o valor de R$ 120,00, com 60 minutos de atendimento personalizado."
-        : "A consulta médica na Clínica Vitae tem o valor de R$ 120,00 (particular), com 60 minutos de atendimento personalizado. No momento atendemos particular, mas fornecemos recibo para reembolso. 😉\n\nQuer verificar os horários para agendar?";
+      fallbackReply = "A consulta médica na Clínica Vitae tem o valor de R$ 120,00.";
     }
     // 4. Horário de Funcionamento da Clínica
     else if (/\b(funcionamento|funciona|atendimento|aberto|abre|expediente)\b/i.test(normMsg)) {
