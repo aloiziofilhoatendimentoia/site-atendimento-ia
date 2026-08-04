@@ -26,24 +26,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // 2. Enviar mensagem direta para o celular do dono via Evolution API (Notificação de novo cadastro iniciado)
-    try {
-      const evoUrl = process.env.EVOLUTION_API_URL || 'https://api-whatsapp.atendimentoiaclinicas.tech';
-      const evoKey = process.env.EVOLUTION_API_KEY || 'atendimentoia_mestre_evolution_2026';
-      await fetch(`${evoUrl}/message/sendText/NumeroDeTestes`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "apikey": evoKey
-        },
-        body: JSON.stringify({
-          number: "5581979066573", // Celular do dono
-          text: `💰 *NOVO PAGAMENTO E CADASTRO INICIADO!*\n\nUma nova clínica realizou o pagamento e iniciou o cadastro no site.\n\n*ID da Empresa:* ${empresaId}\n\nAguardando configuração dos dados pelo cliente...`
-        })
-      });
-    } catch (evoErr: any) {
-      console.error("Falha ao notificar Evolution API sobre pagamento:", evoErr.message || evoErr);
-    }
+
 
     return NextResponse.json({ success: true, message: 'Provisionamento iniciado com sucesso.' });
   } catch (error: any) {

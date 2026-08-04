@@ -153,38 +153,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // 2. Enviar mensagem detalhada de nova clínica configurada via Evolution API ao dono
+    // 2. Enviar mensagem detalhada de nova clínica configurada via Evolution API ao dono (REMOVIDO pois o n8n já envia no formato antigo)
     let cloneStatus = 'Ignorado (Todas clínicas num mesmo workflow)';
-    try {
-      const profsText = especialistas.map((e: any) => ` - ${e.nome} (${e.especialidade})`).join('\n');
-      const mensagemFormatada = `📋 *NOVA CLÍNICA CONFIGURADA COM SUCESSO!*\n\n` +
-        `*Nome da Clínica:* ${nomeClinica}\n` +
-        `*Secretária(o):* ${nomeSecretaria}\n` +
-        `*Endereço:* ${endereco}\n` +
-        `*WhatsApp IA:* ${whatsappClinica}\n\n` +
-        `👨‍⚕️ *PROFISSIONAIS CADASTRADOS:*\n${profsText || 'Nenhum'}\n\n` +
-        `⚙️ *CONFIGURAÇÃO DE AGENDA:*\n` +
-        ` - Horários: ${horarioStr}\n` +
-        ` - Intervalo: ${payload?.horarios?.tempoConsulta || '30'} minutos\n` +
-        ` - Valor da Consulta: R$ ${payload?.horarios?.valorConsulta || '0,00'}\n` +
-        ` - WhatsApp Receber Agenda: ${whatsappReceberAgendamento || 'Não configurado'}`;
-
-      const evoUrl = process.env.EVOLUTION_API_URL || 'https://api-whatsapp.atendimentoiaclinicas.tech';
-      const evoKey = process.env.EVOLUTION_API_KEY || 'atendimentoia_mestre_evolution_2026';
-      await fetch(`${evoUrl}/message/sendText/NumeroDeTestes`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "apikey": evoKey
-        },
-        body: JSON.stringify({
-          number: "5581979066573", // Celular do dono
-          text: mensagemFormatada
-        })
-      });
-    } catch (evoErr: any) {
-      console.error("Falha ao notificar Evolution API sobre configuração:", evoErr.message || evoErr);
-    }
 
     // 3. Criação de Instância na Evolution API
     const evoUrl = process.env.EVOLUTION_API_URL || 'https://api-whatsapp.atendimentoiaclinicas.tech';
