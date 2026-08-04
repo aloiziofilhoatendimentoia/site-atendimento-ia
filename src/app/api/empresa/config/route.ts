@@ -156,7 +156,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // 2. Enviar mensagem detalhada de nova clínica configurada via Z-API ao dono
+    // 2. Enviar mensagem detalhada de nova clínica configurada via Evolution API ao dono
     let cloneStatus = 'Ignorado (Todas clínicas num mesmo workflow)';
     try {
       const profsText = especialistas.map((e: any) => ` - ${e.nome} (${e.especialidade})`).join('\n');
@@ -172,17 +172,21 @@ export async function POST(request: Request) {
         ` - Valor da Consulta: R$ ${payload?.horarios?.valorConsulta || '0,00'}\n` +
         ` - WhatsApp Receber Agenda: ${whatsappReceberAgendamento || 'Não configurado'}`;
 
-      await fetch("https://api.z-api.io/instances/3F59285D2F34B3BDBEDF8292A550B686/token/AF68A3D8D69F03D8AF3FE3E3/send-text", {
+      const evoUrl = process.env.EVOLUTION_API_URL || 'https://api-whatsapp.atendimentoiaclinicas.tech';
+      const evoKey = process.env.EVOLUTION_API_KEY || 'atendimentoia_mestre_evolution_2026';
+      await fetch(`${evoUrl}/message/sendText/NumeroDeTestes`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "apikey": evoKey
+        },
         body: JSON.stringify({
-          phone: "5581979066573", // Celular do dono
-          message: mensagemFormatada,
-          delayTyping: 2
+          number: "5581979066573", // Celular do dono
+          text: mensagemFormatada
         })
       });
-    } catch (zErr: any) {
-      console.error("Falha ao notificar Z-API sobre configuração:", zErr.message || zErr);
+    } catch (evoErr: any) {
+      console.error("Falha ao notificar Evolution API sobre configuração:", evoErr.message || evoErr);
     }
 
     // 3. Criação de Instância na Evolution API

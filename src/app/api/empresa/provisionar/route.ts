@@ -26,19 +26,23 @@ export async function POST(req: Request) {
       }
     }
 
-    // 2. Enviar mensagem direta para o celular do dono via Z-API (Notificação de novo cadastro iniciado)
+    // 2. Enviar mensagem direta para o celular do dono via Evolution API (Notificação de novo cadastro iniciado)
     try {
-      await fetch("https://api.z-api.io/instances/3F59285D2F34B3BDBEDF8292A550B686/token/AF68A3D8D69F03D8AF3FE3E3/send-text", {
+      const evoUrl = process.env.EVOLUTION_API_URL || 'https://api-whatsapp.atendimentoiaclinicas.tech';
+      const evoKey = process.env.EVOLUTION_API_KEY || 'atendimentoia_mestre_evolution_2026';
+      await fetch(`${evoUrl}/message/sendText/NumeroDeTestes`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "apikey": evoKey
+        },
         body: JSON.stringify({
-          phone: "5581979066573", // Celular do dono
-          message: `💰 *NOVO PAGAMENTO E CADASTRO INICIADO!*\n\nUma nova clínica realizou o pagamento e iniciou o cadastro no site.\n\n*ID da Empresa:* ${empresaId}\n\nAguardando configuração dos dados pelo cliente...`,
-          delayTyping: 2
+          number: "5581979066573", // Celular do dono
+          text: `💰 *NOVO PAGAMENTO E CADASTRO INICIADO!*\n\nUma nova clínica realizou o pagamento e iniciou o cadastro no site.\n\n*ID da Empresa:* ${empresaId}\n\nAguardando configuração dos dados pelo cliente...`
         })
       });
-    } catch (zErr: any) {
-      console.error("Falha ao notificar Z-API sobre pagamento:", zErr.message || zErr);
+    } catch (evoErr: any) {
+      console.error("Falha ao notificar Evolution API sobre pagamento:", evoErr.message || evoErr);
     }
 
     return NextResponse.json({ success: true, message: 'Provisionamento iniciado com sucesso.' });
