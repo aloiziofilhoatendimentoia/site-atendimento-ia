@@ -106,7 +106,17 @@ export async function POST(req: Request) {
     );
 
     const diaMatch = normMsg.match(/\b(dia\s+\d{1,2}|amanha|hoje|segunda|terca|quarta|quinta|sexta|sabado|\d{1,2}\/\d{1,2})\b/i);
-    const diaCitado = diaMatch ? diaMatch[0] : "";
+    let diaCitado = diaMatch ? diaMatch[0] : "";
+    if (!diaCitado) {
+      for (let i = messages.length - 2; i >= 0; i--) {
+        const text = messages[i].text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const match = text.match(/\b(dia\s+\d{1,2}|amanha|hoje|segunda|terca|quarta|quinta|sexta|sabado|\d{1,2}\/\d{1,2})\b/i);
+        if (match) {
+          diaCitado = match[0];
+          break;
+        }
+      }
+    }
 
     const horaMatch = normMsg.match(/\b(09:00|11:00|14:00|16:00|09h|11h|14h|16h|9h|as 14|as 9|as 11|as 16|\d{1,2}\s*h|\d{1,2}\s*horas?)\b/i);
     const horaCitada = horaMatch ? horaMatch[0] : "";
