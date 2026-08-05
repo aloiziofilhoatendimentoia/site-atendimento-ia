@@ -367,7 +367,7 @@ export async function saveAgendamentos(empresaId: string, data: { usa_google_cal
   return agendamento;
 }
 
-// 5. Integrações Google Calendar
+// 5. Integrações Google Agenda
 export async function getGoogleIntegrationByEmpresaId(empresaId: string) {
   if (supabase) {
     try {

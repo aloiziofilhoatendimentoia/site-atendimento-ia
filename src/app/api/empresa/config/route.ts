@@ -66,7 +66,7 @@ export async function POST(request: Request) {
 
     const canaisArr = [];
     if (payload?.integracoes?.opcoesAgendamento?.whatsapp) canaisArr.push("WhatsApp");
-    if (payload?.integracoes?.opcoesAgendamento?.calendar) canaisArr.push("Google Calendar");
+    if (payload?.integracoes?.opcoesAgendamento?.calendar) canaisArr.push("Google Agenda");
     const canaisStr = canaisArr.length > 0 ? canaisArr.join(" e ") : 'Nenhum';
 
 

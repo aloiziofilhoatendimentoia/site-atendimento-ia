@@ -101,7 +101,7 @@ export default function GoogleConsentMock() {
             <div>
               <p className="text-sm font-medium text-gray-200">Ver e gerenciar eventos de calendário</p>
               <p className="text-xs text-gray-400 mt-0.5">
-                Permite agendar, modificar e remover eventos no seu Google Calendar.
+                Permite agendar, modificar e remover eventos no seu Google Agenda.
               </p>
             </div>
           </div>

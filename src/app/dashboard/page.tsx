@@ -124,7 +124,7 @@ export default function DashboardPage() {
     const phrases = [
       { type: 'whatsapp', message: 'Mensagem recebida de +55 (11) 98765-4321: "Quero agendar Harmonização hoje"' },
       { type: 'info', message: 'Análise de intenção concluída: Categoria = [AGENDAMENTO]' },
-      { type: 'info', message: 'Verificando horários livres no Google Calendar conectado...' },
+      { type: 'info', message: 'Verificando horários livres no Google Agenda conectado...' },
       { type: 'success', message: 'Google Agenda: Horários 14:30 e 17:00 estão livres. Enviando proposta...' },
       { type: 'whatsapp', message: 'Mensagem enviada para +55 (11) 98765-4321: "Olá! Temos horários disponíveis..."' },
       { type: 'whatsapp', message: 'Cliente respondeu: "Prefiro o das 14:30"' },
@@ -266,7 +266,7 @@ export default function DashboardPage() {
                 <Calendar className="w-5.5 h-5.5" />
               </div>
               <div className="min-w-0 flex-1">
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Google Calendar</span>
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Google Agenda</span>
                 <span className="text-sm font-bold text-white block mt-0.5">
                   {data?.agendamento?.usa_google_calendar ? '🟢 Integrado' : '⚪ Desativado'}
                 </span>
