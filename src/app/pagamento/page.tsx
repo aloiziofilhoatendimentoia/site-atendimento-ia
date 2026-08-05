@@ -83,7 +83,7 @@ export default function PagamentoPage() {
               <span className="font-semibold">Implantação da Secretária IA</span>
             </div>
             <div className="flex items-center space-x-3 text-gray-300">
-              <img src="/google-agenda.jpg" className="w-5 h-5 rounded-md object-contain" alt="Google Agenda" />
+              <img src="/google-agenda.svg" className="w-5 h-5 rounded-md object-contain" alt="Google Agenda" />
               <span className="font-semibold">Conexão com Google Agenda</span>
             </div>
             <div className="flex items-center space-x-3 text-gray-300">

@@ -417,7 +417,7 @@ function ConfigurarFormContent() {
                     <label className="flex items-center space-x-3 cursor-pointer">
                       <input type="checkbox" checked={opcoesAgendamento.calendar} onChange={(e) => setOpcoesAgendamento({...opcoesAgendamento, calendar: e.target.checked})} className="w-5 h-5 rounded border-gray-600 bg-gray-700 text-blue-500 focus:ring-blue-500" />
                       <span className="text-gray-300 flex items-center font-semibold">
-                        <img src="/google-agenda.jpg" className="w-6 h-6 mr-2 rounded-md object-contain" alt="Google Agenda" />
+                        <img src="/google-agenda.svg" className="w-6 h-6 mr-2 rounded-md object-contain" alt="Google Agenda" />
                         Agendamento pelo Google Agenda
                       </span>
                     </label>
