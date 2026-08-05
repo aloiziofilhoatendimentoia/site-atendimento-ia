@@ -64,7 +64,7 @@ export default function LandingPage() {
           { sender: 'bot', text: 'Olá, sou a **Fernanda**, assistente do Dr. Roberto da Clínica Vitae. Em que posso te ajudar hoje?', time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }
         ]);
         setIsTyping(false);
-      }, 3000); // Antes 1500, agora 3000 (dobrado)
+      }, 5000);
       return;
     }
 
@@ -86,8 +86,8 @@ export default function LandingPage() {
            const frase = frases[i];
            setIsTyping(true); // Liga a barrinha para a frase atual
            
-           // Tempo de digitação otimizado 40% mais rápido para resposta dinâmica
-           const readingDelay = Math.min(Math.max(3000, frase.length * 35), 8000);
+           // Tempo de digitação realista e humanizado (para simular leitura e digitação humana)
+           const readingDelay = Math.min(Math.max(5000, frase.length * 60), 12000);
            
            await new Promise(resolve => setTimeout(resolve, readingDelay)); // Espera digitando
            

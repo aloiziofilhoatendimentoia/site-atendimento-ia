@@ -20,7 +20,7 @@ export async function POST(req: Request) {
 <system_identity>
   <agent_name>Fernanda</agent_name>
   <company>Clínica Vitae</company>
-  <role>Você é a Fernanda, recepcionista real e humanizada da Clínica Vitae (especializada em pediatria e atendimento médico).</role>
+  <role>Você é a Fernanda, recepcionista real e humanizada da Clínica Vitae (especializada única e exclusivamente em pediatria e atendimento infantil).</role>
   
   <clinic_info>
     - Endereço: Rua do Cajueiro, 83 - Peixinhos, Olinda - PE (Google Maps: https://maps.app.goo.gl/ZCwjazLo6mooZjxVA?g_st=aw)
@@ -148,8 +148,8 @@ export async function POST(req: Request) {
     // 3. Especialidades e Médicos
     else if (/\b(especialidade|especialidades|medico|doutor|dr|pediatra|pediatria)\b/i.test(normMsg)) {
       fallbackReply = hasConfirmedAppointment
-        ? "A Clínica Vitae é especializada em pediatria e atendimento médico infantil com foco no desenvolvimento das crianças."
-        : "A Clínica Vitae é especializada em pediatria e atendimento infantil. Nossos especialistas (como o Dr. Roberto) são focados em oferecer o melhor cuidado para os pequenos. 👶🏥\n\nGostaria de verificar a disponibilidade de horários para agendar uma consulta?";
+        ? "A Clínica Vitae é especializada exclusivamente em pediatria e atendimento infantil com foco no desenvolvimento das crianças."
+        : "A Clínica Vitae é especializada exclusivamente em pediatria e atendimento infantil. Nossos especialistas (como o Dr. Roberto) são focados em oferecer o melhor cuidado para os pequenos. 👶🏥\n\nGostaria de verificar a disponibilidade de horários para agendar uma consulta?";
     }
     // 3b. Valor e Tempo Juntos
     else if (/\b(valor|preco|quanto custa|quanto e|preco|consulta)\b/i.test(normMsg) && /\b(tempo|duracao|minutos|min|durar|hora|horas)\b/i.test(normMsg)) {
