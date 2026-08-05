@@ -68,7 +68,7 @@ export async function POST(req: Request) {
 `;
 
     // 2. Chamar a API do Gemini com instrução de sistema e histórico completo
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     
     const response = await fetch(geminiUrl, {
       method: 'POST',
@@ -188,9 +188,13 @@ export async function POST(req: Request) {
     else if (/\b(agend|agendar|agendamento|marcar|reagendar|remarcar|consulta|consultas)\b/i.test(normMsg)) {
       fallbackReply = "Claro! Qual dia e horário você prefere para o seu agendamento?";
     }
-    // 8. Confirmação
+    // 8. Confirmação (SÓ CONFIRMA SE O DIA JÁ FOI CITADO ANTERIORMENTE NA CONVERSA)
     else if (/\b(sim|pode|ok|confirma|confirmar|positivo|claro|pode ser|09:00|11:00|14:00|16:00|9h|11h|14h|16h|9|11|14|16)\b/i.test(normMsg)) {
-      fallbackReply = "Agendamento confirmado com sucesso! 🎉\n\nA equipe da Clínica Vitae aguarda você de braços abertos. Posso ajudar com mais alguma dúvida?";
+      if (diaCitado) {
+        fallbackReply = "Agendamento confirmado com sucesso! 🎉\n\nA equipe da Clínica Vitae aguarda você de braços abertos. Posso ajudar com mais alguma dúvida?";
+      } else {
+        fallbackReply = "Claro! Qual dia e horário você prefere para o seu agendamento?";
+      }
     }
     // 9. Agradecimento e despedida
     else if (/\b(obrigado|obrigada|valeu|perfeito|nada|tchau|ate logo)\b/i.test(normMsg)) {

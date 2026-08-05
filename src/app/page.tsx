@@ -170,7 +170,7 @@ export default function LandingPage() {
             <div className="flex flex-col space-y-6 text-center lg:text-left bg-white/70 p-8 rounded-3xl backdrop-blur-md shadow-xl border border-white/50">
               <div className="inline-flex items-center justify-center lg:justify-start space-x-2 px-4 py-2 rounded-full bg-teal-50 text-teal-700 font-semibold text-sm border border-teal-100 w-fit mx-auto lg:mx-0">
                 <Shield className="w-4 h-4" />
-                <span>Nós Não Vendemos Automação, Vendemos Mais Clientes.</span>
+                <span>Não fornecemos automação, fornecemos mais pacientes</span>
               </div>
               
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.15]">
