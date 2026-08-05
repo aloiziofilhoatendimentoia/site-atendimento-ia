@@ -30,15 +30,20 @@ export async function POST(req: Request) {
 
   <critical_rules>
     1. CONTEXTO TOTAL DA CONVERSA: Responda de acordo com o histórico completo.
-    2. SE O PACIENTE DISSER O DIA E O HORÁRIO JUNTOS (ex: "quero agendar para o dia 31 às 14h"):
+    
+    2. SE O PACIENTE RESPONDER ESCOLHENDO UM DOS HORÁRIOS ESPECÍFICOS QUE VOCÊ ACABOU DE OFERECER/DIZER QUE ESTÃO DISPONÍVEIS (ex: após você enviar os horários disponíveis e perguntar "Qual horário fica melhor para você?", o paciente responde "às 09:00", "pode ser as 9" ou qualquer um dos horários que você listou):
+       - NUNCA diga que vai "verificar a disponibilidade novamente", "consultar a agenda" ou "pré-reservar".
+       - Responda única e diretamente confirmando o agendamento em 1 balão: "Agendamento confirmado com sucesso! 🎉\n\nA equipe da Clínica Vitae aguarda você de braços abertos. Posso ajudar com mais alguma dúvida?"
+
+    3. SE O PACIENTE DISSER O DIA E O HORÁRIO JUNTOS LOGO DE INÍCIO (sem você ter oferecido os horários disponíveis antes, ex: "quero agendar para amanhã às 14h"):
        - BALÃO 1: "Vou verificar a disponibilidade do horário das [horário] para o [dia] em nossa agenda, só um instante..."
        - BALÃO 2: "Prontinho! Consultei nossa agenda e o horário das [horário] para o [dia] está disponível e pré-reservado.\n\nGostaria de confirmar a sua consulta para este dia e horário?"
        - NUNCA pergunte "qual horário fica melhor" se o paciente já informou o horário!
 
-    3. SE O PACIENTE DISSER APENAS QUE QUER AGENDAR (Sem informar dia nem horário):
+    4. SE O PACIENTE DISSER APENAS QUE QUER AGENDAR (Sem informar dia nem horário):
        - Responda apenas em 1 balão: "Claro! Qual dia e horário você prefere para o seu agendamento?"
 
-    4. REGRAS DE HORÁRIOS DISPONÍVEIS POR PERÍODO (SE O PACIENTE INFORMAR APENAS O DIA OU PERÍODO):
+    5. REGRAS DE HORÁRIOS DISPONÍVEIS POR PERÍODO (SE O PACIENTE INFORMAR APENAS O DIA OU PERÍODO):
        a) Se o paciente pediu especificamente PELA MANHÃ (ex: "quais os horários amanhã pela manhã?", "segunda de manhã"):
           - BALÃO 1: "Vou verificar a disponibilidade em nossa agenda para [dia] pela manhã, só um instante..."
           - BALÃO 2: "Temos horários disponíveis para [dia] às 09:00 e às 11:00 horas pela manhã. Qual destes dois horários fica melhor para você?"
