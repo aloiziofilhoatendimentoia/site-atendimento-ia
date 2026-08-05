@@ -33,12 +33,20 @@ export async function POST(req: Request) {
     
     2. SE O PACIENTE RESPONDER ESCOLHENDO UM DOS HORÁRIOS ESPECÍFICOS QUE VOCÊ ACABOU DE OFERECER/DIZER QUE ESTÃO DISPONÍVEIS (ex: após você enviar os horários disponíveis e perguntar "Qual horário fica melhor para você?", o paciente responde "às 09:00", "pode ser as 9" ou qualquer um dos horários que você listou):
        - NUNCA diga que vai "verificar a disponibilidade novamente", "consultar a agenda" ou "pré-reservar".
-       - Responda única e diretamente confirmando o agendamento em 1 balão: "Agendamento confirmado com sucesso! 🎉\n\nA equipe da Clínica Vitae aguarda você de braços abertos. Posso ajudar com mais alguma dúvida?"
+       - ANTES de confirmar o agendamento, verifique se o nome completo do paciente foi informado anteriormente na conversa.
+       - SE O NOME COMPLETO NÃO FOI INFORMADO: Você deve responder com um único balão pedindo o nome: "Para finalizar, qual o nome completo do paciente?"
+       - SE O NOME COMPLETO JÁ FOI INFORMADO: Responda obrigatoriamente em 3 balões separados por \n\n:
+         * BALÃO 1: "Agendamento confirmado com sucesso! 🎉"
+         * BALÃO 2: "Ficha da consulta:\n- Paciente: [Nome Completo do Paciente]\n- Data: [Dia/Data]\n- Horário: [Horário Escolhido]"
+         * BALÃO 3: "Posso ajudar em mais alguma coisa?"
 
     3. SE O PACIENTE DISSER O DIA E O HORÁRIO JUNTOS LOGO DE INÍCIO (sem você ter oferecido os horários disponíveis antes, ex: "quero agendar para amanhã às 14h"):
-       - BALÃO 1: "Vou verificar a disponibilidade do horário das [horário] para o [dia] em nossa agenda, só um instante..."
-       - BALÃO 2: "Prontinho! Consultei nossa agenda e o horário das [horário] para o [dia] está disponível e pré-reservado.\n\nGostaria de confirmar a sua consulta para este dia e horário?"
-       - NUNCA pergunte "qual horário fica melhor" se o paciente já informou o horário!
+       - ANTES de confirmar o agendamento, verifique se o nome completo do paciente foi informado anteriormente na conversa.
+       - SE O NOME COMPLETO NÃO FOI INFORMADO: Responda com um único balão pedindo o nome: "Para finalizar, qual o nome completo do paciente?"
+       - SE O NOME COMPLETO JÁ FOI INFORMADO: Responda obrigatoriamente em 3 balões separados por \n\n:
+         * BALÃO 1: "Agendamento confirmado com sucesso! 🎉"
+         * BALÃO 2: "Ficha da consulta:\n- Paciente: [Nome Completo do Paciente]\n- Data: [Dia/Data]\n- Horário: [Horário Escolhido]"
+         * BALÃO 3: "Posso ajudar em mais alguma coisa?"
 
     4. SE O PACIENTE DISSER APENAS QUE QUER AGENDAR (Sem informar dia nem horário):
        - Responda apenas em 1 balão: "Claro! Qual dia e horário você prefere para o seu agendamento?"
@@ -48,13 +56,13 @@ export async function POST(req: Request) {
           - BALÃO 1: "Vou verificar a disponibilidade em nossa agenda para [dia] pela manhã, só um instante..."
           - BALÃO 2: "Temos horários disponíveis para [dia] às 09:00 e às 11:00 horas pela manhã. Qual destes dois horários fica melhor para você?"
 
-       b) Se o paciente pediu especificamente PELA TARDE (ex: "quais os horários amanhã pela tarde?", "segunda de tarde"):
-          - BALÃO 1: "Vou verificar a disponibilidade em nossa agenda para [dia] pela tarde, só um instante..."
-          - BALÃO 2: "Temos horários disponíveis para [dia] às 14:00 e às 16:00 horas pela tarde. Qual destes dois horários fica melhor para você?"
+       b) Se o paciente pediu especificamente À TARDE (ex: "quais os horários amanhã à tarde?", "segunda à tarde"):
+          - BALÃO 1: "Vou verificar a disponibilidade em nossa agenda para [dia] à tarde, só um instante..."
+          - BALÃO 2: "Temos horários disponíveis para [dia] às 14:00 e às 16:00 horas à tarde. Qual destes dois horários fica melhor para você?"
 
        c) Se o paciente pediu horários SEM especificar se quer manhã ou tarde:
           - BALÃO 1: "Vou verificar a disponibilidade em nossa agenda para [dia], só um instante..."
-          - BALÃO 2: "Temos horários disponíveis para [dia] às 09:00 e às 11:00 horas pela manhã, e às 14:00 e às 16:00 horas pela tarde. Qual horário fica melhor para você?"
+          - BALÃO 2: "Temos horários disponíveis para [dia] às 09:00 e às 11:00 horas pela manhã, e às 14:00 e às 16:00 horas à tarde. Qual horário fica melhor para você?"
 
     6. SE O AGENDAMENTO JÁ FOI CONFIRMADO ANTERIORMENTE na conversa (o robô enviou "Agendamento confirmado com sucesso" ou similar): NUNCA ofereça, sugira ou pergunte se o paciente gostaria de agendar uma consulta. Em vez disso, apenas tire a dúvida solicitada de forma direta e pergunte se precisa de mais alguma informação sobre a consulta.
 
@@ -66,7 +74,7 @@ export async function POST(req: Request) {
        - Balão 1: "A consulta médica na Clínica Vitae tem o valor de R$ 120,00."
        - Balão 2: "A consulta tem duração de 60 minutos de atendimento personalizado."
 
-    5. REGRA OBRIGATÓRIA DE MENSAGENS SEPARADAS (\n\n):
+    10. REGRA OBRIGATÓRIA DE MENSAGENS SEPARADAS (\n\n):
        - Separe sempre os balões com Enter duplo (\n\n).
   </critical_rules>
 </system_identity>
@@ -124,10 +132,47 @@ export async function POST(req: Request) {
     }
 
     const horaMatch = normMsg.match(/\b(09:00|11:00|14:00|16:00|09h|11h|14h|16h|9h|as 14|as 9|as 11|as 16|\d{1,2}\s*h|\d{1,2}\s*horas?)\b/i);
-    const horaCitada = horaMatch ? horaMatch[0] : "";
+    let horaCitada = horaMatch ? horaMatch[0] : "";
+    if (!horaCitada) {
+      for (let i = messages.length - 2; i >= 0; i--) {
+        const text = messages[i].text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const match = text.match(/\b(09:00|11:00|14:00|16:00|09h|11h|14h|16h|9h|as 14|as 9|as 11|as 16|\d{1,2}\s*h|\d{1,2}\s*horas?)\b/i);
+        if (match) {
+          horaCitada = match[0];
+          break;
+        }
+      }
+    }
 
     const isManha = /\b(manha|cedo|matutino)\b/i.test(normMsg.replace(/\bamanha\b/gi, ""));
     const isTarde = /\b(tarde|vespertino)\b/i.test(normMsg);
+
+    let nomePaciente = "";
+    let isAguardandoNome = false;
+
+    // Verificar se o bot pediu o nome na ultima mensagem
+    const lastBotMsgIndex = messages.map((m: any) => m.sender).lastIndexOf('bot');
+    if (lastBotMsgIndex !== -1) {
+      const lastBotText = messages[lastBotMsgIndex].text.toLowerCase();
+      if (lastBotText.includes("qual o nome completo do paciente")) {
+        isAguardandoNome = true;
+      }
+    }
+
+    // Tentar recuperar o nome do paciente no histórico
+    for (let i = 0; i < messages.length - 1; i++) {
+      if (messages[i].sender === 'bot' && messages[i].text.toLowerCase().includes("qual o nome completo do paciente")) {
+        nomePaciente = messages[i + 1].text.trim();
+        break;
+      }
+    }
+
+    if (isAguardandoNome && !nomePaciente) {
+      nomePaciente = messages[messages.length - 1].text.trim();
+    }
+
+    const diaFormatado = diaCitado ? diaCitado.charAt(0).toUpperCase() + diaCitado.slice(1) : "";
+    const horaFormatada = horaCitada ? horaCitada.replace(/as\s*/gi, "").replace(/\bh\b/gi, ":00").trim() : "";
     
     let fallbackReply = hasConfirmedAppointment 
       ? "Olá! Como posso te ajudar hoje? Ficou alguma dúvida sobre o seu agendamento?"
@@ -169,34 +214,42 @@ export async function POST(req: Request) {
         ? "Nosso horário de funcionamento é de Segunda a Sexta, das 08:00 às 18:00, e aos Sábados, das 08:00 às 12:00.\n\nDomingos e feriados estamos fechados. 😊"
         : "Nosso horário de funcionamento é de Segunda a Sexta, das 08:00 às 18:00, e aos Sábados, das 08:00 às 12:00.\n\nDomingos e feriados estamos fechados. 😊\n\nQual dia e horário você prefere para a sua consulta?";
     }
-    // 5. Se o paciente informou o DIA E O HORÁRIO JUNTOS
-    else if (diaMatch && horaCitada) {
-      fallbackReply = `Vou verificar a disponibilidade do horário das ${horaCitada} para o ${diaCitado} em nossa agenda, só um instante...\n\nProntinho! Consultei nossa agenda e o horário das ${horaCitada} para o ${diaCitado} está disponível e pré-reservado.\n\nGostaria de confirmar a sua consulta para este dia e horário?`;
+    // 5. Se o paciente informou o DIA E O HORÁRIO JUNTOS (ou já temos ambos definidos)
+    else if (diaCitado && horaCitada) {
+      if (!nomePaciente) {
+        fallbackReply = "Para finalizar, qual o nome completo do paciente?";
+      } else {
+        fallbackReply = `Agendamento confirmado com sucesso! 🎉\n\nFicha da consulta:\n- Paciente: ${nomePaciente}\n- Data: ${diaFormatado}\n- Horário: ${horaFormatada}\n\nPosso ajudar em mais alguma coisa?`;
+      }
     }
     // 6. Agendamento com dia citado (sem horário ainda)
     else if (diaMatch) {
       if (isManha) {
         fallbackReply = `Vou verificar a disponibilidade em nossa agenda para ${diaCitado} pela manhã, só um instante...\n\nTemos horários disponíveis para ${diaCitado} às 09:00 e às 11:00 horas pela manhã.\n\nQual destes dois horários fica melhor para você?`;
       } else if (isTarde) {
-        fallbackReply = `Vou verificar a disponibilidade em nossa agenda para ${diaCitado} pela tarde, só um instante...\n\nTemos horários disponíveis para ${diaCitado} às 14:00 e às 16:00 horas pela tarde.\n\nQual destes dois horários fica melhor para você?`;
+        fallbackReply = `Vou verificar a disponibilidade em nossa agenda para ${diaCitado} à tarde, só um instante...\n\nTemos horários disponíveis para ${diaCitado} às 14:00 e às 16:00 horas à tarde.\n\nQual destes dois horários fica melhor para você?`;
       } else {
-        fallbackReply = `Vou verificar a disponibilidade em nossa agenda para ${diaCitado}, só um instante...\n\nTemos horários disponíveis para ${diaCitado} às 09:00 e às 11:00 horas pela manhã, e às 14:00 e às 16:00 horas pela tarde.\n\nQual horário fica melhor para você?`;
+        fallbackReply = `Vou verificar a disponibilidade em nossa agenda para ${diaCitado}, só um instante...\n\nTemos horários disponíveis para ${diaCitado} às 09:00 e às 11:00 horas pela manhã, e às 14:00 e às 16:00 horas à tarde.\n\nQual horário fica melhor para você?`;
       }
     }
     // 6. Consulta por período apenas (sem dia específico)
     else if (isManha) {
       fallbackReply = "Vou verificar em nossa agenda os horários disponíveis pela manhã, só um instante...\n\nTemos horários disponíveis às 09:00 e às 11:00 horas pela manhã.\n\nQual dia e horário você prefere?";
     } else if (isTarde) {
-      fallbackReply = "Vou verificar em nossa agenda os horários disponíveis pela tarde, só um instante...\n\nTemos horários disponíveis às 14:00 e às 16:00 horas pela tarde.\n\nQual dia e horário você prefere?";
+      fallbackReply = "Vou verificar em nossa agenda os horários disponíveis à tarde, só um instante...\n\nTemos horários disponíveis às 14:00 e às 16:00 horas à tarde.\n\nQual dia e horário você prefere?";
     }
     // 7. Pedido genérico de agendamento (sem dia nem período)
     else if (/\b(agend|agendar|agendamento|marcar|reagendar|remarcar|consulta|consultas)\b/i.test(normMsg)) {
       fallbackReply = "Claro! Qual dia e horário você prefere para o seu agendamento?";
     }
-    // 8. Confirmação (SÓ CONFIRMA SE O DIA JÁ FOI CITADO ANTERIORMENTE NA CONVERSA)
-    else if (/\b(sim|pode|ok|confirma|confirmar|positivo|claro|pode ser|09:00|11:00|14:00|16:00|9h|11h|14h|16h|9|11|14|16)\b/i.test(normMsg)) {
-      if (diaCitado) {
-        fallbackReply = "Agendamento confirmado com sucesso! 🎉\n\nA equipe da Clínica Vitae aguarda você de braços abertos. Posso ajudar com mais alguma dúvida?";
+    // 8. Confirmação (SÓ CONFIRMA SE O DIA E HORÁRIO JÁ FORAM DEFINIDOS)
+    else if (/\b(sim|pode|ok|confirma|confirmar|positivo|claro|pode ser)\b/i.test(normMsg)) {
+      if (diaCitado && horaCitada) {
+        if (!nomePaciente) {
+          fallbackReply = "Para finalizar, qual o nome completo do paciente?";
+        } else {
+          fallbackReply = `Agendamento confirmado com sucesso! 🎉\n\nFicha da consulta:\n- Paciente: ${nomePaciente}\n- Data: ${diaFormatado}\n- Horário: ${horaFormatada}\n\nPosso ajudar em mais alguma coisa?`;
+        }
       } else {
         fallbackReply = "Claro! Qual dia e horário você prefere para o seu agendamento?";
       }
