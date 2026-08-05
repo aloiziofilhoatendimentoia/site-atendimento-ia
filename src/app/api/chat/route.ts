@@ -74,6 +74,16 @@ export async function POST(req: Request) {
        - Balão 1: "A consulta médica na Clínica Vitae tem o valor de R$ 120,00."
        - Balão 2: "A consulta tem duração de 60 minutos de atendimento personalizado."
 
+    11. REGRA DE REAGENDAMENTO (SE O PACIENTE SOLICITAR REAGENDAR, ALTERAR OU REMARCAR A CONSULTA):
+        - Se o paciente solicitar reagendar a consulta E informar a nova data/horário (ex: "quero reagendar para dia 08 no mesmo horário"):
+          * Você deve enviar obrigatoriamente 4 balões separados por \n\n:
+            - BALÃO 1: "Vou verificar a disponibilidade para reagendamento em nossa agenda, só um instante..."
+            - BALÃO 2: "Prontinho! Consultei nossa agenda e o seu agendamento foi reagendado com sucesso! 🎉"
+            - BALÃO 3: "Ficha da consulta:\n- Paciente: [Nome Completo do Paciente]\n- Data: [Nova Data]\n- Horário: [Novo Horário]"
+            - BALÃO 4: "Posso ajudar em mais alguma coisa?"
+        - Se o paciente disser apenas que quer reagendar (sem informar a nova data/horário):
+          * Responda em 1 único balão: "Claro! Para qual dia e horário você deseja reagendar?"
+
     10. REGRA OBRIGATÓRIA DE MENSAGENS SEPARADAS (\n\n):
        - Separe sempre os balões com Enter duplo (\n\n).
   </critical_rules>
@@ -213,6 +223,14 @@ export async function POST(req: Request) {
       fallbackReply = hasConfirmedAppointment
         ? "Nosso horário de funcionamento é de Segunda a Sexta, das 08:00 às 18:00, e aos Sábados, das 08:00 às 12:00.\n\nDomingos e feriados estamos fechados. 😊"
         : "Nosso horário de funcionamento é de Segunda a Sexta, das 08:00 às 18:00, e aos Sábados, das 08:00 às 12:00.\n\nDomingos e feriados estamos fechados. 😊\n\nQual dia e horário você prefere para a sua consulta?";
+    }
+    // 4b. Reagendamento
+    else if (/\b(reagendar|remarcar|alterar|mudar)\b/i.test(normMsg)) {
+      if (diaCitado && horaCitada) {
+        fallbackReply = `Vou verificar a disponibilidade para reagendamento em nossa agenda, só um instante...\n\nProntinho! Consultei nossa agenda e o seu agendamento foi reagendado com sucesso! 🎉\n\nFicha da consulta:\n- Paciente: ${nomePaciente || 'Paciente'}\n- Data: ${diaFormatado}\n- Horário: ${horaFormatada}\n\nPosso ajudar em mais alguma coisa?`;
+      } else {
+        fallbackReply = "Claro! Para qual dia e horário você deseja reagendar?";
+      }
     }
     // 5. Se o paciente informou o DIA E O HORÁRIO JUNTOS (ou já temos ambos definidos)
     else if (diaCitado && horaCitada) {
