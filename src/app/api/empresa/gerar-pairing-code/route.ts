@@ -21,16 +21,12 @@ export async function POST(request: Request) {
 
     console.log(`Solicitando código de pareamento para a instância ${instanceName} e número ${cleanPhone}`);
 
-    // Rota oficial da Evolution API V2 para gerar Código de Pareamento por telefone: POST /instance/connect/{instanceName}
-    let res = await fetch(`${evoUrl}/instance/connect/${instanceName}`, {
-      method: 'POST',
+    // Endpoint correto e testado da Evolution API: GET /instance/connect/{instanceName}?number={phoneNumber}
+    let res = await fetch(`${evoUrl}/instance/connect/${instanceName}?number=${cleanPhone}`, {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
         'apikey': evoKey,
-      },
-      body: JSON.stringify({
-        number: cleanPhone
-      })
+      }
     });
 
     // Se a instância não existir (404), tenta criar e rodar novamente
@@ -50,16 +46,12 @@ export async function POST(request: Request) {
       });
 
       if (createRes.ok) {
-        // Tenta conectar via pairing code novamente (POST /instance/connect/{instanceName})
-        res = await fetch(`${evoUrl}/instance/connect/${instanceName}`, {
-          method: 'POST',
+        // Tenta conectar via pairing code novamente (GET /instance/connect/{instanceName}?number={phoneNumber})
+        res = await fetch(`${evoUrl}/instance/connect/${instanceName}?number=${cleanPhone}`, {
+          method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
             'apikey': evoKey,
-          },
-          body: JSON.stringify({
-            number: cleanPhone
-          })
+          }
         });
       }
     }
@@ -77,7 +69,7 @@ export async function POST(request: Request) {
     }
 
     const data = await res.json();
-    // A Evolution API V2 retorna o código em { code: "ABCDEFGH" } ou { pairingCode: "ABCDEFGH" }
+    // A Evolution API retorna o código em { code: "ABCDEFGH" } ou { pairingCode: "ABCDEFGH" }
     const code = data.code || data.pairingCode;
 
     if (!code) {
