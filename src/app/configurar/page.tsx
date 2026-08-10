@@ -68,6 +68,13 @@ function ConfigurarFormContent() {
   const [instanceName, setInstanceName] = useState('');
   const [qrLoading, setQrLoading] = useState(false);
 
+  // 5. ESTADOS DE PAREAMENTO / DEVICE DETECTION
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [connectionMode, setConnectionMode] = useState<'qr' | 'pairing'>('qr');
+  const [pairingCode, setPairingCode] = useState('');
+  const [pairingLoading, setPairingLoading] = useState(false);
+  const [pairingPhone, setPairingPhone] = useState('');
+
   // 1. DADOS DA CLÍNICA
   const [nomeClinica, setNomeClinica] = useState('');
   const [nomeSecretaria, setNomeSecretaria] = useState('Secretária Virtual');
@@ -89,6 +96,97 @@ function ConfigurarFormContent() {
   ]);
 
   const diasDaSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+
+  // Detectar dispositivo móvel
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const isMobile = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+      setIsMobileDevice(isMobile);
+      if (isMobile) {
+        setConnectionMode('pairing');
+      }
+    }
+  }, []);
+
+  // Carregar dados salvos do localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('onboarding_data');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.nomeClinica) setNomeClinica(parsed.nomeClinica);
+          if (parsed.nomeSecretaria) setNomeSecretaria(parsed.nomeSecretaria);
+          if (parsed.endereco) setEndereco(parsed.endereco);
+          if (parsed.whatsappClinica) {
+            setWhatsappClinica(parsed.whatsappClinica);
+            setPairingPhone(parsed.whatsappClinica);
+          }
+          if (parsed.especialistas) setEspecialistas(parsed.especialistas);
+          if (parsed.opcoesAgendamento) setOpcoesAgendamento(parsed.opcoesAgendamento);
+          if (parsed.emailCalendar) setEmailCalendar(parsed.emailCalendar);
+          if (parsed.whatsappHumano) setWhatsappHumano(parsed.whatsappHumano);
+          if (parsed.whatsappReceberAgendamento) setWhatsappReceberAgendamento(parsed.whatsappReceberAgendamento);
+          if (parsed.tempoConsulta) setTempoConsulta(parsed.tempoConsulta);
+          if (parsed.valorConsulta) setValorConsulta(parsed.valorConsulta);
+          if (parsed.blocosHorario) setBlocosHorario(parsed.blocosHorario);
+        } catch (e) {
+          console.error("Erro ao carregar dados salvos:", e);
+        }
+      }
+    }
+  }, []);
+
+  // Salvar dados no localStorage sempre que mudar algum campo
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const data = {
+        nomeClinica,
+        nomeSecretaria,
+        endereco,
+        whatsappClinica,
+        especialistas,
+        opcoesAgendamento,
+        emailCalendar,
+        whatsappHumano,
+        whatsappReceberAgendamento,
+        tempoConsulta,
+        valorConsulta,
+        blocosHorario
+      };
+      localStorage.setItem('onboarding_data', JSON.stringify(data));
+    }
+  }, [
+    nomeClinica, nomeSecretaria, endereco, whatsappClinica, especialistas,
+    opcoesAgendamento, emailCalendar, whatsappHumano, whatsappReceberAgendamento,
+    tempoConsulta, valorConsulta, blocosHorario
+  ]);
+
+  const handleGeneratePairingCode = async () => {
+    if (!pairingPhone) {
+      setErrorMessage("Por favor, digite o número do WhatsApp para pareamento.");
+      return;
+    }
+    setPairingLoading(true);
+    setErrorMessage('');
+    try {
+      const res = await fetch('/api/empresa/gerar-pairing-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instanceName, phoneNumber: pairingPhone })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao gerar código de pareamento');
+      if (data.pairingCode) {
+        setPairingCode(data.pairingCode);
+      }
+    } catch (e: any) {
+      setErrorMessage(e.message || 'Erro ao gerar código de conexão.');
+    } finally {
+      setPairingLoading(false);
+    }
+  };
 
   // Funções Utilitárias para Arrays Dinâmicos
   const addEspecialista = () => setEspecialistas([...especialistas, { nome: '', especialidade: '' }]);
@@ -270,7 +368,10 @@ function ConfigurarFormContent() {
 
       const defaultQr = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://api-whatsapp.atendimentoiaclinicas.tech/manager`;
       setQrBase64(data.evolutionQrCode || defaultQr);
-      setInstanceName(whatsappClinica.replace(/\D/g, '') || 'NumeroDeTestes');
+      const targetInstance = whatsappClinica.replace(/\D/g, '') || 'NumeroDeTestes';
+      setInstanceName(targetInstance);
+      setPairingPhone(whatsappClinica);
+      setPairingCode('');
       setShowQrModal(true);
     } catch (err: any) {
       setErrorMessage(err.message || 'Falha ao salvar as configurações no servidor.');
@@ -528,7 +629,7 @@ function ConfigurarFormContent() {
                 {currentTab !== 'horarios' ? (
                   <button type="button" onClick={handleNextTab} className="px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl transition-colors flex items-center space-x-2 shadow-lg cursor-pointer">
                     <span>Próxima Etapa</span><ArrowRight className="w-4 h-4" />
-                  </button>
+                </button>
                 ) : (
                   <button type="button" onClick={handleSalvarConfiguracoes} disabled={saving} className="px-8 py-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-teal-500/25 flex items-center space-x-2 disabled:opacity-50 cursor-pointer">
                     {saving ? <span>Criando Cérebro...</span> : <><span>Finalizar e Ligar IA</span><CheckCircle className="w-5 h-5" /></>}
@@ -550,20 +651,106 @@ function ConfigurarFormContent() {
                 <Smartphone className="w-8 h-8" />
               </div>
               <h3 className="text-2xl font-bold text-white mb-2">Conecte sua IA ao WhatsApp</h3>
-              <p className="text-gray-400 text-sm mb-6 px-4">
-                Pegue o celular da clínica, abra o WhatsApp, vá em <strong className="text-white">Aparelhos Conectados</strong> e escaneie o código abaixo.
-              </p>
 
-              <div className="bg-white p-4 rounded-xl shadow-inner mb-6 relative min-h-[220px] min-w-[220px] flex items-center justify-center">
-                {qrLoading ? (
-                  <div className="flex flex-col items-center justify-center text-gray-500">
-                    <RefreshCw className="w-8 h-8 animate-spin mb-2" />
-                    <span className="text-sm font-semibold">Gerando novo código...</span>
-                  </div>
-                ) : (
-                  <img src={qrBase64} alt="WhatsApp QR Code" className="w-[200px] h-[200px]" />
-                )}
+              {/* Seletor de Modo de Conexão */}
+              <div className="flex border-b border-[#27272a] mb-6 w-full">
+                <button
+                  type="button"
+                  onClick={() => setConnectionMode('qr')}
+                  className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+                    connectionMode === 'qr' 
+                      ? 'border-teal-500 text-teal-400' 
+                      : 'border-transparent text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  QR Code (Computador)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConnectionMode('pairing')}
+                  className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+                    connectionMode === 'pairing' 
+                      ? 'border-teal-500 text-teal-400' 
+                      : 'border-transparent text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  Conexão Direta (Celular)
+                </button>
               </div>
+
+              {connectionMode === 'qr' ? (
+                <>
+                  <p className="text-gray-400 text-sm mb-6 px-4">
+                    Pegue o celular da clínica, abra o WhatsApp, vá em <strong className="text-white">Aparelhos Conectados</strong> e escaneie o código abaixo.
+                  </p>
+
+                  <div className="bg-white p-4 rounded-xl shadow-inner mb-6 relative min-h-[220px] min-w-[220px] flex items-center justify-center">
+                    {qrLoading ? (
+                      <div className="flex flex-col items-center justify-center text-gray-500">
+                        <RefreshCw className="w-8 h-8 animate-spin mb-2" />
+                        <span className="text-sm font-semibold">Gerando novo código...</span>
+                      </div>
+                    ) : (
+                      <img src={qrBase64} alt="WhatsApp QR Code" className="w-[200px] h-[200px]" />
+                    )}
+                  </div>
+
+                  <div className="w-full mb-6">
+                    <button 
+                      onClick={handleRegenerateQr}
+                      disabled={qrLoading}
+                      className="w-full py-3 px-4 bg-teal-600/10 border border-teal-500/30 hover:bg-teal-600/20 text-teal-400 font-semibold rounded-xl transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${qrLoading ? 'animate-spin' : ''}`} /> <span>Gerar Novamente</span>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-gray-400 text-sm mb-6 px-4">
+                    Insira o número do WhatsApp da clínica com o código do país e DDD para gerar o código de pareamento.
+                  </p>
+
+                  <div className="w-full space-y-4 mb-6">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={pairingPhone}
+                        onChange={(e) => setPairingPhone(e.target.value)}
+                        placeholder="Ex: 5511999999999"
+                        className="flex-1 bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 text-center"
+                      />
+                      <button
+                        onClick={handleGeneratePairingCode}
+                        disabled={pairingLoading || !pairingPhone}
+                        className="px-5 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-colors disabled:opacity-50 cursor-pointer whitespace-nowrap flex items-center justify-center"
+                      >
+                        {pairingLoading ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Gerar Código"}
+                      </button>
+                    </div>
+
+                    {pairingCode ? (
+                      <div className="bg-[#181a1f] border border-teal-500/30 p-6 rounded-2xl text-center space-y-4 animate-fade-in">
+                        <span className="text-xs text-gray-400 uppercase tracking-widest block font-bold">Código de Conexão</span>
+                        <div className="text-3xl font-extrabold text-teal-400 tracking-wider font-mono select-all bg-[#0c0d0e] py-3 rounded-xl border border-[#27272a] shadow-inner">
+                          {pairingCode}
+                        </div>
+                        <div className="text-left text-xs text-gray-300 space-y-2 pt-2 border-t border-gray-800">
+                          <p className="font-semibold text-white">Como conectar no seu WhatsApp:</p>
+                          <p>1. Abra o WhatsApp no celular que deseja conectar.</p>
+                          <p>2. Vá em <strong className="text-white">Aparelhos Conectados</strong> &gt; <strong className="text-white">Conectar um aparelho</strong>.</p>
+                          <p>3. Toque em <strong className="text-white">Conectar com número de telefone</strong> na parte inferior.</p>
+                          <p>4. Insira o código acima na tela do seu celular.</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-[#181a1f]/50 border border-dashed border-[#27272a] p-8 rounded-xl text-center text-sm text-gray-500">
+                        Clique em "Gerar Código" para obter a chave de pareamento de 8 dígitos.
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
 
               <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl text-left mb-8 w-full flex items-start space-x-3">
                 <ShieldCheck className="w-6 h-6 text-amber-500 flex-shrink-0" />
@@ -580,20 +767,13 @@ function ConfigurarFormContent() {
                 </div>
               )}
 
-              <div className="w-full">
-                <button 
-                  onClick={handleRegenerateQr}
-                  disabled={qrLoading}
-                  className="w-full py-3 px-4 bg-teal-600/10 border border-teal-500/30 hover:bg-teal-600/20 text-teal-400 font-semibold rounded-xl transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
-                >
-                  <RefreshCw className={`w-4 h-4 ${qrLoading ? 'animate-spin' : ''}`} /> <span>Gerar Novamente</span>
-                </button>
-              </div>
-
               <button 
                 type="button"
                 onClick={() => {
                   if (!isConnected) return;
+                  if (typeof window !== 'undefined') {
+                    localStorage.removeItem('onboarding_data');
+                  }
                   window.location.href = '/sucesso';
                 }}
                 disabled={!isConnected}
@@ -610,7 +790,7 @@ function ConfigurarFormContent() {
                   </>
                 ) : (
                   <>
-                    <span>Aguardando leitura do QR Code pelo WhatsApp...</span>
+                    <span>Aguardando conexão pelo WhatsApp...</span>
                     <RefreshCw className="w-5 h-5 animate-spin" />
                   </>
                 )}
