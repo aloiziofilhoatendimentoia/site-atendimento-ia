@@ -53,10 +53,25 @@ function ConfigurarFormContent() {
     }
   }, [searchParams, router]);
 
+  const scrollToTop = () => {
+    if (typeof window !== 'undefined') {
+      const el = document.getElementById('form-scroll-container');
+      if (el) {
+        el.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  };
+
+  const showError = (msg: string) => {
+    setErrorMessage(msg);
+    scrollToTop();
+  };
+
   const goToTab = (tab: Tab) => {
     setErrorMessage('');
     const stepNum = tab === 'horarios' ? '3' : tab === 'integracoes' ? '2' : '1';
     router.push(`/configurar?step=${stepNum}`);
+    setTimeout(scrollToTop, 50);
   };
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -77,7 +92,7 @@ function ConfigurarFormContent() {
 
   // 1. DADOS DA CLÍNICA
   const [nomeClinica, setNomeClinica] = useState('');
-  const [nomeSecretaria, setNomeSecretaria] = useState('Secretária Virtual');
+  const [nomeSecretaria, setNomeSecretaria] = useState('');
   const [endereco, setEndereco] = useState('');
   const [whatsappClinica, setWhatsappClinica] = useState(''); // Número onde a IA vai responder clientes
   const [especialistas, setEspecialistas] = useState<Especialista[]>([{ nome: '', especialidade: '' }]);
@@ -302,21 +317,21 @@ function ConfigurarFormContent() {
     setErrorMessage('');
     if (currentTab === 'clinica') {
       if (!nomeClinica || !nomeSecretaria || !endereco || !whatsappClinica || especialistas.some(e => !e.nome || !e.especialidade)) {
-        setErrorMessage('Preencha os dados da clínica, nome da secretária(o), endereço e especialistas.');
+        showError('Preencha os dados da clínica, nome da secretária(o), endereço e especialistas.');
         return;
       }
       goToTab('integracoes');
     } else if (currentTab === 'integracoes') {
       if (!opcoesAgendamento.whatsapp && !opcoesAgendamento.calendar) {
-        setErrorMessage('Escolha pelo menos uma opção de agendamento (WhatsApp ou Google Agenda).');
+        showError('Escolha pelo menos uma opção de agendamento (WhatsApp ou Google Agenda).');
         return;
       }
       if (opcoesAgendamento.whatsapp && !whatsappReceberAgendamento) {
-        setErrorMessage('Por favor, insira o número do WhatsApp onde você deseja receber os agendamentos.');
+        showError('Por favor, insira o número do WhatsApp onde você deseja receber os agendamentos.');
         return;
       }
       if (opcoesAgendamento.calendar && !googleConnected) {
-        setErrorMessage('Para agendar via Google Agenda, é obrigatório conectar a conta Google.');
+        showError('Para agendar via Google Agenda, é obrigatório conectar a conta Google.');
         return;
       }
       goToTab('horarios');
@@ -327,22 +342,22 @@ function ConfigurarFormContent() {
     setErrorMessage('');
     
     if (!nomeClinica || !nomeSecretaria || !endereco || !whatsappClinica || especialistas.some(e => !e.nome || !e.especialidade)) {
-      setErrorMessage('Preencha os dados da clínica, nome da secretária(o), endereço e especialistas.');
+      showError('Preencha os dados da clínica, nome da secretária(o), endereço e especialistas.');
       goToTab('clinica');
       return;
     }
     if (!opcoesAgendamento.whatsapp && !opcoesAgendamento.calendar) {
-      setErrorMessage('Escolha pelo menos uma opção de agendamento (WhatsApp ou Google Agenda).');
+      showError('Escolha pelo menos uma opção de agendamento (WhatsApp ou Google Agenda).');
       goToTab('integracoes');
       return;
     }
     if (opcoesAgendamento.calendar && !googleConnected) {
-      setErrorMessage('Para agendar via Google Agenda, é obrigatório conectar a conta Google.');
+      showError('Para agendar via Google Agenda, é obrigatório conectar a conta Google.');
       goToTab('integracoes');
       return;
     }
     if (!tempoConsulta || !valorConsulta || blocosHorario.some(b => b.dias.length === 0 || !b.inicio || !b.fim)) {
-      setErrorMessage('Preencha os valores da consulta e os dias e horários de todos os blocos de expediente.');
+      showError('Preencha os valores da consulta e os dias e horários de todos os blocos de expediente.');
       goToTab('horarios');
       return;
     }
@@ -374,7 +389,7 @@ function ConfigurarFormContent() {
       setPairingCode('');
       setShowQrModal(true);
     } catch (err: any) {
-      setErrorMessage(err.message || 'Falha ao salvar as configurações no servidor.');
+      showError(err.message || 'Falha ao salvar as configurações no servidor.');
     } finally {
       setSaving(false);
     }
@@ -431,7 +446,7 @@ function ConfigurarFormContent() {
 
         {/* FORMULÁRIO CENTRAL */}
         <div className="flex-1 flex flex-col h-full">
-          <div className="bg-[#121417] border border-[#27272a] rounded-2xl p-6 sm:p-10 shadow-2xl flex-1 relative overflow-y-auto">
+          <div id="form-scroll-container" className="bg-[#121417] border border-[#27272a] rounded-2xl p-6 sm:p-10 shadow-2xl flex-1 relative overflow-y-auto">
             {errorMessage && (
               <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start space-x-3">
                 <CheckCircle className="w-5 h-5 text-red-500 mt-0.5" />
@@ -615,6 +630,13 @@ function ConfigurarFormContent() {
                     <Plus className="w-4 h-4" /> <span>Adicionar Novo Bloco (Ex: Sábado 08h as 12h)</span>
                   </button>
                 </div>
+              </div>
+            )}
+
+            {errorMessage && (
+              <div className="mt-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start space-x-3 animate-fade-in">
+                <CheckCircle className="w-5 h-5 text-red-500 mt-0.5" />
+                <p className="text-sm text-red-400">{errorMessage}</p>
               </div>
             )}
 
