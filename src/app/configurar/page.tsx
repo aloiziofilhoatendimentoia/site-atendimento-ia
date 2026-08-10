@@ -88,7 +88,8 @@ function ConfigurarFormContent() {
   const [connectionMode, setConnectionMode] = useState<'qr' | 'pairing'>('qr');
   const [pairingCode, setPairingCode] = useState('');
   const [pairingLoading, setPairingLoading] = useState(false);
-  const [pairingPhone, setPairingPhone] = useState('');
+  const [pairingPhone, setPairingPhone] = useState('55');
+  const pairingPhoneInputRef = React.useRef<HTMLInputElement>(null);
 
   // 1. DADOS DA CLÍNICA
   const [nomeClinica, setNomeClinica] = useState('');
@@ -124,6 +125,19 @@ function ConfigurarFormContent() {
     }
   }, []);
 
+  // Focar no input de pareamento e colocar o cursor no final (após o "55")
+  useEffect(() => {
+    if (showQrModal && connectionMode === 'pairing') {
+      setTimeout(() => {
+        if (pairingPhoneInputRef.current) {
+          pairingPhoneInputRef.current.focus();
+          const len = pairingPhoneInputRef.current.value.length;
+          pairingPhoneInputRef.current.setSelectionRange(len, len);
+        }
+      }, 150);
+    }
+  }, [showQrModal, connectionMode]);
+
   // Carregar dados salvos do localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -136,7 +150,8 @@ function ConfigurarFormContent() {
           if (parsed.endereco) setEndereco(parsed.endereco);
           if (parsed.whatsappClinica) {
             setWhatsappClinica(parsed.whatsappClinica);
-            setPairingPhone(parsed.whatsappClinica);
+            const clean = parsed.whatsappClinica.replace(/\D/g, '');
+            setPairingPhone(clean ? (clean.startsWith('55') ? clean : '55' + clean) : '55');
           }
           if (parsed.especialistas) setEspecialistas(parsed.especialistas);
           if (parsed.opcoesAgendamento) setOpcoesAgendamento(parsed.opcoesAgendamento);
@@ -385,7 +400,9 @@ function ConfigurarFormContent() {
       setQrBase64(data.evolutionQrCode || defaultQr);
       const targetInstance = whatsappClinica.replace(/\D/g, '') || 'NumeroDeTestes';
       setInstanceName(targetInstance);
-      setPairingPhone(whatsappClinica);
+      const cleanPhone = whatsappClinica.replace(/\D/g, '');
+      const defaultPhone = cleanPhone ? (cleanPhone.startsWith('55') ? cleanPhone : '55' + cleanPhone) : '55';
+      setPairingPhone(defaultPhone);
       setPairingCode('');
       setShowQrModal(true);
     } catch (err: any) {
@@ -736,6 +753,7 @@ function ConfigurarFormContent() {
                   <div className="w-full space-y-4 mb-6">
                     <div className="flex gap-2">
                       <input
+                        ref={pairingPhoneInputRef}
                         type="text"
                         value={pairingPhone}
                         onChange={(e) => setPairingPhone(e.target.value)}
