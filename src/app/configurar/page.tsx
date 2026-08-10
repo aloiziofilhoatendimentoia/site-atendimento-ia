@@ -718,6 +718,13 @@ function ConfigurarFormContent() {
                 </button>
               </div>
 
+              {errorMessage && (
+                <div className="w-full bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl mb-6 text-xs font-semibold text-left flex items-start space-x-2 animate-fade-in">
+                  <CheckCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+
               {connectionMode === 'qr' ? (
                 <>
                   <p className="text-gray-400 text-sm mb-6 px-4">
