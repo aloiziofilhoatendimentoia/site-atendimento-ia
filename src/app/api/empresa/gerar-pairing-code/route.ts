@@ -19,12 +19,18 @@ export async function POST(request: Request) {
     const evoUrl = process.env.EVOLUTION_API_URL || 'https://api-whatsapp.atendimentoiaclinicas.tech';
     const evoKey = process.env.EVOLUTION_API_KEY || 'atendimentoia_mestre_evolution_2026';
 
-    // Tenta obter o código de pareamento
-    let res = await fetch(`${evoUrl}/instance/connect/phone/${instanceName}?number=${cleanPhone}`, {
-      method: 'GET',
+    console.log(`Solicitando código de pareamento para a instância ${instanceName} e número ${cleanPhone}`);
+
+    // Rota oficial da Evolution API V2 para gerar Código de Pareamento por telefone: POST /instance/connect/{instanceName}
+    let res = await fetch(`${evoUrl}/instance/connect/${instanceName}`, {
+      method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'apikey': evoKey,
-      }
+      },
+      body: JSON.stringify({
+        number: cleanPhone
+      })
     });
 
     // Se a instância não existir (404), tenta criar e rodar novamente
@@ -44,12 +50,16 @@ export async function POST(request: Request) {
       });
 
       if (createRes.ok) {
-        // Tenta conectar via pairing code novamente
-        res = await fetch(`${evoUrl}/instance/connect/phone/${instanceName}?number=${cleanPhone}`, {
-          method: 'GET',
+        // Tenta conectar via pairing code novamente (POST /instance/connect/{instanceName})
+        res = await fetch(`${evoUrl}/instance/connect/${instanceName}`, {
+          method: 'POST',
           headers: {
+            'Content-Type': 'application/json',
             'apikey': evoKey,
-          }
+          },
+          body: JSON.stringify({
+            number: cleanPhone
+          })
         });
       }
     }
@@ -67,10 +77,11 @@ export async function POST(request: Request) {
     }
 
     const data = await res.json();
-    const code = data.code;
+    // A Evolution API V2 retorna o código em { code: "ABCDEFGH" } ou { pairingCode: "ABCDEFGH" }
+    const code = data.code || data.pairingCode;
 
     if (!code) {
-      return NextResponse.json({ error: 'Código não retornado pela Evolution. Certifique-se de que o número está correto e que o WhatsApp não está conectado.' }, { status: 400 });
+      return NextResponse.json({ error: 'Código não retornado pela Evolution. Certifique-se de que a instância não está conectada.' }, { status: 400 });
     }
 
     return NextResponse.json({ success: true, pairingCode: code }, { status: 200 });
