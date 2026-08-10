@@ -67,8 +67,10 @@ function ConfigurarFormContent() {
     scrollToTop();
   };
 
-  const goToTab = (tab: Tab) => {
-    setErrorMessage('');
+  const goToTab = (tab: Tab, keepError = false) => {
+    if (!keepError) {
+      setErrorMessage('');
+    }
     const stepNum = tab === 'horarios' ? '3' : tab === 'integracoes' ? '2' : '1';
     router.push(`/configurar?step=${stepNum}`);
     setTimeout(scrollToTop, 50);
@@ -357,23 +359,22 @@ function ConfigurarFormContent() {
     setErrorMessage('');
     
     if (!nomeClinica || !nomeSecretaria || !endereco || !whatsappClinica || especialistas.some(e => !e.nome || !e.especialidade)) {
+      goToTab('clinica', true);
       showError('Preencha os dados da clínica, nome da secretária(o), endereço e especialistas.');
-      goToTab('clinica');
       return;
     }
     if (!opcoesAgendamento.whatsapp && !opcoesAgendamento.calendar) {
+      goToTab('integracoes', true);
       showError('Escolha pelo menos uma opção de agendamento (WhatsApp ou Google Agenda).');
-      goToTab('integracoes');
       return;
     }
     if (opcoesAgendamento.calendar && !googleConnected) {
+      goToTab('integracoes', true);
       showError('Para agendar via Google Agenda, é obrigatório conectar a conta Google.');
-      goToTab('integracoes');
       return;
     }
     if (!tempoConsulta || !valorConsulta || blocosHorario.some(b => b.dias.length === 0 || !b.inicio || !b.fim)) {
       showError('Preencha os valores da consulta e os dias e horários de todos os blocos de expediente.');
-      goToTab('horarios');
       return;
     }
 
