@@ -19,7 +19,8 @@ import {
   QrCode,
   RefreshCw,
   XCircle,
-  Smartphone
+  Smartphone,
+  LogOut
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -225,6 +226,18 @@ function ConfigurarFormContent() {
       setErrorMessage(e.message || 'Erro ao gerar código de conexão.');
     } finally {
       setPairingLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/session', { method: 'DELETE' });
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+      }
+      window.location.href = '/dashboard';
+    } catch (err) {
+      console.error('Erro ao sair:', err);
     }
   };
 
@@ -437,6 +450,14 @@ function ConfigurarFormContent() {
             <div className="h-6 w-px bg-[#27272a] mx-2 hidden sm:block"></div>
             <span className="text-sm font-semibold text-teal-500 hidden sm:block tracking-wide uppercase">Painel Médico de Implantação</span>
           </div>
+          
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-red-950/20 hover:bg-red-900/30 border border-red-900/30 hover:border-red-800/40 text-red-400 text-sm font-semibold transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sair do Painel</span>
+          </button>
         </div>
       </nav>
 

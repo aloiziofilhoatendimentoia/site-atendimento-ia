@@ -403,11 +403,27 @@ export default function DashboardPage() {
     }
   };
 
+  // Redirecionamento automático do médico autenticado para o painel de configuração/wizard
+  useEffect(() => {
+    if (authenticated && data?.empresa?.id) {
+      window.location.href = `/configurar?empresa_id=${data.empresa.id}`;
+    }
+  }, [authenticated, data]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#09090b] text-gray-100 flex items-center justify-center flex-col space-y-4">
-        <div className="w-12 h-12 rounded-xl border-4 border-purple-900 border-t-purple-500 animate-spin" />
+        <div className="w-12 h-12 rounded-xl border-4 border-teal-900 border-t-teal-500 animate-spin" />
         <p className="text-sm font-medium text-gray-400">Carregando painel SaaS premium...</p>
+      </div>
+    );
+  }
+
+  if (authenticated) {
+    return (
+      <div className="min-h-screen bg-[#09090b] text-gray-100 flex items-center justify-center flex-col space-y-4">
+        <div className="w-12 h-12 rounded-xl border-4 border-teal-900 border-t-teal-500 animate-spin" />
+        <p className="text-sm font-medium text-gray-400">Redirecionando para as configurações da clínica...</p>
       </div>
     );
   }
