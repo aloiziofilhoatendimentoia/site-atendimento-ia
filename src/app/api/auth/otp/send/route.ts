@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUserByEmail } from '@/lib/db';
 import { saveOTP } from '@/lib/otp';
+import { sendOTPEmail } from '@/lib/mail';
 
 export async function POST(request: Request) {
   try {
@@ -25,11 +26,16 @@ export async function POST(request: Request) {
     // Logs para o desenvolvedor ver no Coolify
     console.log(`[OTP] Código gerado para ${email}: ${code}`);
 
-    // Em ambiente de desenvolvimento ou testes, retornamos o código no payload para o usuário conseguir testar sem precisar configurar servidores de e-mail de imediato.
+    // Tentar enviar o e-mail real via SMTP
+    const emailSent = await sendOTPEmail(email, code);
+
+    // Se o e-mail foi enviado com sucesso, não mostramos o código na tela por segurança.
+    // Caso contrário (SMTP não configurado), retornamos o código para não bloquear o teste em homologação.
     return NextResponse.json({ 
       success: true, 
-      message: 'Código enviado com sucesso!',
-      testCode: code // Retornado amigavelmente para testes rápidos no site
+      message: emailSent ? 'Código enviado para o seu e-mail!' : 'Código gerado para teste.',
+      emailSent,
+      testCode: !emailSent ? code : undefined
     }, { status: 200 });
 
   } catch (error: any) {

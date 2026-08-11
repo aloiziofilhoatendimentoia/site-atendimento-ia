@@ -207,10 +207,14 @@ function ConfigurarFormContent() {
     setPairingLoading(true);
     setErrorMessage('');
     try {
+      const cleanPhone = pairingPhone.replace(/\D/g, '');
+      const cleanClinica = whatsappClinica.replace(/\D/g, '');
+      const targetInst = cleanPhone || cleanClinica || instanceName || `clinica_${Math.floor(1000 + Math.random() * 9000)}`;
+
       const res = await fetch('/api/empresa/gerar-pairing-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName, phoneNumber: pairingPhone })
+        body: JSON.stringify({ instanceName: targetInst, phoneNumber: pairingPhone })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erro ao gerar código de pareamento');

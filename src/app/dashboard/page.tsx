@@ -229,9 +229,7 @@ export default function DashboardPage() {
       }
 
       setOtpSent(true);
-      if (resData.testCode) {
-        setTestCodeMsg(resData.testCode);
-      }
+      setTestCodeMsg(resData.testCode || '');
     } catch (err: any) {
       setAuthError(err.message);
     } finally {
@@ -332,14 +330,16 @@ export default function DashboardPage() {
   // Gerar código de pareamento no modal
   const handleGeneratePairingCode = async () => {
     if (!data) return;
-    const instanceName = data?.suporte?.whatsapp_empresa?.replace(/\D/g, '') || '81999049361';
+    const cleanPhone = pairingPhone.replace(/\D/g, '');
+    const cleanClinica = data?.suporte?.whatsapp_empresa?.replace(/\D/g, '');
+    const targetInst = cleanPhone || cleanClinica || '81999049361';
     setPairingLoading(true);
     setReconnectError('');
     try {
       const res = await fetch('/api/empresa/gerar-pairing-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName, phoneNumber: pairingPhone })
+        body: JSON.stringify({ instanceName: targetInst, phoneNumber: pairingPhone })
       });
       const resData = await res.json();
       if (!res.ok) throw new Error(resData.error || 'Erro ao gerar código de celular.');
@@ -444,8 +444,8 @@ export default function DashboardPage() {
             )}
 
             {testCodeMsg && (
-              <div className="mb-5 p-4 bg-teal-500/10 border border-teal-500/30 text-teal-400 text-xs font-bold rounded-xl animate-pulse">
-                <span className="block mb-1 text-white">🧪 Modo de Teste:</span>
+              <div className="mb-5 p-4 bg-teal-500/10 border border-teal-500/30 text-teal-400 text-xs font-bold rounded-xl">
+                <span className="block mb-1 text-white">⚙️ Modo de Homologação (SMTP não configurado no Coolify):</span>
                 Seu código OTP de 6 dígitos é: <span className="text-lg font-mono text-white underline select-all">{testCodeMsg}</span>
               </div>
             )}
