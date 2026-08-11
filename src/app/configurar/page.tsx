@@ -209,7 +209,7 @@ function ConfigurarFormContent() {
     try {
       const cleanPhone = pairingPhone.replace(/\D/g, '');
       const cleanClinica = whatsappClinica.replace(/\D/g, '');
-      const targetInst = cleanPhone || cleanClinica || instanceName || `clinica_${Math.floor(1000 + Math.random() * 9000)}`;
+      const targetInst = cleanClinica || cleanPhone || instanceName || `clinica_${Math.floor(1000 + Math.random() * 9000)}`;
 
       const res = await fetch('/api/empresa/gerar-pairing-code', {
         method: 'POST',

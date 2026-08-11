@@ -332,7 +332,7 @@ export default function DashboardPage() {
     if (!data) return;
     const cleanPhone = pairingPhone.replace(/\D/g, '');
     const cleanClinica = data?.suporte?.whatsapp_empresa?.replace(/\D/g, '');
-    const targetInst = cleanPhone || cleanClinica || '81999049361';
+    const targetInst = cleanClinica || cleanPhone || '81999049361';
     setPairingLoading(true);
     setReconnectError('');
     try {
