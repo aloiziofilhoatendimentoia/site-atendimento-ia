@@ -14,6 +14,18 @@ export default function PagamentoPage() {
   const [error, setError] = useState('');
   const [pixGerado, setPixGerado] = useState(false);
 
+  // Redirecionamento automático se a licença já está paga localmente no navegador
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isPaid = window.localStorage.getItem('licenca_paga') === 'true';
+      const savedEmpresaId = window.localStorage.getItem('onboarding_empresa_id');
+      if (isPaid && savedEmpresaId) {
+        router.replace(`/configurar?empresa_id=${savedEmpresaId}`);
+      }
+    }
+  }, [router]);
+
+
   const handleVoltarInicio = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -41,7 +53,7 @@ export default function PagamentoPage() {
       if (!stripeRes.ok) throw new Error(stripeData.error || 'Erro ao gerar pagamento.');
       
       if (typeof window !== 'undefined') {
-        window.sessionStorage.setItem('licenca_paga', 'true');
+        window.localStorage.setItem('licenca_paga', 'true');
       }
       window.location.href = stripeData.url;
     } catch (err: any) {
@@ -231,7 +243,7 @@ export default function PagamentoPage() {
                 href="/configurar" 
                 onClick={() => {
                   if (typeof window !== 'undefined') {
-                    window.sessionStorage.setItem('licenca_paga', 'true');
+                    window.localStorage.setItem('licenca_paga', 'true');
                   }
                 }}
                 className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold text-center rounded-xl transition-colors"

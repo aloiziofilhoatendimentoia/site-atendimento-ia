@@ -45,9 +45,13 @@ function ConfigurarFormContent() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const isPaid = window.sessionStorage.getItem('licenca_paga') === 'true';
+      const isPaid = window.localStorage.getItem('licenca_paga') === 'true';
       const hasEmpresaId = searchParams.get('empresa_id') || searchParams.get('session_id');
-      if (!isPaid && !hasEmpresaId) {
+      
+      if (hasEmpresaId) {
+        window.localStorage.setItem('licenca_paga', 'true');
+        window.localStorage.setItem('onboarding_empresa_id', hasEmpresaId);
+      } else if (!isPaid) {
         router.replace('/pagamento');
       }
     }
