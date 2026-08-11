@@ -82,81 +82,137 @@ export async function POST(request: Request) {
       }
     }
 
-    // 1. SALVAR/CRIAR USUÁRIO E VINCULAR EMPRESA NO BANCO HÍBRIDO (SUPABASE / LOCAL_DB)
-    const ownerEmail = payload.ownerEmail || 'aloiziofilho2012@gmail.com';
-    let user = await getUserByEmail(ownerEmail);
-    if (!user) {
-      user = await createUser(ownerEmail, 'no_password_otp_only');
-    }
-
     const cnpj = payload?.clinica?.cnpj || '00000000000000';
     const nomeEmpresario = payload?.clinica?.nomeEmpresario || payload?.clinica?.nome_empresario || 'Doutor';
     const cpf = payload?.clinica?.cpf || '000.000.000-00';
     const nicho = payload?.clinica?.nicho || 'Médico';
 
-    const empresa = await saveEmpresa(user.id, {
-      nome_empresa: nomeClinica,
-      cnpj,
-      nome_empresario: nomeEmpresario,
-      cpf,
-      nicho
-    });
+    // 1. SALVAR/CRIAR USUÁRIO E VINCULAR EMPRESA NO BANCO HÍBRIDO (SUPABASE / LOCAL_DB)
+    const ownerEmail = payload.ownerEmail || 'aloiziofilho2012@gmail.com';
+    let user = await getUserByEmail(ownerEmail);
+    
+    let hasChanges = true;
+    let eventType = 'novo_cadastro';
 
-    // Salvar configurações filhas
-    await Promise.all([
-      saveSuporte(empresa.id, {
-        dias_funcionamento: diasStr,
-        horario_funcionamento: horarioStr,
-        endereco,
-        whatsapp_empresa: whatsappClinica,
-        telefone_suporte: whatsappHumano
-      }),
-      saveAgendamentos(empresa.id, {
-        usa_google_calendar: payload?.integracoes?.opcoesAgendamento?.calendar || false,
-        usa_whatsapp: payload?.integracoes?.opcoesAgendamento?.whatsapp || false,
-        whatsapp_agendamento: whatsappReceberAgendamento
-      }),
-      saveVendas(empresa.id, {
-        link_pagamento: payload?.venda?.link_pagamento || '',
-        chave_pix: payload?.venda?.chave_pix || ''
-      }),
-      saveServicos(empresa.id, payload?.servicos || [])
-    ]);
+    if (user) {
+      const existingData = await getDashboardData(user.id);
+      if (existingData) {
+        eventType = 'alteracao_cadastro';
 
-    // 2. SALVAR NA TABELA MAIÚSCULA 'CLIENTES ATENDIMENTO IA SITE'
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-    let supabaseStatus = 'Não Tentou';
+        const oldEmpresa = existingData.empresa;
+        const oldSuporte = existingData.suporte;
+        const oldAgendamentos = existingData.agendamento;
+        const oldVendas = existingData.venda;
+        const oldServicos = existingData.servicos || [];
 
-    if (supabaseUrl && supabaseServiceKey) {
-      try {
-        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-        const { error: insertError } = await supabaseAdmin
-          .from('CLIENTES ATENDIMENTO IA SITE')
-          .insert([
-            {
-              nome_clinica: nomeClinica,
-              telefone_principal: whatsappClinica,
-              endereco: endereco,
-              especialistas: especialistasStr,
-              canais_escolhidos: canaisStr
-            }
-          ]);
-        if (insertError) {
-          console.error("Erro insert Supabase:", insertError);
-          supabaseStatus = 'Erro: ' + insertError.message;
-        } else {
-          supabaseStatus = 'Sucesso';
-          console.log("✅ Cliente inserido na tabela CLIENTES ATENDIMENTO IA SITE com a ficha completa");
+        const sameClinica = 
+          oldEmpresa?.nome_empresa === nomeClinica &&
+          oldEmpresa?.cnpj === cnpj &&
+          oldEmpresa?.nome_empresario === nomeEmpresario &&
+          oldEmpresa?.cpf === cpf &&
+          oldEmpresa?.nicho === nicho;
+
+        const sameSuporte = 
+          oldSuporte?.dias_funcionamento === diasStr &&
+          oldSuporte?.horario_funcionamento === horarioStr &&
+          oldSuporte?.endereco === endereco &&
+          oldSuporte?.whatsapp_empresa === whatsappClinica &&
+          oldSuporte?.telefone_suporte === whatsappHumano;
+
+        const sameAgendamentos = 
+          oldAgendamentos?.usa_google_calendar === (payload?.integracoes?.opcoesAgendamento?.calendar || false) &&
+          oldAgendamentos?.usa_whatsapp === (payload?.integracoes?.opcoesAgendamento?.whatsapp || false) &&
+          oldAgendamentos?.whatsapp_agendamento === whatsappReceberAgendamento;
+
+        const sameVendas = 
+          oldVendas?.link_pagamento === (payload?.venda?.link_pagamento || '') &&
+          oldVendas?.chave_pix === (payload?.venda?.chave_pix || '');
+
+        const newServicos = payload?.servicos || [];
+        const sameServicos = 
+          oldServicos.length === newServicos.length &&
+          oldServicos.every((s: any, idx: number) => {
+            const ns = newServicos[idx];
+            return ns && s.servico === ns.servico && Number(s.valor) === Number(ns.valor);
+          });
+
+        if (sameClinica && sameSuporte && sameAgendamentos && sameVendas && sameServicos) {
+          hasChanges = false;
+          console.log(`[Config] Nenhuma alteração de dados para ${ownerEmail}.`);
         }
-      } catch (e: any) {
-        console.error("Crash insert Supabase:", e);
-        supabaseStatus = 'Crash: ' + e.message;
+      }
+    } else {
+      user = await createUser(ownerEmail, 'no_password_otp_only');
+    }
+
+    let supabaseStatus = 'Pulado (Sem alterações)';
+    
+    if (hasChanges) {
+      const empresa = await saveEmpresa(user.id, {
+        nome_empresa: nomeClinica,
+        cnpj,
+        nome_empresario: nomeEmpresario,
+        cpf,
+        nicho
+      });
+
+      // Salvar configurações filhas
+      await Promise.all([
+        saveSuporte(empresa.id, {
+          dias_funcionamento: diasStr,
+          horario_funcionamento: horarioStr,
+          endereco,
+          whatsapp_empresa: whatsappClinica,
+          telefone_suporte: whatsappHumano
+        }),
+        saveAgendamentos(empresa.id, {
+          usa_google_calendar: payload?.integracoes?.opcoesAgendamento?.calendar || false,
+          usa_whatsapp: payload?.integracoes?.opcoesAgendamento?.whatsapp || false,
+          whatsapp_agendamento: whatsappReceberAgendamento
+        }),
+        saveVendas(empresa.id, {
+          link_pagamento: payload?.venda?.link_pagamento || '',
+          chave_pix: payload?.venda?.chave_pix || ''
+        }),
+        saveServicos(empresa.id, payload?.servicos || [])
+      ]);
+
+      // 2. SALVAR NA TABELA MAIÚSCULA 'CLIENTES ATENDIMENTO IA SITE'
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+      supabaseStatus = 'Não Tentou';
+
+      if (supabaseUrl && supabaseServiceKey) {
+        try {
+          const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+          const { error: insertError } = await supabaseAdmin
+            .from('CLIENTES ATENDIMENTO IA SITE')
+            .insert([
+              {
+                nome_clinica: nomeClinica,
+                telefone_principal: whatsappClinica,
+                endereco: endereco,
+                especialistas: especialistasStr,
+                canais_escolhidos: canaisStr
+              }
+            ]);
+          if (insertError) {
+            console.error("Erro insert Supabase:", insertError);
+            supabaseStatus = 'Erro: ' + insertError.message;
+          } else {
+            supabaseStatus = 'Sucesso';
+            console.log("✅ Cliente inserido na tabela CLIENTES ATENDIMENTO IA SITE");
+          }
+        } catch (e: any) {
+          console.error("Crash insert Supabase:", e);
+          supabaseStatus = 'Crash: ' + e.message;
+        }
       }
     }
 
     const payloadWebhook = {
       ...payload,
+      event: eventType, // 'novo_cadastro' ou 'alteracao_cadastro'
       clinicName: nomeClinica,
       nome_da_clinica: nomeClinica,
       whatsapp_ia: whatsappClinica,
@@ -170,11 +226,12 @@ export async function POST(request: Request) {
       valor_consulta: valorConsulta
     };
 
-    // 3. Disparo pro n8n para acionar o Webhook e o WhatsApp do Médico
+    // 3. Disparo pro n8n para acionar o Webhook e o WhatsApp do Médico (apenas se houver alterações!)
     const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL || 'https://n8n.atendimentoiaclinicas.tech/webhook/config-empresa';
-    let n8nStatus = 'Não Disparado';
+    let n8nStatus = 'Não Disparado (Sem alterações)';
     
-    if (n8nWebhookUrl) {
+    if (hasChanges && n8nWebhookUrl) {
+      n8nStatus = 'Não Disparado';
       try {
         const n8nRes = await fetch(n8nWebhookUrl, {
           method: 'POST',
