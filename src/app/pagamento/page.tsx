@@ -58,6 +58,7 @@ export default function PagamentoPage() {
       
       if (typeof window !== 'undefined') {
         window.localStorage.setItem('licenca_paga', 'true');
+        window.localStorage.setItem('onboarding_email', email);
       }
       window.location.href = stripeData.url;
     } catch (err: any) {
@@ -248,6 +249,7 @@ export default function PagamentoPage() {
                 onClick={() => {
                   if (typeof window !== 'undefined') {
                     window.localStorage.setItem('licenca_paga', 'true');
+                    window.localStorage.setItem('onboarding_email', email);
                   }
                 }}
                 className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold text-center rounded-xl transition-colors"

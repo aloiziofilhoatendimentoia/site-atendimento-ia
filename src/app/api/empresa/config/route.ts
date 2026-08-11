@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
 import {
   getUserByEmail,
+  createUser,
   saveEmpresa,
   saveSuporte,
   saveAgendamentos,
@@ -69,9 +70,60 @@ export async function POST(request: Request) {
     if (payload?.integracoes?.opcoesAgendamento?.calendar) canaisArr.push("Google Agenda");
     const canaisStr = canaisArr.length > 0 ? canaisArr.join(" e ") : 'Nenhum';
 
+    let diasStr = 'seg,ter,qua,qui,sex';
+    let horarioStr = '09:00 - 18:00';
 
+    if (payload?.horarios?.blocosHorario && Array.isArray(payload.horarios.blocosHorario) && payload.horarios.blocosHorario.length > 0) {
+      const blocos = payload.horarios.blocosHorario.filter((b: any) => b.dias && b.dias.length > 0);
+      if (blocos.length > 0) {
+        const linhasFormatadas = blocos.map((b: any) => `• ${b.dias.join(', ')}: das ${b.inicio || '08:00'} às ${b.fim || '18:00'}`);
+        diasStr = blocos[0].dias.join(', ');
+        horarioStr = `das ${blocos[0].inicio || '08:00'} às ${blocos[0].fim || '18:00'}`;
+      }
+    }
 
-    // 1. SALVAR NO SUPABASE (TABELA CLIENTES ATENDIMENTO IA SITE)
+    // 1. SALVAR/CRIAR USUÁRIO E VINCULAR EMPRESA NO BANCO HÍBRIDO (SUPABASE / LOCAL_DB)
+    const ownerEmail = payload.ownerEmail || 'aloiziofilho2012@gmail.com';
+    let user = await getUserByEmail(ownerEmail);
+    if (!user) {
+      user = await createUser(ownerEmail, 'no_password_otp_only');
+    }
+
+    const cnpj = payload?.clinica?.cnpj || '00000000000000';
+    const nomeEmpresario = payload?.clinica?.nomeEmpresario || payload?.clinica?.nome_empresario || 'Doutor';
+    const cpf = payload?.clinica?.cpf || '000.000.000-00';
+    const nicho = payload?.clinica?.nicho || 'Médico';
+
+    const empresa = await saveEmpresa(user.id, {
+      nome_empresa: nomeClinica,
+      cnpj,
+      nome_empresario: nomeEmpresario,
+      cpf,
+      nicho
+    });
+
+    // Salvar configurações filhas
+    await Promise.all([
+      saveSuporte(empresa.id, {
+        dias_funcionamento: diasStr,
+        horario_funcionamento: horarioStr,
+        endereco,
+        whatsapp_empresa: whatsappClinica,
+        telefone_suporte: whatsappHumano
+      }),
+      saveAgendamentos(empresa.id, {
+        usa_google_calendar: payload?.integracoes?.opcoesAgendamento?.calendar || false,
+        usa_whatsapp: payload?.integracoes?.opcoesAgendamento?.whatsapp || false,
+        whatsapp_agendamento: whatsappReceberAgendamento
+      }),
+      saveVendas(empresa.id, {
+        link_pagamento: payload?.venda?.link_pagamento || '',
+        chave_pix: payload?.venda?.chave_pix || ''
+      }),
+      saveServicos(empresa.id, payload?.servicos || [])
+    ]);
+
+    // 2. SALVAR NA TABELA MAIÚSCULA 'CLIENTES ATENDIMENTO IA SITE'
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
     let supabaseStatus = 'Não Tentou';
@@ -101,42 +153,24 @@ export async function POST(request: Request) {
         console.error("Crash insert Supabase:", e);
         supabaseStatus = 'Crash: ' + e.message;
       }
-    } else {
-      supabaseStatus = 'Chaves do Supabase Ausentes';
-    }
-
-    let diasStr = 'Não informado';
-    let horarioStr = 'Não informado';
-    let horariosFormatadosStr = 'Não informado';
-
-    if (payload?.horarios?.blocosHorario && Array.isArray(payload.horarios.blocosHorario) && payload.horarios.blocosHorario.length > 0) {
-      const blocos = payload.horarios.blocosHorario.filter((b: any) => b.dias && b.dias.length > 0);
-      if (blocos.length > 0) {
-        const linhasFormatadas = blocos.map((b: any) => `• ${b.dias.join(', ')}: das ${b.inicio || '08:00'} às ${b.fim || '18:00'}`);
-        horariosFormatadosStr = linhasFormatadas.join('\n');
-        diasStr = linhasFormatadas.join('\n');
-        horarioStr = blocos.map((b: any) => `${b.dias.join(', ')} (das ${b.inicio || '08:00'} às ${b.fim || '18:00'})`).join(' | ');
-      }
     }
 
     const payloadWebhook = {
       ...payload,
-      clinicName: nomeClinica, // Mantido para retrocompatibilidade
+      clinicName: nomeClinica,
       nome_da_clinica: nomeClinica,
-      whatsapp_ia: payload?.clinica?.whatsappClinica || 'Não informado',
-      whatsapp_humano: payload?.integracoes?.whatsappHumano || 'Não informado',
-      whatsapp_agendamento: payload?.integracoes?.whatsappReceberAgendamento || 'Não informado',
+      whatsapp_ia: whatsappClinica,
+      whatsapp_humano: whatsappHumano,
+      whatsapp_agendamento: whatsappReceberAgendamento,
       profissionais_formatados: especialistasStr,
       canais_escolhidos: canaisStr,
       dias_atendimento: diasStr,
       horarios_atendimento: horarioStr,
-      horarios_formatados: horariosFormatadosStr,
-      intervalo_consulta: payload?.horarios?.tempoConsulta ? `${payload.horarios.tempoConsulta} minutos` : 'Não informado',
-      valor_consulta: payload?.horarios?.valorConsulta || 'R$ 0,00'
+      intervalo_consulta: tempoConsulta,
+      valor_consulta: valorConsulta
     };
 
-    // 2. Disparo pro n8n para acionar o Webhook e o WhatsApp do Médico
-    // A URL utiliza o Endpoint de PRODUÇÃO do n8n (/webhook/) porque o workflow do cliente está ativado
+    // 3. Disparo pro n8n para acionar o Webhook e o WhatsApp do Médico
     const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL || 'https://n8n.atendimentoiaclinicas.tech/webhook/config-empresa';
     let n8nStatus = 'Não Disparado';
     
@@ -153,10 +187,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // 2. Enviar mensagem detalhada de nova clínica configurada via Evolution API ao dono (REMOVIDO pois o n8n já envia no formato antigo)
-    let cloneStatus = 'Ignorado (Todas clínicas num mesmo workflow)';
-
-    // 3. Criação de Instância na Evolution API
+    // 4. Criação de Instância na Evolution API
     const evoUrl = process.env.EVOLUTION_API_URL || 'https://api-whatsapp.atendimentoiaclinicas.tech';
     const evoKey = process.env.EVOLUTION_API_KEY || 'atendimentoia_mestre_evolution_2026';
     let evolutionStatus = 'Não Tentou';
@@ -190,7 +221,6 @@ export async function POST(request: Request) {
         evolutionStatus = `Falha: ${evoRes.statusText}`;
       }
 
-      // Se a instância já existe (ex: 403 Forbidden) e não veio QR Code no create, tenta no connect
       if (!evolutionQrCode) {
         try {
           const connectRes = await fetch(`${evoUrl}/instance/connect/${instanceName}`, {
@@ -211,7 +241,6 @@ export async function POST(request: Request) {
         }
       }
 
-      // Se não obteve QR code dinâmico da Evolution API, gera um QR code válido para conectar
       if (!evolutionQrCode) {
         evolutionQrCode = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://api-whatsapp.atendimentoiaclinicas.tech/manager`;
       }
@@ -220,18 +249,17 @@ export async function POST(request: Request) {
       evolutionQrCode = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://api-whatsapp.atendimentoiaclinicas.tech/manager`;
     }
 
-    // Retorna sucesso instantâneo ignorando tokens (WOW effect de Instalação na demonstração)
     return NextResponse.json({
       success: true,
-      message: 'Configurações salvas com sucesso (Simulação)',
+      message: 'Configurações salvas com sucesso',
       webhookStatus: n8nStatus,
-      cloneStatus: cloneStatus,
       supabaseStatus: supabaseStatus,
       evolutionStatus: evolutionStatus,
       evolutionQrCode: evolutionQrCode
     }, { status: 200 });
 
   } catch (error: any) {
+    console.error('Erro no config POST:', error);
     return NextResponse.json({ error: 'Erro de processamento.' }, { status: 500 });
   }
 }

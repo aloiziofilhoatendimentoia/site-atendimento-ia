@@ -386,6 +386,7 @@ function ConfigurarFormContent() {
 
     try {
       const payload = {
+        ownerEmail: typeof window !== 'undefined' ? window.localStorage.getItem('onboarding_email') : null,
         clinica: { nomeClinica, nomeSecretaria, endereco, whatsappClinica, especialistas },
         integracoes: { opcoesAgendamento, emailCalendar, whatsappHumano, whatsappReceberAgendamento, googleConnected },
         horarios: { tempoConsulta, valorConsulta, blocosHorario },
