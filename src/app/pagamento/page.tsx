@@ -19,8 +19,12 @@ export default function PagamentoPage() {
     if (typeof window !== 'undefined') {
       const isPaid = window.localStorage.getItem('licenca_paga') === 'true';
       const savedEmpresaId = window.localStorage.getItem('onboarding_empresa_id');
-      if (isPaid && savedEmpresaId) {
-        router.replace(`/configurar?empresa_id=${savedEmpresaId}`);
+      if (isPaid) {
+        if (savedEmpresaId) {
+          router.replace(`/configurar?empresa_id=${savedEmpresaId}`);
+        } else {
+          router.replace('/configurar');
+        }
       }
     }
   }, [router]);
