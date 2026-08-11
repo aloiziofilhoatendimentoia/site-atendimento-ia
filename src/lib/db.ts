@@ -87,7 +87,18 @@ function initLocalDb(): LocalDatabase {
   }
   try {
     const data = fs.readFileSync(LOCAL_DB_PATH, 'utf-8');
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    
+    // Garantir retrocompatibilidade e existencia das chaves para evitar TypeErrors
+    if (!parsed.users) parsed.users = [];
+    if (!parsed.empresas) parsed.empresas = [];
+    if (!parsed.suporte) parsed.suporte = [];
+    if (!parsed.agendamentos) parsed.agendamentos = [];
+    if (!parsed.google_integrations) parsed.google_integrations = [];
+    if (!parsed.vendas) parsed.vendas = [];
+    if (!parsed.servicos) parsed.servicos = [];
+    
+    return parsed;
   } catch (error) {
     console.error('Erro ao ler local_db.json, reiniciando banco local:', error);
     const defaultDb: LocalDatabase = {

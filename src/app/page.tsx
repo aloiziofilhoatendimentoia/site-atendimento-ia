@@ -139,11 +139,17 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* LADO DIREITO: BOTÃO DE ASSINATURA */}
-          <div className="flex items-center flex-1 justify-end">
+          {/* LADO DIREITO: BOTÃO DE ASSINATURA & ACESSO */}
+          <div className="flex items-center flex-1 justify-end gap-3">
+            <Link 
+              href="/dashboard"
+              className="border border-slate-300 hover:border-teal-500 text-slate-700 hover:text-teal-600 px-5 py-2.5 rounded-full font-bold transition-colors whitespace-nowrap text-sm"
+            >
+              Acesse sua Clínica
+            </Link>
             <Link 
               href="/pagamento"
-              className="bg-teal-600 hover:bg-teal-700 text-white px-6 lg:px-8 py-3 rounded-full font-bold transition-colors shadow-lg whitespace-nowrap"
+              className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-full font-bold transition-colors shadow-lg whitespace-nowrap text-sm"
             >
               Assinar Plano
             </Link>
