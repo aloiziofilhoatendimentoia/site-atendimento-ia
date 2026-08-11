@@ -56,8 +56,10 @@ export async function syncDynamicConfigTable(nomeEmpresa: string, fullData: any)
   }
 }
 
-// Caminho do arquivo JSON para persistência local de fallback
-const LOCAL_DB_PATH = path.join(process.cwd(), 'local_db.json');
+import os from 'os';
+
+// Caminho do arquivo JSON para persistência local de fallback na pasta temporária do sistema operacional
+const LOCAL_DB_PATH = path.join(os.tmpdir(), 'local_db.json');
 
 // Interface para a estrutura do banco de dados local
 interface LocalDatabase {

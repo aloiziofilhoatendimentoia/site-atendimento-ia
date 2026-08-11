@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
-const OTP_FILE_PATH = path.join(process.cwd(), 'local_otps.json');
+const OTP_FILE_PATH = path.join(os.tmpdir(), 'local_otps.json');
 
 interface OTPData {
   email: string;
