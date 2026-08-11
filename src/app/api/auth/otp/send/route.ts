@@ -34,6 +34,8 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('Erro na API de envio de OTP:', error);
-    return NextResponse.json({ error: 'Erro interno no servidor.' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Erro interno no servidor: ' + error.message + '\n' + (error.stack || '')
+    }, { status: 500 });
   }
 }
