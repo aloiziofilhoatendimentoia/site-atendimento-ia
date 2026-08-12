@@ -392,14 +392,31 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, [loading, agentActive, authenticated]);
 
-  // Logout
+  // Prevenção contra cache de navegação (Seta de voltar do navegador)
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
+
+  // Logout seguro e substituição de histórico
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/session', { method: 'DELETE' });
-      setAuthenticated(false);
-      setData(null);
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.replace('/');
+      }
     } catch (err) {
       console.error('Erro ao deslogar:', err);
+      if (typeof window !== 'undefined') {
+        window.location.replace('/');
+      }
     }
   };
 

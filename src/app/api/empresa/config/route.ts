@@ -88,7 +88,7 @@ export async function GET(request: Request) {
 
     const onboardingData = {
       nomeClinica,
-      nomeSecretaria: 'Secretária Virtual',
+      nomeSecretaria: (siteClinic?.nome_secretaria && siteClinic.nome_secretaria !== 'Secretária Virtual') ? siteClinic.nome_secretaria : '',
       endereco,
       whatsappClinica,
       especialistas: especialistasArr,

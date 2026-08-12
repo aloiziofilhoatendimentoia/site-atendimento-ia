@@ -275,10 +275,14 @@ function ConfigurarFormContent() {
       await fetch('/api/auth/session', { method: 'DELETE' });
       if (typeof window !== 'undefined') {
         localStorage.clear();
+        sessionStorage.clear();
+        window.location.replace('/');
       }
-      window.location.href = '/dashboard';
     } catch (err) {
       console.error('Erro ao sair:', err);
+      if (typeof window !== 'undefined') {
+        window.location.replace('/');
+      }
     }
   };
 
@@ -562,7 +566,7 @@ function ConfigurarFormContent() {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-300 mb-2">Nome da Secretária(o) Virtual *</label>
-                    <input type="text" value={nomeSecretaria} onChange={(e) => setNomeSecretaria(e.target.value)} placeholder="Ex: Sofia, Dra. Clara, Secretária Julia" className="w-full bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-colors" />
+                    <input type="text" value={nomeSecretaria === 'Secretária Virtual' ? '' : nomeSecretaria} onChange={(e) => setNomeSecretaria(e.target.value)} placeholder="Ex: Sofia, Dra. Clara, Secretária Julia" className="w-full bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-colors" />
                     <p className="text-xs text-gray-500 mt-1">O nome com o qual a IA se apresentará aos pacientes.</p>
                   </div>
                   <div>
