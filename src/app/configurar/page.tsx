@@ -44,15 +44,31 @@ function ConfigurarFormContent() {
 
   const currentTab: Tab = stepParam === '3' ? 'horarios' : stepParam === '2' ? 'integracoes' : 'clinica';
 
+  const [isFromDashboard, setIsFromDashboard] = useState(false);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      const fromDash = searchParams.get('from_dashboard') === 'true' || searchParams.get('source') === 'dashboard';
+      if (fromDash) {
+        setIsFromDashboard(true);
+      } else {
+        fetch('/api/auth/session')
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.authenticated) {
+              setIsFromDashboard(true);
+            }
+          })
+          .catch(() => {});
+      }
+
       const isPaid = window.localStorage.getItem('licenca_paga') === 'true';
       const hasEmpresaId = searchParams.get('empresa_id') || searchParams.get('session_id');
       
       if (hasEmpresaId) {
         window.localStorage.setItem('licenca_paga', 'true');
         window.localStorage.setItem('onboarding_empresa_id', hasEmpresaId);
-      } else if (!isPaid) {
+      } else if (!isPaid && !fromDash) {
         router.replace('/pagamento');
       }
     }
@@ -211,6 +227,7 @@ function ConfigurarFormContent() {
       const cleanPhone = pairingPhone.replace(/\D/g, '');
       const cleanClinica = whatsappClinica.replace(/\D/g, '');
       const targetInst = cleanClinica || cleanPhone || instanceName || `clinica_${Math.floor(1000 + Math.random() * 9000)}`;
+      setInstanceName(targetInst);
 
       const res = await fetch('/api/empresa/gerar-pairing-code', {
         method: 'POST',
@@ -451,13 +468,15 @@ function ConfigurarFormContent() {
             <span className="text-sm font-semibold text-teal-500 hidden sm:block tracking-wide uppercase">Painel Médico de Implantação</span>
           </div>
           
-          <button
-            onClick={handleLogout}
-            className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-red-950/20 hover:bg-red-900/30 border border-red-900/30 hover:border-red-800/40 text-red-400 text-sm font-semibold transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Sair do Painel</span>
-          </button>
+          {isFromDashboard && (
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-red-950/20 hover:bg-red-900/30 border border-red-900/30 hover:border-red-800/40 text-red-400 text-sm font-semibold transition-colors cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sair do Painel</span>
+            </button>
+          )}
         </div>
       </nav>
 
@@ -716,164 +735,176 @@ function ConfigurarFormContent() {
       {showQrModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
           <div className="bg-[#121417] border border-[#27272a] rounded-2xl p-6 sm:p-10 shadow-2xl w-full max-w-lg relative">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 bg-teal-500/10 text-teal-400 rounded-full flex items-center justify-center mb-6">
-                <Smartphone className="w-8 h-8" />
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Conecte sua IA ao WhatsApp</h3>
-
-              {/* Seletor de Modo de Conexão */}
-              <div className="flex border-b border-[#27272a] mb-6 w-full">
-                <button
-                  type="button"
-                  onClick={() => setConnectionMode('qr')}
-                  className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
-                    connectionMode === 'qr' 
-                      ? 'border-teal-500 text-teal-400' 
-                      : 'border-transparent text-gray-500 hover:text-gray-300'
-                  }`}
-                >
-                  QR Code (Computador)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConnectionMode('pairing')}
-                  className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
-                    connectionMode === 'pairing' 
-                      ? 'border-teal-500 text-teal-400' 
-                      : 'border-transparent text-gray-500 hover:text-gray-300'
-                  }`}
-                >
-                  Conexão Direta (Celular)
-                </button>
-              </div>
-
-              {errorMessage && (
-                <div className="w-full bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl mb-6 text-xs font-semibold text-left flex items-start space-x-2 animate-fade-in">
-                  <CheckCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-                  <span>{errorMessage}</span>
+            {isConnected ? (
+              <div className="flex flex-col items-center text-center py-4 animate-fade-in space-y-6 w-full">
+                <div className="relative">
+                  <div className="w-24 h-24 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center animate-pulse">
+                    <CheckCircle className="w-16 h-16 text-emerald-400" />
+                  </div>
+                  <span className="absolute bottom-1 right-1 flex h-6 w-6">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-6 w-6 bg-emerald-500 border-2 border-[#121417]"></span>
+                  </span>
                 </div>
-              )}
 
-              {connectionMode === 'qr' ? (
-                <>
-                  <p className="text-gray-400 text-sm mb-6 px-4">
-                    Pegue o celular da clínica, abra o WhatsApp, vá em <strong className="text-white">Aparelhos Conectados</strong> e escaneie o código abaixo.
-                  </p>
-
-                  <div className="bg-white p-4 rounded-xl shadow-inner mb-6 relative min-h-[220px] min-w-[220px] flex items-center justify-center">
-                    {qrLoading ? (
-                      <div className="flex flex-col items-center justify-center text-gray-500">
-                        <RefreshCw className="w-8 h-8 animate-spin mb-2" />
-                        <span className="text-sm font-semibold">Gerando novo código...</span>
-                      </div>
-                    ) : (
-                      <img src={qrBase64} alt="WhatsApp QR Code" className="w-[200px] h-[200px]" />
-                    )}
+                <div>
+                  <div className="inline-flex items-center space-x-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-emerald-400 text-xs font-bold uppercase tracking-wider mb-3">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>Conexão Verificada</span>
                   </div>
-
-                  <div className="w-full mb-6">
-                    <button 
-                      onClick={handleRegenerateQr}
-                      disabled={qrLoading}
-                      className="w-full py-3 px-4 bg-teal-600/10 border border-teal-500/30 hover:bg-teal-600/20 text-teal-400 font-semibold rounded-xl transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${qrLoading ? 'animate-spin' : ''}`} /> <span>Gerar Novamente</span>
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p className="text-gray-400 text-sm mb-6 px-4">
-                    Insira o número do WhatsApp da clínica com o código do país e DDD para gerar o código de pareamento.
+                  <h3 className="text-2xl sm:text-3xl font-extrabold text-white">WhatsApp Conectado com Sucesso!</h3>
+                  <p className="text-gray-300 text-sm mt-2 max-w-md">
+                    Sua Inteligência Artificial já está ativada e pronta para responder os seus pacientes no WhatsApp oficial da clínica.
                   </p>
+                </div>
 
-                  <div className="w-full space-y-4 mb-6">
-                    <div className="flex gap-2">
-                      <input
-                        ref={pairingPhoneInputRef}
-                        type="text"
-                        value={pairingPhone}
-                        onChange={(e) => setPairingPhone(e.target.value)}
-                        placeholder="Ex: 5511999999999"
-                        className="flex-1 bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 text-center"
-                      />
-                      <button
-                        onClick={handleGeneratePairingCode}
-                        disabled={pairingLoading || !pairingPhone}
-                        className="px-5 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-colors disabled:opacity-50 cursor-pointer whitespace-nowrap flex items-center justify-center"
-                      >
-                        {pairingLoading ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Gerar Código"}
-                      </button>
+                <div className="w-full bg-[#181a1f] border border-emerald-500/30 p-4 rounded-xl text-left text-xs text-gray-300 space-y-2">
+                  <div className="flex items-center space-x-2 text-emerald-400 font-bold">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Instância Ativa: {instanceName || whatsappClinica}</span>
+                  </div>
+                  <p>• Agendamentos automáticos ativados</p>
+                  <p>• Respostas 24/7 com IA habilitadas</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      localStorage.removeItem('onboarding_data');
+                    }
+                    window.location.href = '/sucesso';
+                  }}
+                  className="w-full py-4 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-base rounded-xl transition-all shadow-xl hover:shadow-emerald-500/25 flex items-center justify-center space-x-3 cursor-pointer"
+                >
+                  <span>Concluir e Ir para a Tela de Sucesso</span>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-teal-500/10 text-teal-400 rounded-full flex items-center justify-center mb-6">
+                  <Smartphone className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">Conecte sua IA ao WhatsApp</h3>
+
+                {/* Seletor de Modo de Conexão */}
+                <div className="flex border-b border-[#27272a] mb-6 w-full">
+                  <button
+                    type="button"
+                    onClick={() => setConnectionMode('qr')}
+                    className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+                      connectionMode === 'qr' 
+                        ? 'border-teal-500 text-teal-400' 
+                        : 'border-transparent text-gray-500 hover:text-gray-300'
+                    }`}
+                  >
+                    QR Code (Computador)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConnectionMode('pairing')}
+                    className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+                      connectionMode === 'pairing' 
+                        ? 'border-teal-500 text-teal-400' 
+                        : 'border-transparent text-gray-500 hover:text-gray-300'
+                    }`}
+                  >
+                    Conexão Direta (Celular)
+                  </button>
+                </div>
+
+                {errorMessage && (
+                  <div className="w-full bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl mb-6 text-xs font-semibold text-left flex items-start space-x-2 animate-fade-in">
+                    <CheckCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
+
+                {connectionMode === 'qr' ? (
+                  <>
+                    <p className="text-gray-400 text-sm mb-6 px-4">
+                      Pegue o celular da clínica, abra o WhatsApp, vá em <strong className="text-white">Aparelhos Conectados</strong> e escaneie o código abaixo.
+                    </p>
+
+                    <div className="bg-white p-4 rounded-xl shadow-inner mb-6 relative min-h-[220px] min-w-[220px] flex items-center justify-center">
+                      {qrLoading ? (
+                        <div className="flex flex-col items-center justify-center text-gray-500">
+                          <RefreshCw className="w-8 h-8 animate-spin mb-2" />
+                          <span className="text-sm font-semibold">Gerando novo código...</span>
+                        </div>
+                      ) : (
+                        <img src={qrBase64} alt="WhatsApp QR Code" className="w-[200px] h-[200px]" />
+                      )}
                     </div>
 
-                    {pairingCode ? (
-                      <div className="bg-[#181a1f] border border-teal-500/30 p-6 rounded-2xl text-center space-y-4 animate-fade-in">
-                        <span className="text-xs text-gray-400 uppercase tracking-widest block font-bold">Código de Conexão</span>
-                        <div className="text-3xl font-extrabold text-teal-400 tracking-wider font-mono select-all bg-[#0c0d0e] py-3 rounded-xl border border-[#27272a] shadow-inner">
-                          {pairingCode}
-                        </div>
-                        <div className="text-left text-xs text-gray-300 space-y-2 pt-2 border-t border-gray-800">
-                          <p className="font-semibold text-white">Como conectar no seu WhatsApp:</p>
-                          <p>1. Abra o WhatsApp no celular que deseja conectar.</p>
-                          <p>2. Vá em <strong className="text-white">Aparelhos Conectados</strong> &gt; <strong className="text-white">Conectar um aparelho</strong>.</p>
-                          <p>3. Toque em <strong className="text-white">Conectar com número de telefone</strong> na parte inferior.</p>
-                          <p>4. Insira o código acima na tela do seu celular.</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-[#181a1f]/50 border border-dashed border-[#27272a] p-8 rounded-xl text-center text-sm text-gray-500">
-                        Clique em "Gerar Código" para obter a chave de pareamento de 8 dígitos.
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-
-              <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl text-left mb-8 w-full flex items-start space-x-3">
-                <ShieldCheck className="w-6 h-6 text-amber-500 flex-shrink-0" />
-                <p className="text-xs text-amber-400/90 leading-relaxed">
-                  <strong className="text-amber-500 block mb-1">Aviso de Segurança (Anti-Spam)</strong>
-                  Este número ficará sob o controle exclusivo da nossa Inteligência Artificial para responder pacientes. <strong className="text-amber-300">Não utilize este número para fazer propagandas ou envios em massa (marketing)</strong>, sujeito a bloqueio definitivo do chip pelo WhatsApp.
-                </p>
-              </div>
-
-              {isConnected && (
-                <div className="w-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 p-3.5 rounded-xl mb-4 text-sm font-semibold flex items-center justify-center space-x-2 animate-bounce">
-                  <CheckCircle className="w-5 h-5 text-emerald-400" />
-                  <span>WhatsApp Conectado com Sucesso!</span>
-                </div>
-              )}
-
-              <button 
-                type="button"
-                onClick={() => {
-                  if (!isConnected) return;
-                  if (typeof window !== 'undefined') {
-                    localStorage.removeItem('onboarding_data');
-                  }
-                  window.location.href = '/sucesso';
-                }}
-                disabled={!isConnected}
-                className={`w-full py-3.5 px-4 font-bold rounded-xl transition-all shadow-lg flex items-center justify-center space-x-2 mt-4 ${
-                  isConnected 
-                    ? 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white cursor-pointer hover:shadow-teal-500/25' 
-                    : 'bg-gray-800 text-gray-500 cursor-not-allowed opacity-60 border border-gray-700'
-                }`}
-              >
-                {isConnected ? (
-                  <>
-                    <span>Concluir e Ir para Tela de Sucesso</span>
-                    <CheckCircle className="w-5 h-5" />
+                    <div className="w-full mb-6">
+                      <button 
+                        onClick={handleRegenerateQr}
+                        disabled={qrLoading}
+                        className="w-full py-3 px-4 bg-teal-600/10 border border-teal-500/30 hover:bg-teal-600/20 text-teal-400 font-semibold rounded-xl transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
+                      >
+                        <RefreshCw className={`w-4 h-4 ${qrLoading ? 'animate-spin' : ''}`} /> <span>Gerar Novamente</span>
+                      </button>
+                    </div>
                   </>
                 ) : (
                   <>
-                    <span>Aguardando conexão pelo WhatsApp...</span>
-                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    <p className="text-gray-400 text-sm mb-6 px-4">
+                      Insira o número do WhatsApp da clínica com o código do país e DDD para gerar o código de pareamento.
+                    </p>
+
+                    <div className="w-full space-y-4 mb-6">
+                      <div className="flex gap-2">
+                        <input
+                          ref={pairingPhoneInputRef}
+                          type="text"
+                          value={pairingPhone}
+                          onChange={(e) => setPairingPhone(e.target.value)}
+                          placeholder="Ex: 5511999999999"
+                          className="flex-1 bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 text-center"
+                        />
+                        <button
+                          onClick={handleGeneratePairingCode}
+                          disabled={pairingLoading || !pairingPhone}
+                          className="px-5 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl transition-colors disabled:opacity-50 cursor-pointer whitespace-nowrap flex items-center justify-center"
+                        >
+                          {pairingLoading ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Gerar Código"}
+                        </button>
+                      </div>
+
+                      {pairingCode ? (
+                        <div className="bg-[#181a1f] border border-teal-500/30 p-6 rounded-2xl text-center space-y-4 animate-fade-in">
+                          <span className="text-xs text-gray-400 uppercase tracking-widest block font-bold">Código de Conexão</span>
+                          <div className="text-3xl font-extrabold text-teal-400 tracking-wider font-mono select-all bg-[#0c0d0e] py-3 rounded-xl border border-[#27272a] shadow-inner">
+                            {pairingCode}
+                          </div>
+                          <div className="text-left text-xs text-gray-300 space-y-2 pt-2 border-t border-gray-800">
+                            <p className="font-semibold text-white">Como conectar no seu WhatsApp:</p>
+                            <p>1. Abra o WhatsApp no celular que deseja conectar.</p>
+                            <p>2. Vá em <strong className="text-white">Aparelhos Conectados</strong> &gt; <strong className="text-white">Conectar um aparelho</strong>.</p>
+                            <p>3. Toque em <strong className="text-white">Conectar com número de telefone</strong> na parte inferior.</p>
+                            <p>4. Insira o código acima na tela do seu celular.</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-[#181a1f]/50 border border-dashed border-[#27272a] p-8 rounded-xl text-center text-sm text-gray-500">
+                          Clique em "Gerar Código" para obter a chave de pareamento de 8 dígitos.
+                        </div>
+                      )}
+                    </div>
                   </>
                 )}
-              </button>
-            </div>
+
+                <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl text-left mb-4 w-full flex items-start space-x-3">
+                  <ShieldCheck className="w-6 h-6 text-amber-500 flex-shrink-0" />
+                  <p className="text-xs text-amber-400/90 leading-relaxed">
+                    <strong className="text-amber-500 block mb-1">Aviso de Segurança (Anti-Spam)</strong>
+                    Este número ficará sob o controle exclusivo da nossa Inteligência Artificial para responder pacientes. <strong className="text-amber-300">Não utilize este número para fazer propagandas ou envios em massa (marketing)</strong>, sujeito a bloqueio definitivo do chip pelo WhatsApp.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -30,11 +30,13 @@ export async function GET(request: Request) {
 
     const data = await res.json();
     
-    // A estrutura na V2 costuma retornar { instance: { state: "open" } }
-    // Ou direto { state: "open" }
-    const state = data?.instance?.state || data?.state || 'unknown';
+    const rawState = data?.instance?.state || data?.state || data?.status || 'unknown';
+    const state = String(rawState).toLowerCase();
 
-    return NextResponse.json({ state }, { status: 200 });
+    // Considerar aberto se for 'open' ou 'connected'
+    const isConnected = state === 'open' || state === 'connected';
+
+    return NextResponse.json({ state: isConnected ? 'open' : state, rawState }, { status: 200 });
 
   } catch (error: any) {
     console.error('Erro no status-conexao:', error);

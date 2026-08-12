@@ -38,17 +38,20 @@ export async function POST(request: Request) {
       })
     });
 
-    if (!createRes.ok) {
-      const errTxt = await createRes.text();
-      return NextResponse.json({ error: `Falha ao recriar instância para QR Code: ${errTxt}` }, { status: createRes.status });
-    }
-
-    const createData = await createRes.json();
     let base64 = '';
-    if (createData.qrcode && createData.qrcode.base64) {
-      base64 = createData.qrcode.base64;
-    } else if (createData.base64) {
-      base64 = createData.base64;
+    if (createRes.ok) {
+      const createData = await createRes.json();
+      if (createData.qrcode && createData.qrcode.base64) {
+        base64 = createData.qrcode.base64;
+      } else if (createData.base64) {
+        base64 = createData.base64;
+      }
+    } else {
+      const errTxt = await createRes.text();
+      console.log(`[QR Code] Aviso ao criar instância: ${errTxt}`);
+      if (!createRes.status || (createRes.status !== 403 && !errTxt.includes('already in use'))) {
+        return NextResponse.json({ error: `Falha ao recriar instância para QR Code: ${errTxt}` }, { status: createRes.status });
+      }
     }
 
     // Passo 3: Se não veio no create, tenta connect

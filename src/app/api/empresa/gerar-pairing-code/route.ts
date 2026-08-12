@@ -50,7 +50,21 @@ export async function POST(request: Request) {
 
     if (!createRes.ok) {
       const errTxt = await createRes.text();
-      return NextResponse.json({ error: `Falha ao recriar instância para pareamento: ${errTxt}` }, { status: createRes.status });
+      console.log(`[Pairing] Aviso ao criar instância: ${errTxt}`);
+      
+      // Se a instância já existe (already in use), fazemos logout para soltar a sessão e tentamos conectar diretamente
+      if (createRes.status === 403 || errTxt.includes('already in use')) {
+        try {
+          await fetch(`${evoUrl}/instance/logout/${instanceName}`, {
+            method: 'DELETE',
+            headers: { 'apikey': evoKey }
+          });
+        } catch (e) {
+          console.log('[Pairing] Logout prévio falhou, tentando conectar diretamente...');
+        }
+      } else {
+        return NextResponse.json({ error: `Falha ao recriar instância para pareamento: ${errTxt}` }, { status: createRes.status });
+      }
     }
 
     // Passo 3: Solicitar o código de pareamento via GET
