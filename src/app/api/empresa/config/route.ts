@@ -185,10 +185,13 @@ export async function POST(request: Request) {
       user = await createUser(ownerEmail, 'no_password_otp_only');
     }
 
-    // Salvar rascunho completo local e em nuvem
+    // Buscar o rascunho ANTERIOR antes de sobrescrever com o novo payload
+    const previousDraft = (await getDraftPayload(ownerEmail)) || (await getDraftPayload(whatsappClinica));
+
+    // Salvar o novo rascunho completo local e em nuvem
     if (ownerEmail) await saveDraftPayload(ownerEmail, payload);
     if (whatsappClinica) await saveDraftPayload(whatsappClinica, payload);
-    
+
     let hasChanges = true;
     let eventType = 'novo_cadastro';
     let supabaseStatus = 'Não Tentou';
@@ -227,37 +230,46 @@ export async function POST(request: Request) {
           return false;
         });
 
-        if (existing) {
+        const fullJsonString = JSON.stringify(payload);
+
+        if (existing || previousDraft) {
           // Já existe! É uma alteração de cadastro
           eventType = 'alteracao_cadastro';
 
-          // Buscar rascunho anterior para comparação profunda (incluindo horários, tempo, valor, secretária)
-          const oldDraft = (await getDraftPayload(ownerEmail)) || (await getDraftPayload(whatsappClinica));
-          
-          const normStr = (obj: any) => JSON.stringify(obj || {});
-          
-          const oldPayloadStr = oldDraft 
-            ? normStr({ clinica: oldDraft.clinica, integracoes: oldDraft.integracoes, horarios: oldDraft.horarios })
-            : (existing.dados_completos_json ? (typeof existing.dados_completos_json === 'string' ? existing.dados_completos_json : JSON.stringify(existing.dados_completos_json)) : '');
+          if (previousDraft) {
+            const cleanObj = (obj: any) => ({
+              clinica: obj?.clinica || {},
+              integracoes: obj?.integracoes || {},
+              horarios: obj?.horarios || {}
+            });
 
-          const newPayloadStr = normStr({ clinica: payload.clinica, integracoes: payload.integracoes, horarios: payload.horarios });
+            const oldSig = JSON.stringify(cleanObj(previousDraft));
+            const newSig = JSON.stringify(cleanObj(payload));
 
-          // Comparação profunda dos campos chaves e do JSON integral
-          const sameName = norm(existing.nome_clinica) === norm(nomeClinica);
-          const sameAddress = norm(existing.endereco) === norm(endereco);
-          const sameSpecialists = norm(existing.especialistas) === norm(especialistasStr);
-          const sameChannels = norm(existing.canais_escolhidos) === norm(canaisStr);
-          const samePayload = oldPayloadStr ? (norm(oldPayloadStr) === norm(newPayloadStr)) : false;
-
-          const fullJsonString = JSON.stringify(payload);
-
-          if (sameName && sameAddress && sameSpecialists && sameChannels && samePayload) {
-            hasChanges = false;
-            supabaseStatus = 'Pulado (Sem alterações)';
-            console.log(`[Config] Nenhuma alteração real detectada para a clínica de telefone ${whatsappClinica}.`);
+            if (oldSig === newSig) {
+              hasChanges = false;
+              supabaseStatus = 'Pulado (Sem alterações)';
+              console.log(`[Config] Nenhuma alteração real detectada nos dados completos.`);
+            } else {
+              hasChanges = true;
+              console.log(`[Config] Alteração detectada nos dados completos da clínica.`);
+            }
           } else {
-            hasChanges = true;
-            // Houve alteração real -> Atualizar registro existente
+            // Comparação fallback com colunas de produção
+            const sameName = norm(existing?.nome_clinica) === norm(nomeClinica);
+            const sameAddress = norm(existing?.endereco) === norm(endereco);
+            const sameSpecialists = norm(existing?.especialistas) === norm(especialistasStr);
+            const sameChannels = norm(existing?.canais_escolhidos) === norm(canaisStr);
+
+            if (sameName && sameAddress && sameSpecialists && sameChannels) {
+              hasChanges = false;
+              supabaseStatus = 'Pulado (Sem alterações)';
+            } else {
+              hasChanges = true;
+            }
+          }
+
+          if (hasChanges && existing) {
             let updatePayload: any = {
               nome_clinica: nomeClinica,
               telefone_principal: cleanPhone || whatsappClinica,
@@ -292,7 +304,6 @@ export async function POST(request: Request) {
           }
         } else {
           // Novo cadastro! Inserir novo registro
-          const fullJsonString = JSON.stringify(payload);
           let insertPayload: any = {
             nome_clinica: nomeClinica,
             telefone_principal: cleanPhone || whatsappClinica,
