@@ -210,9 +210,14 @@ export async function POST(request: Request) {
       }
     }
 
+    const tituloMensagem = eventType === 'alteracao_cadastro' 
+      ? '📋 *ALTERAÇÃO DE CADASTRO DE CLÍNICA*' 
+      : '📋 *NOVO CADASTRO DE CLÍNICA*';
+
     const payloadWebhook = {
       ...payload,
       event: eventType, // 'novo_cadastro' ou 'alteracao_cadastro'
+      titulo_mensagem: tituloMensagem,
       clinicName: nomeClinica,
       nome_da_clinica: nomeClinica,
       whatsapp_ia: whatsappClinica,
