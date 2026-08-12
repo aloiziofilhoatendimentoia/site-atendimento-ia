@@ -231,19 +231,32 @@ export async function POST(request: Request) {
           // Já existe! É uma alteração de cadastro
           eventType = 'alteracao_cadastro';
 
-          // Comparação profunda dos campos chaves para determinar se houve alteração real
+          // Buscar rascunho anterior para comparação profunda (incluindo horários, tempo, valor, secretária)
+          const oldDraft = (await getDraftPayload(ownerEmail)) || (await getDraftPayload(whatsappClinica));
+          
+          const normStr = (obj: any) => JSON.stringify(obj || {});
+          
+          const oldPayloadStr = oldDraft 
+            ? normStr({ clinica: oldDraft.clinica, integracoes: oldDraft.integracoes, horarios: oldDraft.horarios })
+            : (existing.dados_completos_json ? (typeof existing.dados_completos_json === 'string' ? existing.dados_completos_json : JSON.stringify(existing.dados_completos_json)) : '');
+
+          const newPayloadStr = normStr({ clinica: payload.clinica, integracoes: payload.integracoes, horarios: payload.horarios });
+
+          // Comparação profunda dos campos chaves e do JSON integral
           const sameName = norm(existing.nome_clinica) === norm(nomeClinica);
           const sameAddress = norm(existing.endereco) === norm(endereco);
           const sameSpecialists = norm(existing.especialistas) === norm(especialistasStr);
           const sameChannels = norm(existing.canais_escolhidos) === norm(canaisStr);
+          const samePayload = oldPayloadStr ? (norm(oldPayloadStr) === norm(newPayloadStr)) : false;
 
           const fullJsonString = JSON.stringify(payload);
 
-          if (sameName && sameAddress && sameSpecialists && sameChannels) {
+          if (sameName && sameAddress && sameSpecialists && sameChannels && samePayload) {
             hasChanges = false;
             supabaseStatus = 'Pulado (Sem alterações)';
             console.log(`[Config] Nenhuma alteração real detectada para a clínica de telefone ${whatsappClinica}.`);
           } else {
+            hasChanges = true;
             // Houve alteração real -> Atualizar registro existente
             let updatePayload: any = {
               nome_clinica: nomeClinica,

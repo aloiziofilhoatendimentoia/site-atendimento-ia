@@ -152,6 +152,21 @@ function ConfigurarFormContent() {
     }
   }, [showQrModal, connectionMode]);
 
+  // Interceptar a seta de voltar do navegador com o Modal de Conexão aberto (Volta para Etapa 3 - Regras da Agenda)
+  useEffect(() => {
+    if (showQrModal) {
+      window.history.pushState({ modalOpen: true }, '');
+      const handlePopState = (e: PopStateEvent) => {
+        setShowQrModal(false);
+        router.push('/configurar?step=3');
+      };
+      window.addEventListener('popstate', handlePopState);
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
+  }, [showQrModal, router]);
+
   // Carregar dados salvos do localStorage e do Servidor (Cloud Persistence)
   useEffect(() => {
     if (typeof window !== 'undefined') {
