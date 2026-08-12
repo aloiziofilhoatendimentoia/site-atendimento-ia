@@ -15,30 +15,100 @@ import {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_atendimento_ia_key';
 
-// GET /api/empresa/config - Retorna os dados já salvos da empresa do usuário logado
-export async function GET() {
+// GET /api/empresa/config - Retorna a estrutura completa de onboarding da clínica por JWT ou query params (email/whatsapp)
+export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies();
-    const tokenCookie = cookieStore.get('auth_token');
+    const { searchParams } = new URL(request.url);
+    const emailParam = searchParams.get('email');
+    const whatsappParam = searchParams.get('whatsapp');
 
-    if (!tokenCookie || !tokenCookie.value) {
-      return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+    let emailToUse = emailParam || '';
+
+    if (!emailToUse) {
+      const cookieStore = await cookies();
+      const tokenCookie = cookieStore.get('auth_token');
+      if (tokenCookie && tokenCookie.value) {
+        try {
+          const decoded: any = jwt.verify(tokenCookie.value, JWT_SECRET);
+          emailToUse = decoded.email || '';
+        } catch (e) {}
+      }
     }
 
-    let decoded: any;
-    try {
-      decoded = jwt.verify(tokenCookie.value, JWT_SECRET);
-    } catch (e) {
-      return NextResponse.json({ error: 'Sessão expirada.' }, { status: 401 });
+    let user = emailToUse ? await getUserByEmail(emailToUse) : null;
+    let dashboardData = user ? await getDashboardData(user.id) : null;
+
+    // Buscar no Supabase nativo se houver whatsappParam ou se local_db não tiver os dados
+    let siteClinic: any = null;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+    if (supabaseUrl && supabaseServiceKey) {
+      try {
+        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+        let query = supabaseAdmin.from('CLIENTES ATENDIMENTO IA SITE').select('*');
+
+        if (whatsappParam) {
+          const clean = whatsappParam.replace(/\D/g, '');
+          query = query.or(`telefone_principal.eq.${whatsappParam},telefone_principal.eq.${clean},telefone_principal.eq.55${clean}`);
+        } else {
+          query = query.order('id', { ascending: false }).limit(1);
+        }
+
+        const { data: clinics } = await query;
+        if (clinics && clinics.length > 0) {
+          siteClinic = clinics[0];
+        }
+      } catch (err) {
+        console.error("Erro busca Supabase GET config:", err);
+      }
     }
 
-    const user = await getUserByEmail(decoded.email);
-    if (!user) {
-      return NextResponse.json({ error: 'Usuário não localizado.' }, { status: 401 });
+    // Reconstruir o objeto onboardingData completo para o formulário
+    const nomeClinica = dashboardData?.empresa?.nome_empresa || siteClinic?.nome_clinica || '';
+    const endereco = dashboardData?.suporte?.endereco || siteClinic?.endereco || '';
+    const whatsappClinica = dashboardData?.suporte?.whatsapp_empresa || siteClinic?.telefone_principal || whatsappParam || '';
+    const whatsappHumano = dashboardData?.suporte?.telefone_suporte || whatsappClinica;
+    const whatsappReceberAgendamento = dashboardData?.agendamento?.whatsapp_agendamento || whatsappClinica;
+
+    let especialistasArr = [{ nome: '', especialidade: '' }];
+    if (siteClinic?.especialistas) {
+      const parsed = String(siteClinic.especialistas)
+        .split('\n')
+        .map(line => {
+          const match = line.match(/-?\s*(?:Dr\.|Dra\.)?\s*([^(]+)\(([^)]+)\)/i);
+          if (match) {
+            return { nome: match[1].trim(), especialidade: match[2].trim() };
+          }
+          return { nome: line.replace(/^-/, '').trim(), especialidade: 'Geral' };
+        })
+        .filter(e => e.nome);
+      if (parsed.length > 0) especialistasArr = parsed;
     }
 
-    const dashboardData = await getDashboardData(user.id);
-    return NextResponse.json({ success: true, data: dashboardData }, { status: 200 });
+    const onboardingData = {
+      nomeClinica,
+      nomeSecretaria: 'Secretária Virtual',
+      endereco,
+      whatsappClinica,
+      especialistas: especialistasArr,
+      opcoesAgendamento: {
+        whatsapp: dashboardData?.agendamento?.usa_whatsapp ?? true,
+        calendar: dashboardData?.agendamento?.usa_google_calendar ?? false
+      },
+      emailCalendar: '',
+      whatsappHumano,
+      whatsappReceberAgendamento,
+      tempoConsulta: '30',
+      valorConsulta: 'R$ 200,00',
+      blocosHorario: [{ dias: ['seg', 'ter', 'qua', 'qui', 'sex'], inicio: '08:00', fim: '18:00' }]
+    };
+
+    return NextResponse.json({
+      success: true,
+      data: dashboardData,
+      onboardingData
+    }, { status: 200 });
 
   } catch (error) {
     console.error('Erro na API de buscar configurações:', error);

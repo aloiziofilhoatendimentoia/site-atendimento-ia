@@ -161,7 +161,7 @@ function ConfigurarFormContent() {
     }
   }, [showQrModal, connectionMode]);
 
-  // Carregar dados salvos do localStorage
+  // Carregar dados salvos do localStorage e do Servidor (Cloud Persistence)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('onboarding_data');
@@ -185,9 +185,33 @@ function ConfigurarFormContent() {
           if (parsed.valorConsulta) setValorConsulta(parsed.valorConsulta);
           if (parsed.blocosHorario) setBlocosHorario(parsed.blocosHorario);
         } catch (e) {
-          console.error("Erro ao carregar dados salvos:", e);
+          console.error("Erro ao carregar dados salvos do localStorage:", e);
         }
       }
+
+      // Buscar do Servidor para sincronização em nuvem
+      const email = localStorage.getItem('onboarding_email') || localStorage.getItem('user_email') || localStorage.getItem('email') || '';
+      const whatsapp = localStorage.getItem('onboarding_whatsapp') || '';
+      fetch(`/api/empresa/config?email=${encodeURIComponent(email)}&whatsapp=${encodeURIComponent(whatsapp)}`)
+        .then(res => res.json())
+        .then(resData => {
+          if (resData && resData.onboardingData) {
+            const ob = resData.onboardingData;
+            if (ob.nomeClinica) setNomeClinica(ob.nomeClinica);
+            if (ob.nomeSecretaria) setNomeSecretaria(ob.nomeSecretaria);
+            if (ob.endereco) setEndereco(ob.endereco);
+            if (ob.whatsappClinica) {
+              setWhatsappClinica(ob.whatsappClinica);
+              const clean = ob.whatsappClinica.replace(/\D/g, '');
+              setPairingPhone(clean ? (clean.startsWith('55') ? clean : '55' + clean) : '55');
+            }
+            if (ob.especialistas && ob.especialistas.length > 0) setEspecialistas(ob.especialistas);
+            if (ob.opcoesAgendamento) setOpcoesAgendamento(ob.opcoesAgendamento);
+            if (ob.whatsappHumano) setWhatsappHumano(ob.whatsappHumano);
+            if (ob.whatsappReceberAgendamento) setWhatsappReceberAgendamento(ob.whatsappReceberAgendamento);
+          }
+        })
+        .catch(err => console.error("Erro ao carregar rascunho do servidor:", err));
     }
   }, []);
 
