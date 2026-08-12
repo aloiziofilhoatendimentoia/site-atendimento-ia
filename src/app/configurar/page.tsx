@@ -195,11 +195,15 @@ function ConfigurarFormContent() {
               setWhatsappClinica(ob.whatsappClinica);
               const clean = ob.whatsappClinica.replace(/\D/g, '');
               setPairingPhone(clean ? (clean.startsWith('55') ? clean : '55' + clean) : '55');
+              localStorage.setItem('onboarding_whatsapp', ob.whatsappClinica);
             }
             if (ob.especialistas && ob.especialistas.length > 0) setEspecialistas(ob.especialistas);
             if (ob.opcoesAgendamento) setOpcoesAgendamento(ob.opcoesAgendamento);
             if (ob.whatsappHumano) setWhatsappHumano(ob.whatsappHumano);
             if (ob.whatsappReceberAgendamento) setWhatsappReceberAgendamento(ob.whatsappReceberAgendamento);
+            if (ob.tempoConsulta) setTempoConsulta(ob.tempoConsulta);
+            if (ob.valorConsulta) setValorConsulta(ob.valorConsulta);
+            if (ob.blocosHorario && ob.blocosHorario.length > 0) setBlocosHorario(ob.blocosHorario);
           }
         })
         .catch(err => console.error("Erro ao carregar rascunho do servidor:", err));

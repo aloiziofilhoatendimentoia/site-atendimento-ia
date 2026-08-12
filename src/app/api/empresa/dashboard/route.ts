@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
-import { getUserByEmail, getDashboardData } from '@/lib/db';
+import { getUserByEmail, getDashboardData, getDraftPayload } from '@/lib/db';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_atendimento_ia_key';
 
@@ -88,7 +88,9 @@ export async function GET() {
       }, { status: 200 });
     }
 
-    // 3. Retornar dados completos
+    // 3. Retornar dados completos com rascunho de onboarding
+    const savedDraft = await getDraftPayload(user.email) || await getDraftPayload(dashboardData.suporte?.whatsapp_empresa || '');
+
     return NextResponse.json({
       success: true,
       data: {
@@ -98,7 +100,8 @@ export async function GET() {
         venda: dashboardData.venda,
         servicos: dashboardData.servicos,
         googleIntegration: dashboardData.googleIntegration
-      }
+      },
+      onboardingData: savedDraft ? savedDraft : null
     }, { status: 200 });
 
   } catch (error) {
