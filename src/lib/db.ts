@@ -70,6 +70,7 @@ interface LocalDatabase {
   google_integrations: any[];
   vendas: any[];
   servicos: any[];
+  drafts?: any[];
 }
 
 // Inicializa o banco de dados local com estrutura de tabelas vazias se o arquivo não existir
@@ -99,6 +100,7 @@ function initLocalDb(): LocalDatabase {
     if (!parsed.google_integrations) parsed.google_integrations = [];
     if (!parsed.vendas) parsed.vendas = [];
     if (!parsed.servicos) parsed.servicos = [];
+    if (!parsed.drafts) parsed.drafts = [];
     
     return parsed;
   } catch (error) {
@@ -580,4 +582,45 @@ export async function getDashboardData(userId: string) {
     venda,
     servicos,
   };
+}
+
+// 9. Persistência de Rascunhos Completos (Onboarding Drafts)
+export async function saveDraftPayload(identifier: string, payload: any) {
+  if (!identifier) return null;
+  const db = initLocalDb();
+  if (!db.drafts) db.drafts = [];
+  const normId = identifier.trim().toLowerCase();
+  const cleanId = identifier.replace(/\D/g, '');
+
+  const idx = db.drafts.findIndex((d: any) => 
+    d.id === normId || (cleanId && cleanId.length >= 8 && d.cleanId === cleanId)
+  );
+
+  const entry = {
+    id: normId,
+    cleanId: cleanId,
+    payload,
+    updated_at: new Date().toISOString()
+  };
+
+  if (idx >= 0) {
+    db.drafts[idx] = entry;
+  } else {
+    db.drafts.push(entry);
+  }
+  saveLocalDb(db);
+  return entry;
+}
+
+export async function getDraftPayload(identifier: string) {
+  if (!identifier) return null;
+  const db = initLocalDb();
+  if (!db.drafts || db.drafts.length === 0) return null;
+  const normId = identifier.trim().toLowerCase();
+  const cleanId = identifier.replace(/\D/g, '');
+
+  const found = db.drafts.find((d: any) => 
+    d.id === normId || (cleanId && cleanId.length >= 8 && d.cleanId === cleanId)
+  );
+  return found ? found.payload : null;
 }

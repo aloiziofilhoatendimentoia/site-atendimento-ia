@@ -10,7 +10,9 @@ import {
   saveAgendamentos,
   saveVendas,
   saveServicos,
-  getDashboardData
+  getDashboardData,
+  saveDraftPayload,
+  getDraftPayload
 } from '@/lib/db';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_atendimento_ia_key';
@@ -64,15 +66,30 @@ export async function GET(request: Request) {
       }
     }
 
-    // Reconstruir o objeto onboardingData completo para o formulário
-    const nomeClinica = dashboardData?.empresa?.nome_empresa || siteClinic?.nome_clinica || '';
-    const endereco = dashboardData?.suporte?.endereco || siteClinic?.endereco || '';
-    const whatsappClinica = dashboardData?.suporte?.whatsapp_empresa || siteClinic?.telefone_principal || whatsappParam || '';
-    const whatsappHumano = dashboardData?.suporte?.telefone_suporte || whatsappClinica;
-    const whatsappReceberAgendamento = dashboardData?.agendamento?.whatsapp_agendamento || whatsappClinica;
+    // Tentar restaurar o rascunho completo do payload salvo (Supabase ou Local DB)
+    let savedPayload: any = null;
+    if (emailToUse) savedPayload = await getDraftPayload(emailToUse);
+    if (!savedPayload && whatsappParam) savedPayload = await getDraftPayload(whatsappParam);
 
-    let especialistasArr = [{ nome: '', especialidade: '' }];
-    if (siteClinic?.especialistas) {
+    if (!savedPayload && siteClinic?.dados_completos_json) {
+      try {
+        savedPayload = typeof siteClinic.dados_completos_json === 'string'
+          ? JSON.parse(siteClinic.dados_completos_json)
+          : siteClinic.dados_completos_json;
+      } catch (e) {}
+    }
+
+    // Reconstruir o objeto onboardingData completo para o formulário
+    const nomeClinica = savedPayload?.clinica?.nomeClinica || dashboardData?.empresa?.nome_empresa || siteClinic?.nome_clinica || '';
+    const rawSecretaria = savedPayload?.clinica?.nomeSecretaria || siteClinic?.nome_secretaria || '';
+    const nomeSecretaria = (rawSecretaria && rawSecretaria !== 'Secretária Virtual') ? rawSecretaria : '';
+    const endereco = savedPayload?.clinica?.endereco || dashboardData?.suporte?.endereco || siteClinic?.endereco || '';
+    const whatsappClinica = savedPayload?.clinica?.whatsappClinica || dashboardData?.suporte?.whatsapp_empresa || siteClinic?.telefone_principal || whatsappParam || '';
+    const whatsappHumano = savedPayload?.integracoes?.whatsappHumano || dashboardData?.suporte?.telefone_suporte || '';
+    const whatsappReceberAgendamento = savedPayload?.integracoes?.whatsappReceberAgendamento || dashboardData?.agendamento?.whatsapp_agendamento || '';
+
+    let especialistasArr = savedPayload?.clinica?.especialistas || [{ nome: '', especialidade: '' }];
+    if ((!especialistasArr || especialistasArr.length === 0 || !especialistasArr[0].nome) && siteClinic?.especialistas) {
       const parsed = String(siteClinic.especialistas)
         .split('\n')
         .map(line => {
@@ -86,22 +103,26 @@ export async function GET(request: Request) {
       if (parsed.length > 0) especialistasArr = parsed;
     }
 
+    const tempoConsulta = savedPayload?.horarios?.tempoConsulta || '30';
+    const valorConsulta = savedPayload?.horarios?.valorConsulta || '';
+    const blocosHorario = savedPayload?.horarios?.blocosHorario || [{ dias: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'], inicio: '08:00', fim: '18:00' }];
+
     const onboardingData = {
       nomeClinica,
-      nomeSecretaria: (siteClinic?.nome_secretaria && siteClinic.nome_secretaria !== 'Secretária Virtual') ? siteClinic.nome_secretaria : '',
+      nomeSecretaria,
       endereco,
       whatsappClinica,
       especialistas: especialistasArr,
-      opcoesAgendamento: {
+      opcoesAgendamento: savedPayload?.integracoes?.opcoesAgendamento || {
         whatsapp: dashboardData?.agendamento?.usa_whatsapp ?? true,
         calendar: dashboardData?.agendamento?.usa_google_calendar ?? false
       },
-      emailCalendar: '',
+      emailCalendar: savedPayload?.integracoes?.emailCalendar || '',
       whatsappHumano,
       whatsappReceberAgendamento,
-      tempoConsulta: '30',
-      valorConsulta: 'R$ 200,00',
-      blocosHorario: [{ dias: ['seg', 'ter', 'qua', 'qui', 'sex'], inicio: '08:00', fim: '18:00' }]
+      tempoConsulta,
+      valorConsulta,
+      blocosHorario
     };
 
     return NextResponse.json({
@@ -163,6 +184,10 @@ export async function POST(request: Request) {
     if (!user) {
       user = await createUser(ownerEmail, 'no_password_otp_only');
     }
+
+    // Salvar rascunho completo local e em nuvem
+    if (ownerEmail) await saveDraftPayload(ownerEmail, payload);
+    if (whatsappClinica) await saveDraftPayload(whatsappClinica, payload);
     
     let hasChanges = true;
     let eventType = 'novo_cadastro';
@@ -212,22 +237,37 @@ export async function POST(request: Request) {
           const sameSpecialists = norm(existing.especialistas) === norm(especialistasStr);
           const sameChannels = norm(existing.canais_escolhidos) === norm(canaisStr);
 
+          const fullJsonString = JSON.stringify(payload);
+
           if (sameName && sameAddress && sameSpecialists && sameChannels) {
             hasChanges = false;
             supabaseStatus = 'Pulado (Sem alterações)';
             console.log(`[Config] Nenhuma alteração real detectada para a clínica de telefone ${whatsappClinica}.`);
           } else {
             // Houve alteração real -> Atualizar registro existente
-            const { error: updateError } = await supabaseAdmin
+            let updatePayload: any = {
+              nome_clinica: nomeClinica,
+              telefone_principal: cleanPhone || whatsappClinica,
+              endereco: endereco,
+              especialistas: especialistasStr,
+              canais_escolhidos: canaisStr,
+              dados_completos_json: fullJsonString
+            };
+
+            let { error: updateError } = await supabaseAdmin
               .from('CLIENTES ATENDIMENTO IA SITE')
-              .update({
-                nome_clinica: nomeClinica,
-                telefone_principal: cleanPhone || whatsappClinica,
-                endereco: endereco,
-                especialistas: especialistasStr,
-                canais_escolhidos: canaisStr
-              })
+              .update(updatePayload)
               .eq('id', existing.id);
+
+            // Fallback se a coluna dados_completos_json ainda não existir na tabela
+            if (updateError && updateError.message.includes('dados_completos_json')) {
+              delete updatePayload.dados_completos_json;
+              const retry = await supabaseAdmin
+                .from('CLIENTES ATENDIMENTO IA SITE')
+                .update(updatePayload)
+                .eq('id', existing.id);
+              updateError = retry.error;
+            }
 
             if (updateError) {
               console.error("Erro update Supabase:", updateError);
@@ -239,17 +279,28 @@ export async function POST(request: Request) {
           }
         } else {
           // Novo cadastro! Inserir novo registro
-          const { error: insertError } = await supabaseAdmin
+          const fullJsonString = JSON.stringify(payload);
+          let insertPayload: any = {
+            nome_clinica: nomeClinica,
+            telefone_principal: cleanPhone || whatsappClinica,
+            endereco: endereco,
+            especialistas: especialistasStr,
+            canais_escolhidos: canaisStr,
+            dados_completos_json: fullJsonString
+          };
+
+          let { error: insertError } = await supabaseAdmin
             .from('CLIENTES ATENDIMENTO IA SITE')
-            .insert([
-              {
-                nome_clinica: nomeClinica,
-                telefone_principal: cleanPhone || whatsappClinica,
-                endereco: endereco,
-                especialistas: especialistasStr,
-                canais_escolhidos: canaisStr
-              }
-            ]);
+            .insert([insertPayload]);
+
+          // Fallback se a coluna dados_completos_json ainda não existir na tabela
+          if (insertError && insertError.message.includes('dados_completos_json')) {
+            delete insertPayload.dados_completos_json;
+            const retry = await supabaseAdmin
+              .from('CLIENTES ATENDIMENTO IA SITE')
+              .insert([insertPayload]);
+            insertError = retry.error;
+          }
 
           if (insertError) {
             console.error("Erro insert Supabase:", insertError);

@@ -87,15 +87,6 @@ function ConfigurarFormContent() {
     setErrorMessage(msg);
     scrollToTop();
   };
-
-  const goToTab = (tab: Tab, keepError = false) => {
-    if (!keepError) {
-      setErrorMessage('');
-    }
-    const stepNum = tab === 'horarios' ? '3' : tab === 'integracoes' ? '2' : '1';
-    router.push(`/configurar?step=${stepNum}`);
-    setTimeout(scrollToTop, 50);
-  };
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successModal, setSuccessModal] = useState(false);
@@ -395,26 +386,104 @@ function ConfigurarFormContent() {
       router.push('/pagamento');
     }
   };
+  const validateStep1 = (): string | null => {
+    if (!nomeClinica || !nomeClinica.trim()) return 'Preencha o Nome da Clínica.';
+    if (!nomeSecretaria || !nomeSecretaria.trim() || nomeSecretaria === 'Secretária Virtual') {
+      return 'Preencha o Nome da Secretária(o) Virtual.';
+    }
+    const cleanWp = whatsappClinica.replace(/\D/g, '');
+    if (!cleanWp || cleanWp.length < 10) return 'Insira um WhatsApp Oficial da Clínica válido com DDD.';
+    if (!endereco || !endereco.trim()) return 'Preencha o Endereço Físico do Consultório.';
+    if (!especialistas || especialistas.length === 0) return 'Adicione pelo menos 1 médico ao Corpo Clínico.';
+    for (let i = 0; i < especialistas.length; i++) {
+      if (!especialistas[i].nome || !especialistas[i].nome.trim() || !especialistas[i].especialidade || !especialistas[i].especialidade.trim()) {
+        return `Preencha o nome e a especialidade do médico ${i + 1}.`;
+      }
+    }
+    return null;
+  };
+
+  const validateStep2 = (): string | null => {
+    const step1Err = validateStep1();
+    if (step1Err) return step1Err;
+
+    if (!opcoesAgendamento.whatsapp && !opcoesAgendamento.calendar) {
+      return 'Escolha pelo menos uma opção de agendamento (WhatsApp ou Google Agenda).';
+    }
+    if (opcoesAgendamento.whatsapp) {
+      const cleanWpAgendamento = whatsappReceberAgendamento.replace(/\D/g, '');
+      if (!cleanWpAgendamento || cleanWpAgendamento.length < 10) {
+        return 'Insira o número do WhatsApp com DDD onde deseja receber os agendamentos.';
+      }
+    }
+    if (opcoesAgendamento.calendar && !googleConnected) {
+      return 'Para agendar via Google Agenda, é obrigatório conectar a conta Google.';
+    }
+    return null;
+  };
+
+  const validateStep3 = (): string | null => {
+    const step2Err = validateStep2();
+    if (step2Err) return step2Err;
+
+    if (!tempoConsulta || !tempoConsulta.trim()) return 'Selecione o Tempo de Consulta.';
+    
+    const cleanValor = valorConsulta.replace(/\D/g, '');
+    if (!cleanValor || Number(cleanValor) === 0 || valorConsulta === 'R$ 0,00') {
+      return 'Informe o Valor da Consulta (não pode ser R$ 0,00).';
+    }
+
+    if (!blocosHorario || blocosHorario.length === 0) {
+      return 'Adicione pelo menos 1 bloco de expediente com dias e horários.';
+    }
+
+    for (let i = 0; i < blocosHorario.length; i++) {
+      const b = blocosHorario[i];
+      if (!b.dias || b.dias.length === 0) {
+        return `Selecione os dias da semana para o bloco de expediente ${i + 1}.`;
+      }
+      if (!b.inicio || b.inicio === '--:--' || !b.fim || b.fim === '--:--') {
+        return `Preencha os horários de abertura e fechamento para o bloco ${i + 1}.`;
+      }
+    }
+    return null;
+  };
+
+  const goToTab = (tab: Tab, keepError = false) => {
+    if (!keepError) {
+      setErrorMessage('');
+    }
+    if (tab === 'integracoes') {
+      const err = validateStep1();
+      if (err) {
+        showError(err);
+        return;
+      }
+    } else if (tab === 'horarios') {
+      const err = validateStep2();
+      if (err) {
+        showError(err);
+        return;
+      }
+    }
+    const stepNum = tab === 'horarios' ? '3' : tab === 'integracoes' ? '2' : '1';
+    router.push(`/configurar?step=${stepNum}`);
+    setTimeout(scrollToTop, 50);
+  };
 
   const handleNextTab = () => {
     setErrorMessage('');
     if (currentTab === 'clinica') {
-      if (!nomeClinica || !nomeSecretaria || !endereco || !whatsappClinica || especialistas.some(e => !e.nome || !e.especialidade)) {
-        showError('Preencha os dados da clínica, nome da secretária(o), endereço e especialistas.');
+      const err = validateStep1();
+      if (err) {
+        showError(err);
         return;
       }
       goToTab('integracoes');
     } else if (currentTab === 'integracoes') {
-      if (!opcoesAgendamento.whatsapp && !opcoesAgendamento.calendar) {
-        showError('Escolha pelo menos uma opção de agendamento (WhatsApp ou Google Agenda).');
-        return;
-      }
-      if (opcoesAgendamento.whatsapp && !whatsappReceberAgendamento) {
-        showError('Por favor, insira o número do WhatsApp onde você deseja receber os agendamentos.');
-        return;
-      }
-      if (opcoesAgendamento.calendar && !googleConnected) {
-        showError('Para agendar via Google Agenda, é obrigatório conectar a conta Google.');
+      const err = validateStep2();
+      if (err) {
+        showError(err);
         return;
       }
       goToTab('horarios');
@@ -424,23 +493,21 @@ function ConfigurarFormContent() {
   const handleSalvarConfiguracoes = async () => {
     setErrorMessage('');
     
-    if (!nomeClinica || !nomeSecretaria || !endereco || !whatsappClinica || especialistas.some(e => !e.nome || !e.especialidade)) {
-      goToTab('clinica', true);
-      showError('Preencha os dados da clínica, nome da secretária(o), endereço e especialistas.');
-      return;
-    }
-    if (!opcoesAgendamento.whatsapp && !opcoesAgendamento.calendar) {
-      goToTab('integracoes', true);
-      showError('Escolha pelo menos uma opção de agendamento (WhatsApp ou Google Agenda).');
-      return;
-    }
-    if (opcoesAgendamento.calendar && !googleConnected) {
-      goToTab('integracoes', true);
-      showError('Para agendar via Google Agenda, é obrigatório conectar a conta Google.');
-      return;
-    }
-    if (!tempoConsulta || !valorConsulta || blocosHorario.some(b => b.dias.length === 0 || !b.inicio || !b.fim)) {
-      showError('Preencha os valores da consulta e os dias e horários de todos os blocos de expediente.');
+    const err = validateStep3();
+    if (err) {
+      const step1Err = validateStep1();
+      if (step1Err) {
+        goToTab('clinica', true);
+        showError(step1Err);
+        return;
+      }
+      const step2Err = validateStep2();
+      if (step2Err) {
+        goToTab('integracoes', true);
+        showError(step2Err);
+        return;
+      }
+      showError(err);
       return;
     }
 
