@@ -105,22 +105,36 @@ export async function POST(request: Request) {
       try {
         const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
         
-        // 1. Buscar se a clínica já existe na tabela de produção
-        const { data: existingRows, error: selectError } = await supabaseAdmin
+        // Normalizar número de telefone para dígitos limpos
+        let cleanPhone = whatsappClinica.replace(/\D/g, '');
+        if (cleanPhone.length === 10 || cleanPhone.length === 11) {
+          cleanPhone = '55' + cleanPhone;
+        }
+
+        // Buscar clínicas existentes na tabela de produção
+        const { data: allRows, error: selectError } = await supabaseAdmin
           .from('CLIENTES ATENDIMENTO IA SITE')
-          .select('*')
-          .eq('telefone_principal', whatsappClinica);
+          .select('*');
 
         if (selectError) {
           console.error("Erro select Supabase:", selectError);
         }
 
         const norm = (v: any) => (v === null || v === undefined) ? '' : String(v).trim();
+        const normDigits = (v: any) => String(v || '').replace(/\D/g, '');
 
-        if (existingRows && existingRows.length > 0) {
+        // Localizar registro existente por telefone (com ou sem 55) ou por nome exato da clínica
+        const existing = (allRows || []).find((r: any) => {
+          const rDigits = normDigits(r.telefone_principal);
+          if (!rDigits && !cleanPhone) return false;
+          if (rDigits === cleanPhone || rDigits.endsWith(cleanPhone) || cleanPhone.endsWith(rDigits)) return true;
+          if (norm(r.nome_clinica).toLowerCase() === norm(nomeClinica).toLowerCase()) return true;
+          return false;
+        });
+
+        if (existing) {
           // Já existe! É uma alteração de cadastro
           eventType = 'alteracao_cadastro';
-          const existing = existingRows[0];
 
           // Comparação profunda dos campos chaves para determinar se houve alteração real
           const sameName = norm(existing.nome_clinica) === norm(nomeClinica);
@@ -138,6 +152,7 @@ export async function POST(request: Request) {
               .from('CLIENTES ATENDIMENTO IA SITE')
               .update({
                 nome_clinica: nomeClinica,
+                telefone_principal: cleanPhone || whatsappClinica,
                 endereco: endereco,
                 especialistas: especialistasStr,
                 canais_escolhidos: canaisStr
@@ -159,7 +174,7 @@ export async function POST(request: Request) {
             .insert([
               {
                 nome_clinica: nomeClinica,
-                telefone_principal: whatsappClinica,
+                telefone_principal: cleanPhone || whatsappClinica,
                 endereco: endereco,
                 especialistas: especialistasStr,
                 canais_escolhidos: canaisStr

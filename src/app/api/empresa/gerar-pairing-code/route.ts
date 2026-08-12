@@ -28,14 +28,15 @@ export async function POST(request: Request) {
         method: 'DELETE',
         headers: { 'apikey': evoKey }
       });
+      // Aguardar 800ms para a Evolution API purgar a sessão antiga no container
+      await new Promise(r => setTimeout(r, 800));
     } catch (err) {
       console.log('[Pairing] Erro ou instância não existia ao deletar:', err);
     }
 
     // Passo 2: Criar a instância OBRIGATORIAMENTE com qrcode: false
-    // Se a instância for criada com qrcode: true, ela entra em loop de QR Code e rejeita o pairing code
     console.log(`[Pairing] Criando nova instância ${instanceName} com qrcode: false...`);
-    const createRes = await fetch(`${evoUrl}/instance/create`, {
+    let createRes = await fetch(`${evoUrl}/instance/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -48,28 +49,39 @@ export async function POST(request: Request) {
       })
     });
 
+    // Se houve conflito 403 (already in use), força novo delete, aguarda 1.2s e tenta novamente
     if (!createRes.ok) {
       const errTxt = await createRes.text();
-      console.log(`[Pairing] Aviso ao criar instância: ${errTxt}`);
+      console.log(`[Pairing] Aviso ao criar instância (tentativa 1): ${errTxt}`);
       
-      // Se a instância já existe (already in use), fazemos logout para soltar a sessão e tentamos conectar diretamente
       if (createRes.status === 403 || errTxt.includes('already in use')) {
+        console.log(`[Pairing] Tentando remoção forçada e segundo retentativa...`);
         try {
-          await fetch(`${evoUrl}/instance/logout/${instanceName}`, {
+          await fetch(`${evoUrl}/instance/delete/${instanceName}`, {
             method: 'DELETE',
             headers: { 'apikey': evoKey }
           });
-        } catch (e) {
-          console.log('[Pairing] Logout prévio falhou, tentando conectar diretamente...');
-        }
-      } else {
-        return NextResponse.json({ error: `Falha ao recriar instância para pareamento: ${errTxt}` }, { status: createRes.status });
+        } catch (e) {}
+        await new Promise(r => setTimeout(r, 1200));
+
+        createRes = await fetch(`${evoUrl}/instance/create`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': evoKey
+          },
+          body: JSON.stringify({
+            instanceName: instanceName,
+            qrcode: false,
+            integration: "WHATSAPP-BAILEYS"
+          })
+        });
       }
     }
 
     // Passo 3: Solicitar o código de pareamento via GET
     console.log(`[Pairing] Solicitando código de pareamento para ${instanceName}?number=${cleanPhone}`);
-    const res = await fetch(`${evoUrl}/instance/connect/${instanceName}?number=${cleanPhone}`, {
+    let res = await fetch(`${evoUrl}/instance/connect/${instanceName}?number=${cleanPhone}`, {
       method: 'GET',
       headers: {
         'apikey': evoKey,
@@ -82,21 +94,18 @@ export async function POST(request: Request) {
       try {
         const errJson = JSON.parse(errText);
         friendlyError = errJson.message || errJson.error || friendlyError;
-      } catch (e) {
-        friendlyError = errText || friendlyError;
-      }
-      return NextResponse.json({ error: 'Erro ao gerar código de pareamento: ' + friendlyError }, { status: res.status });
+      } catch (e) {}
+      return NextResponse.json({ error: friendlyError }, { status: res.status });
     }
 
     const data = await res.json();
     console.log('[Pairing] Resposta da Evolution API:', data);
 
-    const code = data.pairingCode || data.code;
+    const code = data.pairingCode || data.code || data.pairing_code || (data.qrcode && data.qrcode.pairingCode);
 
-    // Se o código contiver '@', é uma string de QR Code e não um pairing code de 8 dígitos
-    if (!code || code.includes('@')) {
+    if (!code || (typeof code === 'string' && code.includes('@'))) {
       return NextResponse.json({ 
-        error: 'A Evolution API não conseguiu gerar o código de pareamento de 8 dígitos e retornou um QR Code. Certifique-se de que o número digitado está correto e ativo no WhatsApp.' 
+        error: 'A Evolution API não retornou o código de pareamento de 8 dígitos. Verifique se o número possui WhatsApp ativo.' 
       }, { status: 400 });
     }
 

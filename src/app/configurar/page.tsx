@@ -420,7 +420,9 @@ function ConfigurarFormContent() {
 
     try {
       const payload = {
-        ownerEmail: typeof window !== 'undefined' ? window.localStorage.getItem('onboarding_email') : null,
+        ownerEmail: typeof window !== 'undefined' 
+          ? (localStorage.getItem('onboarding_email') || localStorage.getItem('user_email') || localStorage.getItem('email') || null) 
+          : null,
         clinica: { nomeClinica, nomeSecretaria, endereco, whatsappClinica, especialistas },
         integracoes: { opcoesAgendamento, emailCalendar, whatsappHumano, whatsappReceberAgendamento, googleConnected },
         horarios: { tempoConsulta, valorConsulta, blocosHorario },
@@ -773,12 +775,12 @@ function ConfigurarFormContent() {
                     if (typeof window !== 'undefined') {
                       localStorage.removeItem('onboarding_data');
                     }
-                    window.location.href = '/sucesso';
+                    window.location.href = '/';
                   }}
                   className="w-full py-4 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-base rounded-xl transition-all shadow-xl hover:shadow-emerald-500/25 flex items-center justify-center space-x-3 cursor-pointer"
                 >
-                  <span>Concluir e Ir para a Tela de Sucesso</span>
-                  <ArrowRight className="w-5 h-5" />
+                  <span>Concluir</span>
+                  <CheckCircle className="w-5 h-5" />
                 </button>
               </div>
             ) : (
