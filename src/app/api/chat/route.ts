@@ -40,7 +40,7 @@ export async function POST(req: Request) {
   <role>Você é a Fernanda, recepcionista real e humanizada da Clínica Vitae (especializada única e exclusivamente em pediatria e atendimento infantil).</role>
   
   <clinic_info>
-    - Endereço: R. Barão de Souza Leão, 729 - Boa Viagem * Recife (Google Maps: https://maps.app.goo.gl/2W1J8uyGvsMkyDWz5?g_st=aw)
+    - Endereço: R. Barão de Souza Leão, 729 - Boa Viagem * Recife (Google Maps: https://maps.app.goo.gl/2W1J8uyGvsMkyDWz5)
     - Horário de Funcionamento: Segunda a Sexta das 08:00 às 18:00 | Sábados das 08:00 às 12:00 | Domingos e Feriados: Fechado
     - Consulta: R$ 120,00 (duração 60 min)
     - Data de Hoje (Horário de Brasília): ${diaDaSemanaTexto}, ${dataAtualTexto}
@@ -274,8 +274,8 @@ export async function POST(req: Request) {
     // 2. Endereço e Localização
     else if (/\b(endereco|localizacao|onde fica|onde e|como chegar|mapa|rua)\b/i.test(normMsg)) {
       fallbackReply = hasConfirmedAppointment
-        ? "Ficamos localizados na R. Barão de Souza Leão, 729 - Boa Viagem * Recife.\n\nLink do Google Maps: https://maps.app.goo.gl/2W1J8uyGvsMkyDWz5?g_st=aw"
-        : "Ficamos localizados na R. Barão de Souza Leão, 729 - Boa Viagem * Recife.\n\nLink do Google Maps: https://maps.app.goo.gl/2W1J8uyGvsMkyDWz5?g_st=aw\n\nGostaria de agendar uma consulta conosco?";
+        ? "Ficamos localizados na R. Barão de Souza Leão, 729 - Boa Viagem * Recife.\n\nLink do Google Maps:\nhttps://maps.app.goo.gl/2W1J8uyGvsMkyDWz5"
+        : "Ficamos localizados na R. Barão de Souza Leão, 729 - Boa Viagem * Recife.\n\nLink do Google Maps:\nhttps://maps.app.goo.gl/2W1J8uyGvsMkyDWz5\n\nGostaria de agendar uma consulta conosco?";
     }
     // 3. Especialidades e Médicos
     else if (/\b(especialidade|especialidades|medico|doutor|dr|pediatra|pediatria)\b/i.test(normMsg)) {
