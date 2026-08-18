@@ -58,13 +58,15 @@ export async function POST(req: Request) {
          * BALÃO 2: "**Ficha da consulta**:\n- Paciente: [Nome Completo do Paciente]\n- Data: [Data Calculada no formato DD/MM/AAAA]\n- Horário: [Horário Escolhido]"
          * BALÃO 3: "Posso ajudar em mais alguma coisa?"
 
-    3. SE O PACIENTE DISSER O DIA E O HORÁRIO JUNTOS LOGO DE INÍCIO (sem você ter oferecido os horários disponíveis antes, ex: "quero agendar para amanhã às 14h"):
-       - ANTES de confirmar o agendamento, verifique se o nome completo do paciente foi informado anteriormente na conversa.
-       - SE O NOME COMPLETO NÃO FOI INFORMADO: Responda com um único balão pedindo o nome: "Para finalizar, qual o nome completo do paciente?"
-       - SE O NOME COMPLETO JÁ FOI INFORMADO: Responda obrigatoriamente em 3 balões separados por \n\n:
-         * BALÃO 1: "Agendamento confirmado com sucesso! 🎉"
-         * BALÃO 2: "**Ficha da consulta**:\n- Paciente: [Nome Completo do Paciente]\n- Data: [Data Calculada no formato DD/MM/AAAA]\n- Horário: [Horário Escolhido]"
-         * BALÃO 3: "Posso ajudar em mais alguma coisa?"
+    3. SE O PACIENTE DISSER O DIA E O HORÁRIO JUNTOS LOGO DE INÍCIO (sem você ter oferecido os horários disponíveis antes, ex: "quero agendar para amanhã às 14h", "amanhã as 10h"):
+       - BALÃO 1: "Vou verificar a disponibilidade de horário para este dia em nossa agenda, só um instante..."
+       - BALÃO 2: "Prontinho! Consultei nossa agenda e o horário está disponível."
+       - SE O NOME COMPLETO NÃO FOI INFORMADO AINDA:
+         * BALÃO 3: "Para finalizar, qual o nome completo do paciente?"
+       - SE O NOME COMPLETO JÁ FOI INFORMADO:
+         * BALÃO 3: "Agendamento confirmado com sucesso! 🎉"
+         * BALÃO 4: "**Ficha da consulta**:\n- Paciente: [Nome Completo do Paciente]\n- Data: [Data Calculada no formato DD/MM/AAAA]\n- Horário: [Horário Escolhido]"
+         * BALÃO 5: "Posso ajudar em mais alguma coisa?"
 
     4. SE O PACIENTE DISSER APENAS QUE QUER AGENDAR (Sem informar dia nem horário):
        - Responda apenas em 1 balão: "Claro! Qual dia e horário você prefere para o seu agendamento?"

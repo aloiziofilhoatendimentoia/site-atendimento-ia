@@ -79,8 +79,8 @@ export default function LandingPage() {
       const data = await response.json();
       
       if (response.ok && data.reply) {
-        // Fatiar a resposta em pequenas frases (baseado no \n\n da API)
-        const frases = data.reply.split('\n\n').filter((f: string) => f.trim().length > 0);
+        // Fatiar a resposta em pequenas frases (baseado em quebras de linha \n ou \n\n da API)
+        const frases = data.reply.split(/\n+/).map((f: string) => f.trim()).filter((f: string) => f.length > 0);
         
         for (let i = 0; i < frases.length; i++) {
            const frase = frases[i];
