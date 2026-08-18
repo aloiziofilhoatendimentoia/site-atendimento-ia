@@ -11,9 +11,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Por favor, insira seu e-mail.' }, { status: 400 });
     }
 
+    const adminEmail = process.env.ADMIN_EMAIL || 'aloiziofilho2012@gmail.com';
+    const isAdmin = email.toLowerCase() === adminEmail.toLowerCase();
+
     // Verificar se o usuário existe
     const user = await getUserByEmail(email);
-    if (!user) {
+    if (!user && !isAdmin) {
       return NextResponse.json({ error: 'Este e-mail não está cadastrado.' }, { status: 404 });
     }
 

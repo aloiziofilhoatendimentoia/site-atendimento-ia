@@ -83,6 +83,10 @@ export default function DashboardPage() {
         const sessionData = await res.json();
 
         if (res.ok && sessionData.authenticated) {
+          if (sessionData.isAdmin) {
+            window.location.href = '/admin';
+            return;
+          }
           setAuthenticated(true);
           await loadDashboardData();
         } else {
@@ -258,6 +262,15 @@ export default function DashboardPage() {
 
       if (!res.ok) {
         throw new Error(resData.error || 'Código inválido ou expirado.');
+      }
+
+      // Verify the session to get isAdmin flag
+      const sessionRes = await fetch('/api/auth/session');
+      const sessionData = await sessionRes.json();
+      
+      if (sessionData.isAdmin) {
+        window.location.href = '/admin';
+        return;
       }
 
       setAuthenticated(true);

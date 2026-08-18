@@ -537,7 +537,14 @@ function ConfigurarFormContent() {
         ownerEmail: typeof window !== 'undefined' 
           ? (localStorage.getItem('onboarding_email') || localStorage.getItem('user_email') || localStorage.getItem('email') || null) 
           : null,
-        clinica: { nomeClinica, nomeSecretaria, endereco, whatsappClinica, especialistas },
+        clinica: { 
+          nomeClinica, 
+          nomeSecretaria, 
+          endereco, 
+          linkGoogleMaps: `https://maps.google.com/?q=${encodeURIComponent(endereco)}`,
+          whatsappClinica, 
+          especialistas 
+        },
         integracoes: { opcoesAgendamento, emailCalendar, whatsappHumano, whatsappReceberAgendamento, googleConnected },
         horarios: { tempoConsulta, valorConsulta, blocosHorario },
         googleTokens: googleTokens

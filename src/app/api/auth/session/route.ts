@@ -30,22 +30,26 @@ export async function GET() {
       return NextResponse.json({ authenticated: false }, { status: 200 });
     }
 
+    const adminEmail = process.env.ADMIN_EMAIL || 'aloiziofilho2012@gmail.com';
+    const isAdmin = decoded.email.toLowerCase() === adminEmail.toLowerCase();
+
     // Buscar dados do usuário no banco
     const user = await getUserByEmail(decoded.email);
-    if (!user) {
+    if (!user && !isAdmin) {
       const response = NextResponse.json({ authenticated: false }, { status: 200 });
       response.cookies.delete('auth_token');
       return response;
     }
 
-    // Buscar empresa associada
-    const empresa = await getEmpresaByUserId(user.id);
+    // Buscar empresa associada (só se user existir)
+    const empresa = user ? await getEmpresaByUserId(user.id) : null;
 
     return NextResponse.json({
       authenticated: true,
+      isAdmin,
       user: {
-        id: user.id,
-        email: user.email,
+        id: user ? user.id : 'admin-master-id',
+        email: decoded.email,
       },
       empresa: empresa || null,
     }, { status: 200 });

@@ -19,15 +19,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Código de verificação inválido ou expirado.' }, { status: 400 });
     }
 
+    const adminEmail = process.env.ADMIN_EMAIL || 'aloiziofilho2012@gmail.com';
+    const isAdmin = email.toLowerCase() === adminEmail.toLowerCase();
+
     // Obter o usuário correspondente
     const user = await getUserByEmail(email);
-    if (!user) {
+    if (!user && !isAdmin) {
       return NextResponse.json({ error: 'Usuário não encontrado.' }, { status: 404 });
     }
 
+    const userId = user ? user.id : 'admin-master-id';
+
     // Assinar Token JWT (igual ao login padrão)
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: userId, email: email },
       JWT_SECRET,
       { expiresIn: '7d' } // Token expira em 7 dias
     );
@@ -36,8 +41,8 @@ export async function POST(request: Request) {
       success: true,
       message: 'Login OTP realizado com sucesso!',
       user: {
-        id: user.id,
-        email: user.email,
+        id: userId,
+        email: email,
       }
     }, { status: 200 });
 
