@@ -276,15 +276,16 @@ export default function LandingPage() {
                             {msg.text?.split(/(https?:\/\/[^\s]+|\*\*.*?\*\*|\*.*?\*)/g).map((part, index) => {
                               if (part.startsWith('http://') || part.startsWith('https://')) {
                                 return (
-                                  <a
-                                    key={index}
-                                    href={part}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 underline break-all font-medium inline-block max-w-full"
-                                  >
-                                    {part}
-                                  </a>
+                                  <span key={index} className="block mt-1">
+                                    <a
+                                      href={part}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 underline break-all font-medium block max-w-full"
+                                    >
+                                      {part}
+                                    </a>
+                                  </span>
                                 );
                               } else if (part.startsWith('**') && part.endsWith('**')) {
                                 return <strong key={index} className="font-bold text-slate-900">{part.slice(2, -2)}</strong>;
