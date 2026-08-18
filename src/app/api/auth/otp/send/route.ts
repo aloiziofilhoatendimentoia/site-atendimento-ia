@@ -11,7 +11,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Por favor, insira seu e-mail.' }, { status: 400 });
     }
 
-    const adminEmail = process.env.ADMIN_EMAIL || 'aloiziofilho2012@gmail.com';
+    const adminEmail = process.env.ADMIN_EMAIL || 'atendimentoia35@gmail.com';
     const isAdmin = email.toLowerCase() === adminEmail.toLowerCase();
 
     // Verificar se o usuário existe

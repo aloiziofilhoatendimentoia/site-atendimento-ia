@@ -30,7 +30,7 @@ export async function GET() {
       return NextResponse.json({ authenticated: false }, { status: 200 });
     }
 
-    const adminEmail = process.env.ADMIN_EMAIL || 'aloiziofilho2012@gmail.com';
+    const adminEmail = process.env.ADMIN_EMAIL || 'atendimentoia35@gmail.com';
     const isAdmin = decoded.email.toLowerCase() === adminEmail.toLowerCase();
 
     // Buscar dados do usuário no banco

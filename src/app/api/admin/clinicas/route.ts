@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { supabase } from '@/lib/db';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_atendimento_ia_key';
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'aloiziofilho2012@gmail.com';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'atendimentoia35@gmail.com';
 
 export async function GET() {
   try {

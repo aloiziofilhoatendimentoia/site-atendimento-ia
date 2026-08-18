@@ -179,7 +179,7 @@ export async function POST(request: Request) {
     const nicho = payload?.clinica?.nicho || 'Médico';
 
     // 1. SALVAR/CRIAR USUÁRIO E VINCULAR EMPRESA NO BANCO HÍBRIDO (SUPABASE / LOCAL_DB)
-    const ownerEmail = payload.ownerEmail || 'aloiziofilho2012@gmail.com';
+    const ownerEmail = payload.ownerEmail || 'atendimentoia35@gmail.com';
     let user = await getUserByEmail(ownerEmail);
     if (!user) {
       user = await createUser(ownerEmail, 'no_password_otp_only');
