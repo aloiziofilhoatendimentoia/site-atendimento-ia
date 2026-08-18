@@ -272,9 +272,21 @@ export default function LandingPage() {
                         <div className={`max-w-[85%] rounded-2xl p-2.5 shadow-sm text-sm relative ${
                           msg.sender === 'user' ? 'bg-[#E7FFDB] text-slate-800 rounded-tr-sm' : 'bg-white text-slate-800 rounded-tl-sm border border-slate-100'
                         }`}>
-                          <p className="whitespace-pre-wrap break-words break-all [overflow-wrap:anywhere] leading-relaxed text-[14px] sm:text-[15px]">
-                            {msg.text?.split(/(\*\*.*?\*\*|\*.*?\*)/g).map((part, index) => {
-                              if (part.startsWith('**') && part.endsWith('**')) {
+                          <p className="whitespace-pre-wrap break-words leading-relaxed text-[14px] sm:text-[15px]">
+                            {msg.text?.split(/(https?:\/\/[^\s]+|\*\*.*?\*\*|\*.*?\*)/g).map((part, index) => {
+                              if (part.startsWith('http://') || part.startsWith('https://')) {
+                                return (
+                                  <a
+                                    key={index}
+                                    href={part}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 underline break-all font-medium inline-block max-w-full"
+                                  >
+                                    {part}
+                                  </a>
+                                );
+                              } else if (part.startsWith('**') && part.endsWith('**')) {
                                 return <strong key={index} className="font-bold text-slate-900">{part.slice(2, -2)}</strong>;
                               } else if (part.startsWith('*') && part.endsWith('*')) {
                                 return <span key={index} className="font-semibold text-slate-900">{part.slice(1, -1)}</span>;
