@@ -113,6 +113,17 @@ export async function POST(req: Request) {
     14. RESTRIÇÃO DE SAUDAÇÕES REPETIDAS:
         - NUNCA diga "Olá", "Olá!", "Tudo bem?", "Bom dia" ou qualquer outra saudação em mensagens que não sejam a primeira da conversa. Se a conversa já se iniciou e está se desenrolando, responda diretamente sem saudações redundantes.
 
+    15. REGRA DE ENDEREÇO E LOCALIZAÇÃO (OBRIGATÓRIO EM 3 BALÕES SEPARADOS POR \n\n):
+        - Se o paciente perguntar pelo endereço ou localização da clínica (ex: "qual o endereço?", "onde fica?"):
+          * Se o agendamento NÃO foi confirmado ainda, envie obrigatoriamente 3 balões separados por \n\n:
+            - BALÃO 1: "O endereço da Clínica Vitae é R. Barão de Souza Leão, 729 - Boa Viagem * Recife."
+            - BALÃO 2: "Você pode conferir no Google Maps por este link:\nhttps://maps.app.goo.gl/2W1J8uyGvsMkyDWz5"
+            - BALÃO 3: "Gostaria de agendar uma consulta conosco?"
+          * Se o agendamento JÁ foi confirmado anteriormente, envie obrigatoriamente 3 balões separados por \n\n:
+            - BALÃO 1: "O endereço da Clínica Vitae é R. Barão de Souza Leão, 729 - Boa Viagem * Recife."
+            - BALÃO 2: "Você pode conferir no Google Maps por este link:\nhttps://maps.app.goo.gl/2W1J8uyGvsMkyDWz5"
+            - BALÃO 3: "Posso ajudar em mais alguma coisa?"
+
     10. REGRA OBRIGATÓRIA DE MENSAGENS SEPARADAS (\n\n):
        - Separe sempre os balões com Enter duplo (\n\n).
   </critical_rules>
@@ -271,11 +282,11 @@ export async function POST(req: Request) {
         ? `${saudacao}Em que posso te ajudar hoje? Ficou alguma dúvida sobre a sua consulta marcada ou quer saber mais sobre a clínica?`
         : `${saudacao}Em que posso te ajudar hoje? Gostaria de agendar uma consulta, saber nosso endereço ou consultar nossos horários de funcionamento?`;
     }
-    // 2. Endereço e Localização
+    // 2. Endereço e Localização (3 Balões Separados por \n\n)
     else if (/\b(endereco|localizacao|onde fica|onde e|como chegar|mapa|rua)\b/i.test(normMsg)) {
       fallbackReply = hasConfirmedAppointment
-        ? "Ficamos localizados na R. Barão de Souza Leão, 729 - Boa Viagem * Recife.\n\nLink do Google Maps:\nhttps://maps.app.goo.gl/2W1J8uyGvsMkyDWz5"
-        : "Ficamos localizados na R. Barão de Souza Leão, 729 - Boa Viagem * Recife.\n\nLink do Google Maps:\nhttps://maps.app.goo.gl/2W1J8uyGvsMkyDWz5\n\nGostaria de agendar uma consulta conosco?";
+        ? "O endereço da Clínica Vitae é R. Barão de Souza Leão, 729 - Boa Viagem * Recife.\n\nVocê pode conferir no Google Maps por este link:\nhttps://maps.app.goo.gl/2W1J8uyGvsMkyDWz5\n\nPosso ajudar em mais alguma coisa?"
+        : "O endereço da Clínica Vitae é R. Barão de Souza Leão, 729 - Boa Viagem * Recife.\n\nVocê pode conferir no Google Maps por este link:\nhttps://maps.app.goo.gl/2W1J8uyGvsMkyDWz5\n\nGostaria de agendar uma consulta conosco?";
     }
     // 3. Especialidades e Médicos
     else if (/\b(especialidade|especialidades|medico|doutor|dr|pediatra|pediatria)\b/i.test(normMsg)) {
