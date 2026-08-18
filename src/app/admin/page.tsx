@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
           <div className="h-8 w-[1px] bg-[#27272a] mx-2" />
           <div className="flex items-center space-x-2 bg-purple-950/30 text-purple-400 px-3 py-1.5 rounded-lg border border-purple-900/50">
             <ShieldAlert className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-wider">Modo Deus (Admin)</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Modo Administrador</span>
           </div>
         </div>
 
