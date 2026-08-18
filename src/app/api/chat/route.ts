@@ -152,8 +152,15 @@ export async function POST(req: Request) {
 
     if (response.ok) {
       const geminiData = await response.json();
-      const aiReply = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+      let aiReply = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
       if (aiReply) {
+        // Correção de segurança de IA: Força a separação exata por Enter duplo (\n\n) 
+        // caso a IA retorne tudo colado, com espaço, ou quebra simples
+        aiReply = aiReply.replace(/\s*(Você pode conferir no Google Maps)/gi, "\n\n$1").trim();
+        aiReply = aiReply.replace(/\s*(Posso ajudar em mais alguma coisa\?|Gostaria de agendar uma consulta conosco\?)/gi, "\n\n$1").trim();
+        aiReply = aiReply.replace(/\s*(Prontinho! Consultei nossa agenda)/gi, "\n\n$1").trim();
+        aiReply = aiReply.replace(/\s*(Para finalizar, qual o nome completo)/gi, "\n\n$1").trim();
+
         return NextResponse.json({ reply: aiReply });
       }
     } else {
