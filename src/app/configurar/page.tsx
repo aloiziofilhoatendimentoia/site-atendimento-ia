@@ -110,6 +110,7 @@ function ConfigurarFormContent() {
   const [nomeSecretaria, setNomeSecretaria] = useState('');
   const [endereco, setEndereco] = useState('');
   const [whatsappClinica, setWhatsappClinica] = useState(''); // Número onde a IA vai responder clientes
+  const [emailAdmin, setEmailAdmin] = useState(''); // E-mail para acesso
   const [especialistas, setEspecialistas] = useState<Especialista[]>([{ nome: '', especialidade: '' }]);
 
   // 2. INTEGRAÇÕES (Z-API e CALENDAR)
@@ -177,6 +178,7 @@ function ConfigurarFormContent() {
           if (parsed.nomeClinica) setNomeClinica(parsed.nomeClinica);
           if (parsed.nomeSecretaria) setNomeSecretaria(parsed.nomeSecretaria);
           if (parsed.endereco) setEndereco(parsed.endereco);
+          if (parsed.emailAdmin) setEmailAdmin(parsed.emailAdmin);
           if (parsed.whatsappClinica) {
             setWhatsappClinica(parsed.whatsappClinica);
             const clean = parsed.whatsappClinica.replace(/\D/g, '');
@@ -197,6 +199,8 @@ function ConfigurarFormContent() {
 
       // Buscar do Servidor para sincronização em nuvem
       const email = localStorage.getItem('onboarding_email') || localStorage.getItem('user_email') || localStorage.getItem('email') || '';
+      if (email && !emailAdmin) setEmailAdmin(email);
+
       const whatsapp = localStorage.getItem('onboarding_whatsapp') || '';
       fetch(`/api/empresa/config?email=${encodeURIComponent(email)}&whatsapp=${encodeURIComponent(whatsapp)}`)
         .then(res => res.json())
@@ -206,6 +210,7 @@ function ConfigurarFormContent() {
             if (ob.nomeClinica) setNomeClinica(ob.nomeClinica);
             if (ob.nomeSecretaria) setNomeSecretaria(ob.nomeSecretaria);
             if (ob.endereco) setEndereco(ob.endereco);
+            if (ob.emailAdmin) setEmailAdmin(ob.emailAdmin);
             if (ob.whatsappClinica) {
               setWhatsappClinica(ob.whatsappClinica);
               const clean = ob.whatsappClinica.replace(/\D/g, '');
@@ -232,6 +237,7 @@ function ConfigurarFormContent() {
         nomeClinica,
         nomeSecretaria,
         endereco,
+        emailAdmin,
         whatsappClinica,
         especialistas,
         opcoesAgendamento,
@@ -412,6 +418,7 @@ function ConfigurarFormContent() {
     }
     const cleanWp = whatsappClinica.replace(/\D/g, '');
     if (!cleanWp || cleanWp.length < 10) return 'Insira um WhatsApp Oficial da Clínica válido com DDD.';
+    if (!emailAdmin || !emailAdmin.includes('@') || !emailAdmin.includes('.')) return 'Preencha um E-mail de Administrador válido.';
     if (!endereco || !endereco.trim()) return 'Preencha o Endereço Físico do Consultório.';
     if (!especialistas || especialistas.length === 0) return 'Adicione pelo menos 1 médico ao Corpo Clínico.';
     for (let i = 0; i < especialistas.length; i++) {
@@ -534,9 +541,9 @@ function ConfigurarFormContent() {
 
     try {
       const payload = {
-        ownerEmail: typeof window !== 'undefined' 
+        ownerEmail: emailAdmin || (typeof window !== 'undefined' 
           ? (localStorage.getItem('onboarding_email') || localStorage.getItem('user_email') || localStorage.getItem('email') || null) 
-          : null,
+          : null),
         clinica: { 
           nomeClinica, 
           nomeSecretaria, 
@@ -668,6 +675,11 @@ function ConfigurarFormContent() {
                     <p className="text-xs text-gray-500 mt-1">O número onde a IA responderá os clientes.</p>
                   </div>
                   <div>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">E-mail do Administrador (Login) *</label>
+                    <input type="email" value={emailAdmin} onChange={(e) => setEmailAdmin(e.target.value)} placeholder="doutor@clinica.com.br" className="w-full bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-colors" />
+                    <p className="text-xs text-gray-500 mt-1">O e-mail usado para acessar o painel posteriormente.</p>
+                  </div>
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-semibold text-gray-300 mb-2">Endereço Físico do Consultório *</label>
                     <input type="text" value={endereco} onChange={(e) => setEndereco(e.target.value)} placeholder="Avenida Paulista, 1000 - Sala 42" className="w-full bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-colors" />
                   </div>

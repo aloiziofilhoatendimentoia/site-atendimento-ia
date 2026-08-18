@@ -276,7 +276,8 @@ export async function POST(request: Request) {
               endereco: endereco,
               especialistas: especialistasStr,
               canais_escolhidos: canaisStr,
-              dados_completos_json: fullJsonString
+              dados_completos_json: fullJsonString,
+              email: ownerEmail
             };
 
             let { error: updateError } = await supabaseAdmin
@@ -284,9 +285,10 @@ export async function POST(request: Request) {
               .update(updatePayload)
               .eq('id', existing.id);
 
-            // Fallback se a coluna dados_completos_json ainda não existir na tabela
-            if (updateError && updateError.message.includes('dados_completos_json')) {
+            // Fallback se a coluna dados_completos_json ou email não existir na tabela
+            if (updateError && (updateError.message.includes('dados_completos_json') || updateError.message.includes('email'))) {
               delete updatePayload.dados_completos_json;
+              delete updatePayload.email;
               const retry = await supabaseAdmin
                 .from('CLIENTES ATENDIMENTO IA SITE')
                 .update(updatePayload)
@@ -310,16 +312,18 @@ export async function POST(request: Request) {
             endereco: endereco,
             especialistas: especialistasStr,
             canais_escolhidos: canaisStr,
-            dados_completos_json: fullJsonString
+            dados_completos_json: fullJsonString,
+            email: ownerEmail
           };
 
           let { error: insertError } = await supabaseAdmin
             .from('CLIENTES ATENDIMENTO IA SITE')
             .insert([insertPayload]);
 
-          // Fallback se a coluna dados_completos_json ainda não existir na tabela
-          if (insertError && insertError.message.includes('dados_completos_json')) {
+          // Fallback se a coluna dados_completos_json ou email não existir na tabela
+          if (insertError && (insertError.message.includes('dados_completos_json') || insertError.message.includes('email'))) {
             delete insertPayload.dados_completos_json;
+            delete insertPayload.email;
             const retry = await supabaseAdmin
               .from('CLIENTES ATENDIMENTO IA SITE')
               .insert([insertPayload]);
