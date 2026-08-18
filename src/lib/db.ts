@@ -152,6 +152,34 @@ export async function getUserByEmail(email: string) {
     } catch (e) {
       console.warn('Falha na consulta ao Supabase, tentando local:', e);
     }
+
+    // Tentar buscar na tabela CLIENTES ATENDIMENTO IA SITE
+    try {
+      const { data: clientes } = await supabase
+        .from('CLIENTES ATENDIMENTO IA SITE')
+        .select('id, dados_completos_json');
+        
+      if (clientes) {
+        const clienteFound = clientes.find((c: any) => {
+          if (!c.dados_completos_json) return false;
+          try {
+            const json = typeof c.dados_completos_json === 'string' ? JSON.parse(c.dados_completos_json) : c.dados_completos_json;
+            return json.ownerEmail && json.ownerEmail.toLowerCase() === email.toLowerCase();
+          } catch(err) { return false; }
+        });
+        
+        if (clienteFound) {
+          return {
+            id: clienteFound.id,
+            email: email,
+            senha_hash: 'no_password_otp_only',
+            created_at: new Date().toISOString()
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('Falha ao buscar em CLIENTES ATENDIMENTO IA SITE:', e);
+    }
   }
 
   // Fallback Local

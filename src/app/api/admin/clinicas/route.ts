@@ -61,15 +61,18 @@ export async function GET() {
 
       // @ts-ignore
       let telefoneIA = json.suporte?.whatsapp_empresa || '';
+      if (!telefoneIA && clinica.telefone_principal) {
+        telefoneIA = clinica.telefone_principal;
+      }
       if (!telefoneIA && clinica.telefone) {
-        telefoneIA = clinica.telefone; // Fallback
+        telefoneIA = clinica.telefone; // Fallback do fallback
       }
 
       return {
         id: clinica.id,
-        nome_empresa: clinica.nome_empresa || 'Empresa sem nome',
-        nome_empresario: clinica.nome_empresario,
-        email: clinica.email,
+        nome_empresa: clinica.nome_clinica || clinica.nome_empresa || 'Empresa sem nome',
+        nome_empresario: clinica.nome_empresario || '',
+        email: clinica.email || (json as any).ownerEmail || '',
         telefone: telefoneIA,
         especialistas: especialistasStr || 'Não informado',
         status: 'verificando', // será testado no frontend
