@@ -117,13 +117,13 @@ export async function POST(req: Request) {
 
     15. REGRA DE ENDEREÇO E LOCALIZAÇÃO (OBRIGATÓRIO EM 3 BALÕES SEPARADOS POR \n\n):
         - Se o paciente perguntar pelo endereço ou localização da clínica (ex: "qual o endereço?", "onde fica?"):
-          * Se o agendamento NÃO foi confirmado ainda, envie obrigatoriamente 3 balões separados por \n\n:
+          * Se o agendamento NÃO foi confirmed ainda, envie obrigatoriamente 3 balões separados por \n\n:
             - BALÃO 1: "O endereço da Clínica Vitae é R. Barão de Souza Leão, 729 - Boa Viagem * Recife."
-            - BALÃO 2: "Você pode conferir no Google Maps por este link:\nhttps://maps.app.goo.gl/2W1J8uyGvsMkyDWz5"
+            - BALÃO 2: "Você pode conferir no Google Maps por este link: https://maps.app.goo.gl/2W1J8uyGvsMkyDWz5"
             - BALÃO 3: "Gostaria de agendar uma consulta conosco?"
           * Se o agendamento JÁ foi confirmado anteriormente, envie obrigatoriamente 3 balões separados por \n\n:
             - BALÃO 1: "O endereço da Clínica Vitae é R. Barão de Souza Leão, 729 - Boa Viagem * Recife."
-            - BALÃO 2: "Você pode conferir no Google Maps por este link:\nhttps://maps.app.goo.gl/2W1J8uyGvsMkyDWz5"
+            - BALÃO 2: "Você pode conferir no Google Maps por este link: https://maps.app.goo.gl/2W1J8uyGvsMkyDWz5"
             - BALÃO 3: "Posso ajudar em mais alguma coisa?"
 
     10. REGRA OBRIGATÓRIA DE MENSAGENS SEPARADAS (\n\n):
@@ -287,8 +287,8 @@ export async function POST(req: Request) {
     // 2. Endereço e Localização (3 Balões Separados por \n\n)
     else if (/\b(endereco|localizacao|onde fica|onde e|como chegar|mapa|rua)\b/i.test(normMsg)) {
       fallbackReply = hasConfirmedAppointment
-        ? "O endereço da Clínica Vitae é R. Barão de Souza Leão, 729 - Boa Viagem * Recife.\n\nVocê pode conferir no Google Maps por este link:\nhttps://maps.app.goo.gl/2W1J8uyGvsMkyDWz5\n\nPosso ajudar em mais alguma coisa?"
-        : "O endereço da Clínica Vitae é R. Barão de Souza Leão, 729 - Boa Viagem * Recife.\n\nVocê pode conferir no Google Maps por este link:\nhttps://maps.app.goo.gl/2W1J8uyGvsMkyDWz5\n\nGostaria de agendar uma consulta conosco?";
+        ? "O endereço da Clínica Vitae é R. Barão de Souza Leão, 729 - Boa Viagem * Recife.\n\nVocê pode conferir no Google Maps por este link: https://maps.app.goo.gl/2W1J8uyGvsMkyDWz5\n\nPosso ajudar em mais alguma coisa?"
+        : "O endereço da Clínica Vitae é R. Barão de Souza Leão, 729 - Boa Viagem * Recife.\n\nVocê pode conferir no Google Maps por este link: https://maps.app.goo.gl/2W1J8uyGvsMkyDWz5\n\nGostaria de agendar uma consulta conosco?";
     }
     // 3. Especialidades e Médicos
     else if (/\b(especialidade|especialidades|medico|doutor|dr|pediatra|pediatria)\b/i.test(normMsg)) {
