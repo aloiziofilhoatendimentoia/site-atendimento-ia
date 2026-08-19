@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
-import { supabase } from '@/lib/db';
+import { createClient } from '@supabase/supabase-js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_atendimento_ia_key';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'atendimentoia35@gmail.com';
@@ -26,12 +26,17 @@ export async function GET() {
       return NextResponse.json({ error: 'Acesso negado. Apenas administradores.' }, { status: 403 });
     }
 
-    if (!supabase) {
-      return NextResponse.json({ error: 'Supabase client não configurado.' }, { status: 500 });
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json({ error: 'Supabase admin client não configurado.' }, { status: 500 });
     }
 
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
     // Buscar todas as empresas
-    const { data: clinicas, error } = await supabase
+    const { data: clinicas, error } = await supabaseAdmin
       .from('CLIENTES ATENDIMENTO IA SITE')
       .select('*')
       .order('created_at', { ascending: false });

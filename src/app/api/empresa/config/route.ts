@@ -111,6 +111,7 @@ export async function GET(request: Request) {
       nomeClinica,
       nomeSecretaria,
       endereco,
+      emailAdmin: savedPayload?.ownerEmail || siteClinic?.email || emailToUse || '',
       whatsappClinica,
       especialistas: especialistasArr,
       opcoesAgendamento: savedPayload?.integracoes?.opcoesAgendamento || {
