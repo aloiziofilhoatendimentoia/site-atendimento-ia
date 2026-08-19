@@ -40,6 +40,30 @@ export async function GET(request: Request) {
     let user = emailToUse ? await getUserByEmail(emailToUse) : null;
     let dashboardData = user ? await getDashboardData(user.id) : null;
 
+    // Se não temos absolutamente nenhuma forma de identificar o usuário (sem e-mail e sem zap),
+    // retornamos um perfil vazio (evita vazar a última clínica cadastrada para usuários anônimos)
+    if (!emailToUse && !whatsappParam) {
+      return NextResponse.json({
+        success: true,
+        data: null,
+        onboardingData: {
+          nomeClinica: '',
+          nomeSecretaria: '',
+          endereco: '',
+          emailAdmin: '',
+          whatsappClinica: '',
+          especialistas: [{ nome: '', especialidade: '' }],
+          opcoesAgendamento: { whatsapp: true, calendar: false },
+          emailCalendar: '',
+          whatsappHumano: '',
+          whatsappReceberAgendamento: '',
+          tempoConsulta: '30',
+          valorConsulta: '',
+          blocosHorario: [{ dias: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'], inicio: '08:00', fim: '18:00' }]
+        }
+      }, { status: 200 });
+    }
+
     // Buscar no Supabase nativo se houver whatsappParam ou se local_db não tiver os dados
     let siteClinic: any = null;
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -53,8 +77,8 @@ export async function GET(request: Request) {
         if (whatsappParam) {
           const clean = whatsappParam.replace(/\D/g, '');
           query = query.or(`telefone_principal.eq.${whatsappParam},telefone_principal.eq.${clean},telefone_principal.eq.55${clean}`);
-        } else {
-          query = query.order('id', { ascending: false }).limit(1);
+        } else if (emailToUse) {
+          query = query.eq('email', emailToUse);
         }
 
         const { data: clinics } = await query;
