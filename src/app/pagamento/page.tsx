@@ -37,7 +37,7 @@ export default function PagamentoPage() {
         const email = localStorage.getItem('user_email') || localStorage.getItem('email') || '';
         if (!email) return; // Trava: não faz sentido buscar se não temos um e-mail
         
-        const res = await fetch(`/api/empresa/config?email=${encodeURIComponent(email)}`);
+        const res = await fetch(`/api/empresa/config?email=${encodeURIComponent(email)}&t=${Date.now()}`);
         if (res.ok) {
           const resData = await res.json();
           if (resData && (resData.onboardingData?.nomeClinica || resData.data?.empresa?.id)) {
