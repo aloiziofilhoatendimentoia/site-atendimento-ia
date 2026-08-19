@@ -239,11 +239,10 @@ export default function AdminDashboardPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-[#0c0d0f] border-b border-[#27272a]">
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Clínica</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Responsável</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider w-36">Status</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider w-64">Clínica</th>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Especialistas</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">WhatsApp da IA</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider w-48">WhatsApp da IA</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#27272a]/50">
@@ -272,13 +271,21 @@ export default function AdminDashboardPage() {
                       <span className="font-bold text-white block">{clinica.nome_empresa}</span>
                       <span className="text-xs text-gray-500">{clinica.email}</span>
                     </td>
-                    <td className="py-4 px-6 text-sm text-gray-300">
-                      {clinica.nome_empresario || '-'}
-                    </td>
                     <td className="py-4 px-6">
-                      <p className="text-xs text-gray-400 max-w-[200px] truncate" title={clinica.especialistas}>
-                        {clinica.especialistas}
-                      </p>
+                      <div className="flex flex-wrap gap-1.5 max-w-2xl">
+                        {clinica.especialistas && clinica.especialistas !== 'Não informado' ? (
+                          clinica.especialistas.split(', ').map((esp, i) => (
+                            <span 
+                              key={i} 
+                              className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-950/40 text-blue-300 border border-blue-900/40"
+                            >
+                              {esp}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-500 italic">Não informado</span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-4 px-6 font-mono text-sm text-purple-300">
                       {clinica.telefone || 'Não Configurado'}
@@ -288,7 +295,7 @@ export default function AdminDashboardPage() {
 
                 {filteredClinicas.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="py-12 text-center text-gray-500">
+                    <td colSpan={4} className="py-12 text-center text-gray-500">
                       Nenhuma clínica encontrada.
                     </td>
                   </tr>
