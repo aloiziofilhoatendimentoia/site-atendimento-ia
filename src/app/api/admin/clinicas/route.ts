@@ -48,38 +48,57 @@ export async function GET() {
 
     // Processar os dados JSON para retornar apenas o necessário para o dashboard
     const clinicasFormatadas = clinicas.map((clinica: any) => {
-      let json = {};
+      let json: any = {};
       try {
         if (clinica.dados_completos_json) {
-          json = JSON.parse(clinica.dados_completos_json);
+          json = typeof clinica.dados_completos_json === 'string'
+            ? JSON.parse(clinica.dados_completos_json)
+            : clinica.dados_completos_json;
         }
       } catch (e) {
         console.error('Erro ao fazer parse do JSON', e);
       }
 
-      // @ts-ignore
-      const especialistasArr = json.especialistas || [];
-      const especialistasStr = Array.isArray(especialistasArr) 
-        // @ts-ignore
-        ? especialistasArr.map(e => e.nome).join(', ')
-        : 'Nenhum cadastrado';
+      // Buscar especialistas em todos os formatos possíveis
+      const especialistasArr = json.clinica?.especialistas || json.especialistas || [];
+      let especialistasStr = '';
+      if (Array.isArray(especialistasArr) && especialistasArr.length > 0) {
+        especialistasStr = especialistasArr
+          .map((e: any) => {
+            if (!e) return '';
+            if (typeof e === 'string') return e;
+            const nome = e.nome || '';
+            const esp = e.especialidade || '';
+            if (nome && esp) return `${nome} (${esp})`;
+            return nome || esp || '';
+          })
+          .filter(Boolean)
+          .join(', ');
+      }
 
-      // @ts-ignore
-      let telefoneIA = json.suporte?.whatsapp_empresa || '';
-      if (!telefoneIA && clinica.telefone_principal) {
-        telefoneIA = clinica.telefone_principal;
+      // Fallback para a coluna direta do Supabase
+      if (!especialistasStr && clinica.especialistas) {
+        especialistasStr = String(clinica.especialistas)
+          .split('\n')
+          .map(line => line.replace(/^-\s*/, '').trim())
+          .filter(Boolean)
+          .join(', ');
       }
-      if (!telefoneIA && clinica.telefone) {
-        telefoneIA = clinica.telefone; // Fallback do fallback
+
+      if (!especialistasStr) {
+        especialistasStr = 'Não informado';
       }
+
+      // Buscar WhatsApp oficial da IA
+      let telefoneIA = json.clinica?.whatsappClinica || json.suporte?.whatsapp_empresa || clinica.telefone_principal || clinica.telefone || '';
 
       return {
         id: clinica.id,
-        nome_empresa: clinica.nome_clinica || clinica.nome_empresa || 'Empresa sem nome',
-        nome_empresario: clinica.nome_empresario || '',
-        email: clinica.email || (json as any).ownerEmail || '',
+        nome_empresa: clinica.nome_clinica || clinica.nome_empresa || json.clinica?.nomeClinica || 'Empresa sem nome',
+        nome_empresario: clinica.nome_empresario || json.clinica?.nomeEmpresario || '',
+        email: clinica.email || json.ownerEmail || '',
         telefone: telefoneIA,
-        especialistas: especialistasStr || 'Não informado',
+        especialistas: especialistasStr,
         status: 'verificando', // será testado no frontend
         created_at: clinica.created_at
       };

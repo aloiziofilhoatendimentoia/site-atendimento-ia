@@ -210,7 +210,18 @@ export default function AdminDashboardPage() {
         {/* TABELA DE CLÍNICAS */}
         <div className="bg-[#121417] border border-[#27272a] rounded-2xl shadow-xl overflow-hidden flex flex-col">
           <div className="p-6 border-b border-[#27272a] flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h2 className="text-lg font-bold text-white">Gestão de Clínicas</h2>
+            <div className="flex items-center space-x-3">
+              <h2 className="text-lg font-bold text-white">Gestão de Clínicas</h2>
+              <button
+                onClick={() => loadClinicas()}
+                disabled={loading}
+                className="flex items-center space-x-1.5 text-xs text-purple-400 hover:text-purple-300 bg-purple-950/30 hover:bg-purple-900/40 border border-purple-900/50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                title="Atualizar lista e testar conexões"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                <span>Atualizar</span>
+              </button>
+            </div>
             
             <div className="relative max-w-sm w-full">
               <Search className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
