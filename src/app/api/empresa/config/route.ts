@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
