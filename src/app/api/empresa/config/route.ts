@@ -250,10 +250,34 @@ export async function POST(request: Request) {
             if (oldSig === newSig) {
               hasChanges = false;
               supabaseStatus = 'Pulado (Sem alterações)';
-              console.log(`[Config] Nenhuma alteração real detectada nos dados completos.`);
+              console.log(`[Config] Nenhuma alteração real detectada nos dados completos (Draft local).`);
             } else {
               hasChanges = true;
-              console.log(`[Config] Alteração detectada nos dados completos da clínica.`);
+              console.log(`[Config] Alteração detectada nos dados completos da clínica (Draft local).`);
+            }
+          } else if (existing?.dados_completos_json) {
+            // Se o Draft foi limpo pelo redeploy, tentamos comparar diretamente com o JSON salvo no Supabase
+            try {
+              const oldJson = typeof existing.dados_completos_json === 'string' ? JSON.parse(existing.dados_completos_json) : existing.dados_completos_json;
+              const cleanObj = (obj: any) => ({
+                clinica: obj?.clinica || {},
+                integracoes: obj?.integracoes || {},
+                horarios: obj?.horarios || {}
+              });
+              
+              const oldSig = JSON.stringify(cleanObj(oldJson));
+              const newSig = JSON.stringify(cleanObj(payload));
+
+              if (oldSig === newSig) {
+                hasChanges = false;
+                supabaseStatus = 'Pulado (Sem alterações)';
+                console.log(`[Config] Nenhuma alteração detectada comparando com o JSON do Supabase.`);
+              } else {
+                hasChanges = true;
+                console.log(`[Config] Alteração detectada comparando com o JSON do Supabase.`);
+              }
+            } catch(e) {
+              hasChanges = true;
             }
           } else {
             // Comparação fallback com colunas de produção
