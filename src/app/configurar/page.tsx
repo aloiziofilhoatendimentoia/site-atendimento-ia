@@ -598,15 +598,13 @@ function ConfigurarFormContent() {
             <span className="text-sm font-semibold text-teal-500 hidden sm:block tracking-wide uppercase">Painel Médico de Implantação</span>
           </div>
           
-          {isFromDashboard && (
-            <button
-              onClick={handleLogout}
-              className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-red-950/20 hover:bg-red-900/30 border border-red-900/30 hover:border-red-800/40 text-red-400 text-sm font-semibold transition-colors cursor-pointer"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Sair do Painel</span>
-            </button>
-          )}
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-red-950/20 hover:bg-red-900/30 border border-red-900/30 hover:border-red-800/40 text-red-400 text-sm font-semibold transition-colors cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sair / Limpar Sessão</span>
+          </button>
         </div>
       </nav>
 
