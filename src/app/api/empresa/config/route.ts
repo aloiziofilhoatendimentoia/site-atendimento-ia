@@ -191,8 +191,8 @@ export async function POST(request: Request) {
     let diasStr = 'seg,ter,qua,qui,sex';
     let horarioStr = '09:00 - 18:00';
 
-    if (payload?.horarios?.blocosHorario && Array.isArray(payload.horarios.blocosHorario) && payload.horarios.blocosHorario.length > 0) {
-      const blocos = payload.horarios.blocosHorario.filter((b: any) => b.dias && b.dias.length > 0);
+    if (payload?.horarios?.blocosHorario && Array.isArray(payload.horarios.blocosHorario) && payload.horarios.blocosHorariOK.length > 0) {
+      const blocos = payload.horarios.blocosHorariOK.filter((b: any) => b.dias && b.dias.length > 0);
       if (blocos.length > 0) {
         const linhasFormatadas = blocos.map((b: any) => `• ${b.dias.join(', ')}: das ${b.inicio || '08:00'} às ${b.fim || '18:00'}`);
         diasStr = blocos[0].dias.join(', ');
@@ -259,135 +259,55 @@ export async function POST(request: Request) {
 
         const fullJsonString = JSON.stringify(payload);
 
-        if (existing || previousDraft) {
-          // Já existe! É uma alteração de cadastro
+        
+        let isUpdate = false;
+        
+        if (previousDraft || existing) {
           eventType = 'alteracao_cadastro';
-
-          if (previousDraft) {
-            const cleanObj = (obj: any) => ({
-              clinica: obj?.clinica || {},
-              integracoes: obj?.integracoes || {},
-              horarios: obj?.horarios || {}
-            });
-
-            const oldSig = JSON.stringify(cleanObj(previousDraft));
-            const newSig = JSON.stringify(cleanObj(payload));
-
-            if (oldSig === newSig) {
-              hasChanges = false;
-              supabaseStatus = 'Pulado (Sem alterações)';
-              console.log(`[Config] Nenhuma alteração real detectada nos dados completos (Draft local).`);
-            } else {
-              hasChanges = true;
-              console.log(`[Config] Alteração detectada nos dados completos da clínica (Draft local).`);
-            }
-          } else if (existing?.dados_completos_json) {
-            // Se o Draft foi limpo pelo redeploy, tentamos comparar diretamente com o JSON salvo no Supabase
-            try {
-              const oldJson = typeof existing.dados_completos_json === 'string' ? JSON.parse(existing.dados_completos_json) : existing.dados_completos_json;
-              const cleanObj = (obj: any) => ({
-                clinica: obj?.clinica || {},
-                integracoes: obj?.integracoes || {},
-                horarios: obj?.horarios || {}
-              });
-              
-              const oldSig = JSON.stringify(cleanObj(oldJson));
-              const newSig = JSON.stringify(cleanObj(payload));
-
-              if (oldSig === newSig) {
-                hasChanges = false;
-                supabaseStatus = 'Pulado (Sem alterações)';
-                console.log(`[Config] Nenhuma alteração detectada comparando com o JSON do Supabase.`);
-              } else {
-                hasChanges = true;
-                console.log(`[Config] Alteração detectada comparando com o JSON do Supabase.`);
-              }
-            } catch(e) {
-              hasChanges = true;
-            }
-          } else {
-            // Comparação fallback com colunas de produção
-            const sameName = norm(existing?.nome_clinica) === norm(nomeClinica);
-            const sameAddress = norm(existing?.endereco) === norm(endereco);
-            const sameSpecialists = norm(existing?.especialistas) === norm(especialistasStr);
-            const sameChannels = norm(existing?.canais_escolhidos) === norm(canaisStr);
-
-            if (sameName && sameAddress && sameSpecialists && sameChannels) {
-              hasChanges = false;
-              supabaseStatus = 'Pulado (Sem alterações)';
-            } else {
-              hasChanges = true;
-            }
-          }
-
-          if (hasChanges && existing) {
-            let updatePayload: any = {
-              nome_clinica: nomeClinica,
-              telefone_principal: cleanPhone || whatsappClinica,
-              endereco: endereco,
-              especialistas: especialistasStr,
-              canais_escolhidos: canaisStr,
-              dados_completos_json: fullJsonString,
-              email: ownerEmail
-            };
-
-            let { error: updateError } = await supabaseAdmin
-              .from('CLIENTES ATENDIMENTO IA SITE')
-              .update(updatePayload)
-              .eq('id', existing.id);
-
-            // Fallback se a coluna dados_completos_json ou email não existir na tabela
-            if (updateError && (updateError.message.includes('dados_completos_json') || updateError.message.includes('email'))) {
-              delete updatePayload.dados_completos_json;
-              delete updatePayload.email;
-              const retry = await supabaseAdmin
-                .from('CLIENTES ATENDIMENTO IA SITE')
-                .update(updatePayload)
-                .eq('id', existing.id);
-              updateError = retry.error;
-            }
-
-            if (updateError) {
-              console.error("Erro update Supabase:", updateError);
-              supabaseStatus = 'Erro update: ' + updateError.message;
-            } else {
-              supabaseStatus = 'Sucesso (Atualizado)';
-              console.log("✅ Cliente atualizado na tabela CLIENTES ATENDIMENTO IA SITE");
-            }
-          }
+          hasChanges = true; // Forçar update se houver algo
         } else {
-          // Novo cadastro! Inserir novo registro
-          let insertPayload: any = {
-            nome_clinica: nomeClinica,
-            telefone_principal: cleanPhone || whatsappClinica,
-            endereco: endereco,
-            especialistas: especialistasStr,
-            canais_escolhidos: canaisStr,
-            dados_completos_json: fullJsonString,
-            email: ownerEmail
-          };
+          eventType = 'novo_cadastro';
+          hasChanges = true;
+        }
 
+        // SEMPRE SALVAR NO SUPABASE
+        let payloadDB = {
+          nome_clinica: nomeClinica,
+          telefone_principal: cleanPhone || whatsappClinica,
+          endereco: endereco,
+          especialistas: especialistasStr,
+          canais_escolhidos: canaisStr,
+          dados_completos_json: fullJsonString,
+          email: ownerEmail
+        };
+
+        if (existing) {
+          // Atualiza
+          let { error: updateError } = await supabaseAdmin
+            .from('CLIENTES ATENDIMENTO IA SITE')
+            .update(payloadDB)
+            .eq('id', existing.id);
+            
+          if (updateError && (updateError.message.includes('dados_completos_json') || updateError.message.includes('email'))) {
+             delete payloadDB.dados_completos_json; delete payloadDB.email;
+             const retry = await supabaseAdmin.from('CLIENTES ATENDIMENTO IA SITE').update(payloadDB).eq('id', existing.id);
+             updateError = retry.error;
+          }
+          if (updateError) { supabaseStatus = 'Erro update: ' + updateError.message; }
+          else { supabaseStatus = 'Sucesso (Atualizado)'; console.log("OK. Cliente atualizado na tabela CLIENTES ATENDIMENTO IA SITE"); }
+        } else {
+          // Insere
           let { error: insertError } = await supabaseAdmin
             .from('CLIENTES ATENDIMENTO IA SITE')
-            .insert([insertPayload]);
-
-          // Fallback se a coluna dados_completos_json ou email não existir na tabela
+            .insert([payloadDB]);
+            
           if (insertError && (insertError.message.includes('dados_completos_json') || insertError.message.includes('email'))) {
-            delete insertPayload.dados_completos_json;
-            delete insertPayload.email;
-            const retry = await supabaseAdmin
-              .from('CLIENTES ATENDIMENTO IA SITE')
-              .insert([insertPayload]);
-            insertError = retry.error;
+             delete payloadDB.dados_completos_json; delete payloadDB.email;
+             const retry = await supabaseAdmin.from('CLIENTES ATENDIMENTO IA SITE').insert([payloadDB]);
+             insertError = retry.error;
           }
-
-          if (insertError) {
-            console.error("Erro insert Supabase:", insertError);
-            supabaseStatus = 'Erro insert: ' + insertError.message;
-          } else {
-            supabaseStatus = 'Sucesso (Inserido)';
-            console.log("✅ Novo cliente inserido na tabela CLIENTES ATENDIMENTO IA SITE");
-          }
+          if (insertError) { supabaseStatus = 'Erro insert: ' + insertError.message; }
+          else { supabaseStatus = 'Sucesso (Inserido)'; console.log("OK. Novo cliente inserido na tabela CLIENTES ATENDIMENTO IA SITE"); }
         }
 
         // Salvar em segundo plano nos modelos de fallback para compatibilidade interna
@@ -426,8 +346,8 @@ export async function POST(request: Request) {
     }
 
     const tituloMensagem = eventType === 'alteracao_cadastro' 
-      ? '📋 *ALTERAÇÃO DE CADASTRO DE CLÍNICA*' 
-      : '📋 *NOVO CADASTRO DE CLÍNICA*';
+      ? '🔄 *ALTERAÇÃO DE CADASTRO DE CLÍNICA*' 
+      : '🆕 *NOVO CADASTRO DE CLÍNICA*';
 
     const payloadWebhook = {
       ...payload,
@@ -544,6 +464,6 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('Erro no config POST:', error);
-    return NextResponse.json({ error: 'Erro de processamento.' }, { status: 500 });
+    return NextResponse.json({ error: 'Erro de processamentOK.' }, { status: 500 });
   }
 }
