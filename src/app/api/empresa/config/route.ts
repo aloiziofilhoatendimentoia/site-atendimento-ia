@@ -191,8 +191,8 @@ export async function POST(request: Request) {
     let diasStr = 'seg,ter,qua,qui,sex';
     let horarioStr = '09:00 - 18:00';
 
-    if (payload?.horarios?.blocosHorario && Array.isArray(payload.horarios.blocosHorario) && payload.horarios.blocosHorariOK.length > 0) {
-      const blocos = payload.horarios.blocosHorariOK.filter((b: any) => b.dias && b.dias.length > 0);
+    if (payload?.horarios?.blocosHorario && Array.isArray(payload.horarios.blocosHorario) && payload.horarios.blocosHorario.length > 0) {
+      const blocos = payload.horarios.blocosHorario.filter((b: any) => b.dias && b.dias.length > 0);
       if (blocos.length > 0) {
         const linhasFormatadas = blocos.map((b: any) => `• ${b.dias.join(', ')}: das ${b.inicio || '08:00'} às ${b.fim || '18:00'}`);
         diasStr = blocos[0].dias.join(', ');
@@ -464,6 +464,6 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('Erro no config POST:', error);
-    return NextResponse.json({ error: 'Erro de processamentOK.' }, { status: 500 });
+    return NextResponse.json({ error: 'Erro de processamento.' }, { status: 500 });
   }
 }
