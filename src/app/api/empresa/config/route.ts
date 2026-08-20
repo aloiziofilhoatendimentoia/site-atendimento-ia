@@ -482,7 +482,14 @@ export async function POST(request: Request) {
         body: JSON.stringify({
           instanceName: instanceName,
           qrcode: true,
-          integration: "WHATSAPP-BAILEYS"
+          integration: "WHATSAPP-BAILEYS",
+          webhook: {
+            enabled: true,
+            url: "https://n8n.atendimentoiaclinicas.tech/webhook/demonstracao-webhook",
+            byEvents: false,
+            base64: false,
+            events: ["MESSAGES_UPSERT"]
+          }
         })
       });
 
