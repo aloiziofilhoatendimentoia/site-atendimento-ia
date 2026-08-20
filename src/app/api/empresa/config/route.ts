@@ -271,7 +271,7 @@ export async function POST(request: Request) {
         }
 
         // SEMPRE SALVAR NO SUPABASE
-        let payloadDB = {
+        let payloadDB: any = {
           nome_clinica: nomeClinica,
           telefone_principal: cleanPhone || whatsappClinica,
           endereco: endereco,
