@@ -424,6 +424,7 @@ export async function POST(request: Request) {
           instanceName: instanceName,
           qrcode: true,
           integration: "WHATSAPP-BAILEYS",
+          groupsIgnore: true,
           webhook: {
             enabled: true,
             url: "https://n8n.atendimentoiaclinicas.tech/webhook/demonstracao-webhook",
