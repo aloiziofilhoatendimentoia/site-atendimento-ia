@@ -76,12 +76,12 @@ export async function GET(request: Request) {
         const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
         let query = supabaseAdmin.from('CLIENTES ATENDIMENTO IA SITE').select('*');
 
-        if (whatsappParam) {
-          const clean = whatsappParam.replace(/\D/g, '');
-          query = query.or(`telefone_principal.eq.${whatsappParam},telefone_principal.eq.${clean},telefone_principal.eq.55${clean}`);
-        } else if (emailToUse) {
-          query = query.eq('email', emailToUse);
-        }
+        if (emailToUse) {
+            query = query.eq('email', emailToUse);
+          } else if (whatsappParam) {
+            const clean = whatsappParam.replace(/\D/g, '');
+            query = query.or(`telefone_principal.eq.${whatsappParam},telefone_principal.eq.${clean},telefone_principal.eq.55${clean}`);
+          }
 
         const { data: clinics } = await query;
         if (clinics && clinics.length > 0) {
