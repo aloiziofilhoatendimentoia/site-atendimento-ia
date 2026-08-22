@@ -54,6 +54,33 @@ export default function AdminDashboardPage() {
     }
   }
 
+  async function handleToggleStatus(clinica: any) {
+    if (!confirm(`Tem certeza que deseja ${clinica.is_active ? 'SUSPENDER' : 'ATIVAR'} a clnica ${clinica.nome_empresa}?`)) return;
+    try {
+      setLoading(true);
+      const instanceName = clinica.telefone ? clinica.telefone.replace(/\D/g, '') : null;
+      const res = await fetch('/api/admin/toggle-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clinicaId: clinica.id,
+          is_active: !clinica.is_active,
+          instanceName
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao alterar status');
+      
+      // Update local state
+      setClinicas(prev => prev.map(c => c.id === clinica.id ? { ...c, is_active: !clinica.is_active } : c));
+      alert(data.message);
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function loadClinicas() {
     try {
       setLoading(true);
@@ -243,6 +270,7 @@ export default function AdminDashboardPage() {
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider w-64">Clínica</th>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Especialistas</th>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider w-48">WhatsApp da IA</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider w-36">Acoes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#27272a]/50">
@@ -268,7 +296,7 @@ export default function AdminDashboardPage() {
                       )}
                     </td>
                     <td className="py-4 px-6">
-                      <span className="font-bold text-white block">{clinica.nome_empresa}</span>
+                      <span className="font-bold text-white block">{clinica.nome_empresa} {clinica.is_active === false && <span className="text-red-500 text-[10px] uppercase ml-2 bg-red-950/50 px-2 py-0.5 rounded border border-red-900">(Suspensa)</span>}</span>
                       <span className="text-xs text-gray-500">{clinica.email}</span>
                     </td>
                     <td className="py-4 px-6">

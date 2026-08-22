@@ -48,6 +48,7 @@ export async function GET(request: Request) {
       return NextResponse.json({
         success: true,
         data: null,
+        is_active: siteClinic?.is_active !== false,
         onboardingData: {
           nomeClinica: '',
           nomeSecretaria: '',
