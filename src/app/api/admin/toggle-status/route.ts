@@ -43,10 +43,25 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Atualizar status no Supabase
+        // Buscar o JSON atual
+    const { data: clinica } = await supabaseAdmin
+      .from('CLIENTES ATENDIMENTO IA SITE')
+      .select('dados_completos_json')
+      .eq('id', clinicaId)
+      .single();
+
+    let updatedJson = {};
+    if (clinica && clinica.dados_completos_json) {
+      try {
+        updatedJson = typeof clinica.dados_completos_json === 'string' ? JSON.parse(clinica.dados_completos_json) : clinica.dados_completos_json;
+      } catch (e) {}
+    }
+    updatedJson.is_active = is_active;
+
+    // Atualizar status no Supabase via JSON
     const { error } = await supabaseAdmin
       .from('CLIENTES ATENDIMENTO IA SITE')
-      .update({ is_active })
+      .update({ dados_completos_json: updatedJson })
       .eq('id', clinicaId);
 
     if (error) {

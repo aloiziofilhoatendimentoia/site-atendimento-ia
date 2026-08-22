@@ -48,7 +48,12 @@ export async function GET(request: Request) {
       return NextResponse.json({
         success: true,
         data: null,
-        is_active: siteClinic?.is_active !== false,
+        is_active: (() => {
+          try {
+            const parsed = typeof siteClinic?.dados_completos_json === 'string' ? JSON.parse(siteClinic.dados_completos_json) : (siteClinic?.dados_completos_json || {});
+            return parsed.is_active !== false;
+          } catch(e) { return true; }
+        })(),
         onboardingData: {
           nomeClinica: '',
           nomeSecretaria: '',
@@ -258,7 +263,17 @@ export async function POST(request: Request) {
           return false;
         });
 
+        
+        let currentIsActive = true;
+        if (existing?.dados_completos_json) {
+          try {
+            const parsed = typeof existing.dados_completos_json === 'string' ? JSON.parse(existing.dados_completos_json) : existing.dados_completos_json;
+            if (parsed.is_active === false) currentIsActive = false;
+          } catch(e){}
+        }
+        payload.is_active = currentIsActive;
         const fullJsonString = JSON.stringify(payload);
+
 
         
         
