@@ -56,7 +56,8 @@ export default function AdminDashboardPage() {
   }
 
   async function handleToggleStatus(clinica: any) {
-    if (!confirm(`Tem certeza que deseja ${clinica.is_active ? 'SUSPENDER' : 'ATIVAR'} a clnica ${clinica.nome_empresa}?`)) return;
+    const currentActive = clinica.is_active !== false; // if undefined, it's true
+    if (!confirm(`Tem certeza que deseja ${currentActive ? 'SUSPENDER' : 'ATIVAR'} a clnica ${clinica.nome_empresa}?`)) return;
     try {
       setLoading(true);
       const instanceName = clinica.telefone ? clinica.telefone.replace(/\D/g, '') : null;
@@ -65,7 +66,7 @@ export default function AdminDashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           clinicaId: clinica.id,
-          is_active: !clinica.is_active,
+          is_active: !currentActive,
           instanceName
         })
       });
@@ -73,7 +74,7 @@ export default function AdminDashboardPage() {
       if (!res.ok) throw new Error(data.error || 'Erro ao alterar status');
       
       // Update local state
-      setClinicas(prev => prev.map(c => c.id === clinica.id ? { ...c, is_active: !clinica.is_active } : c));
+      setClinicas(prev => prev.map(c => c.id === clinica.id ? { ...c, is_active: !currentActive } : c));
       alert(data.message);
     } catch (e: any) {
       alert(e.message);
