@@ -48,12 +48,7 @@ export async function GET(request: Request) {
       return NextResponse.json({
         success: true,
         data: null,
-        is_active: (() => {
-          try {
-            const parsed = typeof siteClinic?.dados_completos_json === 'string' ? JSON.parse(siteClinic.dados_completos_json) : (siteClinic?.dados_completos_json || {});
-            return parsed.is_active !== false;
-          } catch(e) { return true; }
-        })(),
+        is_active: true,
         onboardingData: {
           nomeClinica: '',
           nomeSecretaria: '',
@@ -159,10 +154,16 @@ export async function GET(request: Request) {
     };
 
     return NextResponse.json({
-      success: true,
-      data: dashboardData,
-      onboardingData
-    }, { status: 200 });
+        success: true,
+        data: dashboardData,
+        is_active: (() => {
+          try {
+            const parsed = typeof siteClinic?.dados_completos_json === 'string' ? JSON.parse(siteClinic.dados_completos_json) : (siteClinic?.dados_completos_json || {});
+            return parsed.is_active !== false;
+          } catch(e) { return true; }
+        })(),
+        onboardingData
+      }, { status: 200 });
 
   } catch (error) {
     console.error('Erro na API de buscar configurações:', error);

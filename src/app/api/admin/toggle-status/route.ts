@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       .eq('id', clinicaId)
       .single();
 
-    let updatedJson = {};
+    let updatedJson: any = {};
     if (clinica && clinica.dados_completos_json) {
       try {
         updatedJson = typeof clinica.dados_completos_json === 'string' ? JSON.parse(clinica.dados_completos_json) : clinica.dados_completos_json;

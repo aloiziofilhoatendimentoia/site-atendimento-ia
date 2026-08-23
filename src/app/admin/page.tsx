@@ -22,6 +22,7 @@ interface Clinica {
   telefone: string;
   especialistas: string;
   status: 'verificando' | 'online' | 'offline';
+    is_active?: boolean;
   created_at: string;
 }
 
