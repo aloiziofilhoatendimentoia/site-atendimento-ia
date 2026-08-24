@@ -433,12 +433,7 @@ export default function DashboardPage() {
     }
   };
 
-  // Redirecionamento automático do médico autenticado para o painel de configuração/wizard
-  useEffect(() => {
-    if (authenticated && data?.empresa?.id) {
-      window.location.href = `/configurar?empresa_id=${data.empresa.id}`;
-    }
-  }, [authenticated, data]);
+  // Removido redirecionamento forçado para /configurar para permitir visualização do dashboard
 
   if (loading) {
     return (
