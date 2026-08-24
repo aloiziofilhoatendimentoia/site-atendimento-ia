@@ -99,8 +99,9 @@ export async function GET() {
         email: clinica.email || json.ownerEmail || '',
         telefone: telefoneIA,
         especialistas: especialistasStr,
-        status: 'verificando', // será testado no frontend
-        created_at: clinica.created_at
+        status: 'verificando', // serǭ testado no frontend
+        created_at: clinica.created_at,
+        is_active: json.is_active !== false
       };
     });
 
