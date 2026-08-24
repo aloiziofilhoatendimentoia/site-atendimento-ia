@@ -433,7 +433,12 @@ export default function DashboardPage() {
     }
   };
 
-  // Removido redirecionamento forçado para /configurar para permitir visualização do dashboard
+      // Redirecionamento autom\u01EDtico do m\u011Ddico autenticado para o painel de configura\u011D\u01DDo/wizard
+    useEffect(() => {
+      if (authenticated && data?.empresa?.id) {
+        window.location.href = `/configurar?empresa_id=${data.empresa.id}`;
+      }
+    }, [authenticated, data]);
 
   if (loading) {
     return (
