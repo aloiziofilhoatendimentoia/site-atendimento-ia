@@ -75,33 +75,17 @@ export default function DashboardPage() {
     { time: '11:27:10', type: 'info', message: 'Serviço de escuta do WhatsApp iniciado na porta local.' }
   ]);
 
-  // Verificar sessão e carregar dados
-  useEffect(() => {
-    async function checkSession() {
-      try {
-        const res = await fetch('/api/auth/session');
-        const sessionData = await res.json();
-
-        if (res.ok && sessionData.authenticated) {
-          if (sessionData.isAdmin) {
-            window.location.href = '/admin';
-            return;
-          }
-          setAuthenticated(true);
-          await loadDashboardData();
-        } else {
-          setAuthenticated(false);
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error('Erro ao verificar sessão:', err);
+      // EXIGÊNCIA DO USUÁRIO: SEMPRE deslogar ao acessar esta página para forçar o OTP
+    useEffect(() => {
+      async function forceLogout() {
+        try {
+          await fetch('/api/auth/session', { method: 'DELETE' });
+        } catch (e) {}
         setAuthenticated(false);
         setLoading(false);
       }
-    }
-
-    checkSession();
-  }, []);
+      forceLogout();
+    }, []);
 
   // Carregar dados completos do dashboard
   async function loadDashboardData() {
