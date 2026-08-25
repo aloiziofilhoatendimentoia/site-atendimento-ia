@@ -39,6 +39,7 @@ export async function POST(request: Request) {
             try {
               const parsed = typeof clinica.dados_completos_json === 'string' ? JSON.parse(clinica.dados_completos_json) : clinica.dados_completos_json;
               if (parsed.is_active === false) isActive = false;
+              if (parsed.is_deleted === true) isActive = false;
             } catch(e){}
           }
           if (isActive === false) {

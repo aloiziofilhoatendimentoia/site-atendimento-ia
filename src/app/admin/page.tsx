@@ -83,6 +83,32 @@ export default function AdminDashboardPage() {
     }
   }
 
+  async function handleDeleteClinica(clinica: any) {
+    if (!confirm(`Tem certeza absoluta que deseja EXCLUIR a clínica ${clinica.nome_empresa}? O WhatsApp será desconectado e o usuário perderá o acesso.`)) return;
+    try {
+      setLoading(true);
+      const instanceName = clinica.telefone ? clinica.telefone.replace(/\D/g, '') : null;
+      const res = await fetch('/api/admin/delete-clinica', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clinicaId: clinica.id,
+          instanceName
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao excluir clínica');
+      
+      // Remove from local state
+      setClinicas(prev => prev.filter(c => c.id !== clinica.id));
+      alert(data.message);
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function loadClinicas() {
     try {
       setLoading(true);
@@ -320,16 +346,22 @@ export default function AdminDashboardPage() {
                     <td className="py-4 px-6 font-mono text-sm text-purple-300">
                       {clinica.telefone || 'Não Configurado'}
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-4 px-6 flex items-center space-x-2">
                         <button
                           onClick={() => handleToggleStatus(clinica)}
                           className={`px-3 py-1 rounded text-xs font-bold uppercase transition-colors border ${
                             clinica.is_active !== false
-                              ? 'bg-red-950/30 text-red-400 border-red-900/50 hover:bg-red-900/50'
+                              ? 'bg-orange-950/30 text-orange-400 border-orange-900/50 hover:bg-orange-900/50'
                               : 'bg-green-950/30 text-green-400 border-green-900/50 hover:bg-green-900/50'
                           }`}
                         >
                           {clinica.is_active !== false ? 'Suspender' : 'Ativar'}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClinica(clinica)}
+                          className="px-3 py-1 rounded text-xs font-bold uppercase transition-colors border bg-red-950/30 text-red-500 border-red-900/50 hover:bg-red-900/80"
+                        >
+                          Excluir
                         </button>
                       </td>
                     </tr>
