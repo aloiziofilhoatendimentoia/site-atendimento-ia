@@ -101,9 +101,10 @@ export async function GET() {
         especialistas: especialistasStr,
         status: 'verificando', // serǭ testado no frontend
         created_at: clinica.created_at,
-        is_active: json.is_active !== false
+        is_active: json.is_active !== false,
+        is_deleted: json.is_deleted === true
       };
-    });
+    }).filter((c: any) => !c.is_deleted);
 
     return NextResponse.json({ 
       success: true, 
