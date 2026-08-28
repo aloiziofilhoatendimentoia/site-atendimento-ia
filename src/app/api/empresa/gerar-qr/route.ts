@@ -46,6 +46,30 @@ export async function POST(request: Request) {
       } else if (createData.base64) {
         base64 = createData.base64;
       }
+
+      // Passo 2.5: Configurar o Webhook Definitivo da Instância
+      try {
+        const webhookUrl = process.env.N8N_WEBHOOK_URL_MESSAGES || 'https://n8n.atendimentoiaclinicas.tech/webhook/demonstracao-webhook';
+        await fetch(`${evoUrl}/webhook/set/${instanceName}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': evoKey
+          },
+          body: JSON.stringify({
+            webhook: {
+              enabled: true,
+              url: webhookUrl,
+              webhook_by_events: false,
+              webhook_base64: false,
+              events: ['MESSAGES_UPSERT']
+            }
+          })
+        });
+        console.log(`[QR Code] Webhook configurado com sucesso para a instância ${instanceName}.`);
+      } catch (err) {
+        console.log(`[QR Code] Falha silenciosa ao configurar webhook:`, err);
+      }
     } else {
       const errTxt = await createRes.text();
       console.log(`[QR Code] Aviso ao criar instância: ${errTxt}`);
