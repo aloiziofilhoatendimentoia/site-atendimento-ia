@@ -164,6 +164,7 @@ export async function getUserByEmail(email: string) {
           if (!c.dados_completos_json) return false;
           try {
             const json = typeof c.dados_completos_json === 'string' ? JSON.parse(c.dados_completos_json) : c.dados_completos_json;
+            if (json.is_deleted === true) return false;
             return json.ownerEmail && json.ownerEmail.toLowerCase() === email.toLowerCase();
           } catch(err) { return false; }
         });
