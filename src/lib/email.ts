@@ -25,11 +25,9 @@ export async function sendWelcomeEmail(toEmail: string, customerName?: string) {
       <p>Parabéns pela excelente escolha! Sua clínica acaba de dar um grande passo rumo à inovação. Nosso Agente de IA integrado ao WhatsApp e Google Agenda já está pronto para otimizar seus agendamentos.</p>
       
       <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
-        <h3 style="margin-top: 0; color: #856404;">⚠️ IMPORTANTE: Manutenção do Robô</h3>
+        <h3 style="margin-top: 0; color: #856404;">IMPORTANTE:</h3>
         <p style="margin-bottom: 0; color: #856404;">
-          A inteligência artificial funciona diretamente ligada ao número de WhatsApp que você conectou. 
-          <strong>Caso ocorra alguma queda de energia, perda de conexão de internet no aparelho hospedeiro ou o robô pare de responder, não se desespere:</strong> 
-          Basta acessar o painel principal do nosso site, clicar em <strong>"Acesse sua clínica"</strong> e efetuar uma nova leitura do QR Code. Isso restabelecerá o serviço instantaneamente.
+          A IA funciona diretamente ligada ao whatsapp. Caso o dispositivo desconecte de alguma forma basta acessar o nosso site <a href="https://atendimentoiaclinicas.tech" style="color: #0d6efd; text-decoration: underline;">https://atendimentoiaclinicas.tech</a> clique em "Acesse sua cl&iacute;nica" e fa&ccedil;a a conex&atilde;o novamente.
         </p>
       </div>
 

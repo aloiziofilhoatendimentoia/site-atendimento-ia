@@ -24,10 +24,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
   }
 
-  // Manipular os eventos da Stripe
   switch (event.type) {
     case 'checkout.session.completed':
+    case 'checkout.session.async_payment_succeeded':
       const session = event.data.object as Stripe.Checkout.Session;
+      
+      // Se for completed mas o status de pagamento for unpaid (ex: PIX gerado mas nao pago ainda), a gente ignora e espera o evento async_payment_succeeded
+      if (event.type === 'checkout.session.completed' && session.payment_status === 'unpaid') {
+        console.log('Pagamento gerado (PIX/Boleto), aguardando confirmacao de pagamento real.');
+        break;
+      }
       
       const customerEmail = session.customer_details?.email;
       const customerName = session.customer_details?.name || 'Cliente';
