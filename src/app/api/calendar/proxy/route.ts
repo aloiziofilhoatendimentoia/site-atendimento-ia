@@ -135,10 +135,13 @@ export async function POST(req: Request) {
         if (!payload.eventId || !payload.start || !payload.end) {
           return NextResponse.json({ error: 'eventId, start e end requeridos para Reagendar Evento' }, { status: 200 });
         }
-        const patchData = {
+        const patchData: any = {
           start: typeof payload.start === 'string' ? { dateTime: payload.start } : payload.start,
           end: typeof payload.end === 'string' ? { dateTime: payload.end } : payload.end
         };
+        if (payload.description) {
+          patchData.description = payload.description;
+        }
         result = await googleApiCall(`${baseUrl}/${payload.eventId}`, 'PATCH', patchData);
         break;
 
