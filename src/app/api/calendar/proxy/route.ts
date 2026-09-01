@@ -10,19 +10,19 @@ export async function POST(req: Request) {
     const { empresa_id, action, payload } = body;
 
     if (!empresa_id || !action) {
-      return NextResponse.json({ error: 'Faltam parametros obrigatorios: empresa_id ou action' }, { status: 400 });
+      return NextResponse.json({ error: 'Faltam parametros obrigatorios: empresa_id ou action' }, { status: 200 });
     }
 
     let integration = await getGoogleIntegrationByEmpresaId(empresa_id);
     if (!integration || !integration.access_token) {
-      return NextResponse.json({ error: 'Google Calendar nao conectado para esta clinica.' }, { status: 403 });
+      return NextResponse.json({ error: 'Google Calendar nao conectado para esta clinica.' }, { status: 200 });
     }
 
     // Checar se token esta vencido (damos margem de 1 minuto)
     const now = Date.now();
     if (integration.expiry_date && (integration.expiry_date - 60000) < now) {
       if (!integration.refresh_token) {
-        return NextResponse.json({ error: 'Token expirado e sem refresh_token disponivel.' }, { status: 403 });
+        return NextResponse.json({ error: 'Token expirado e sem refresh_token disponivel.' }, { status: 200 });
       }
 
       const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
       const tokenData = await tokenRes.json();
       if (!tokenRes.ok) {
-        return NextResponse.json({ error: 'Falha ao renovar token Google.', details: tokenData }, { status: 403 });
+        return NextResponse.json({ error: 'Falha ao renovar token Google.', details: tokenData }, { status: 200 });
       }
 
       // Atualizar no banco
@@ -66,7 +66,9 @@ export async function POST(req: Request) {
       });
       if (res.status === 204) return { success: true };
       const responseData = await res.json();
-      if (!res.ok) throw new Error(JSON.stringify(responseData));
+      if (!res.ok) {
+        return { error: 'API do Google retornou erro', details: responseData };
+      }
       return responseData;
     };
 
@@ -75,7 +77,7 @@ export async function POST(req: Request) {
 
     switch (action) {
       case 'Buscar Evento':
-        if (!payload.eventId) throw new Error('eventId requirido para Buscar Evento');
+        if (!payload.eventId) return NextResponse.json({ error: 'eventId requirido para Buscar Evento' }, { status: 200 });
         result = await googleApiCall(`${baseUrl}/${payload.eventId}`, 'GET');
         break;
 
@@ -90,7 +92,7 @@ export async function POST(req: Request) {
 
       case 'Criar Evento':
         if (!payload.start || !payload.end || !payload.summary) {
-          throw new Error('start, end e summary requeridos para Criar Evento');
+          return NextResponse.json({ error: 'start, end e summary requeridos para Criar Evento' }, { status: 200 });
         }
         const createData = {
           summary: payload.summary,
@@ -103,7 +105,7 @@ export async function POST(req: Request) {
 
       case 'Reagendar Evento':
         if (!payload.eventId || !payload.start || !payload.end) {
-          throw new Error('eventId, start e end requeridos para Reagendar Evento');
+          return NextResponse.json({ error: 'eventId, start e end requeridos para Reagendar Evento' }, { status: 200 });
         }
         const patchData = {
           start: typeof payload.start === 'string' ? { dateTime: payload.start } : payload.start,
@@ -113,18 +115,18 @@ export async function POST(req: Request) {
         break;
 
       case 'Cancelar Evento':
-        if (!payload.eventId) throw new Error('eventId requerido para Cancelar Evento');
+        if (!payload.eventId) return NextResponse.json({ error: 'eventId requerido para Cancelar Evento' }, { status: 200 });
         result = await googleApiCall(`${baseUrl}/${payload.eventId}`, 'DELETE');
         break;
 
       default:
-        return NextResponse.json({ error: `Acao nao reconhecida: ${action}` }, { status: 400 });
+        return NextResponse.json({ error: `Acao nao reconhecida: ${action}` }, { status: 200 });
     }
 
     return NextResponse.json(result, { status: 200 });
 
   } catch (error: any) {
     console.error('Erro no Proxy Google Calendar:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 200 });
   }
 }
