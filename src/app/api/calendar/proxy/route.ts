@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getGoogleIntegrationByEmpresaId, saveGoogleIntegration } from '@/lib/db';
+import { createClient } from '@supabase/supabase-js';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 export async function POST(req: Request) {
   try {
@@ -13,7 +15,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Faltam parametros obrigatorios: empresa_id ou action' }, { status: 200 });
     }
 
-    let integration = await getGoogleIntegrationByEmpresaId(empresa_id);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: clientData, error: clientErr } = await supabase
+      .from('CLIENTES ATENDIMENTO IA SITE')
+      .select('*')
+      .eq('id', empresa_id)
+      .single();
+
+    if (clientErr || !clientData || !clientData.dados_completos_json) {
+      return NextResponse.json({ error: 'Google Calendar nao conectado para esta clinica (ID invalido).' }, { status: 200 });
+    }
+
+    let parsedConfig;
+    try {
+      parsedConfig = typeof clientData.dados_completos_json === 'string' 
+        ? JSON.parse(clientData.dados_completos_json) 
+        : clientData.dados_completos_json;
+    } catch(e) {
+      return NextResponse.json({ error: 'Falha ao ler configuracoes da clinica.' }, { status: 200 });
+    }
+
+    let integration = parsedConfig.googleTokens;
     if (!integration || !integration.access_token) {
       return NextResponse.json({ error: 'Google Calendar nao conectado para esta clinica.' }, { status: 200 });
     }
@@ -43,13 +65,19 @@ export async function POST(req: Request) {
 
       // Atualizar no banco
       const newExpiry = Date.now() + (tokenData.expires_in * 1000);
-      integration = await saveGoogleIntegration(empresa_id, {
-        google_email: integration.google_email,
+      integration = {
+        email: integration.email || '',
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token || integration.refresh_token,
-        expiry_date: newExpiry,
-        scopes: integration.scopes
-      });
+        expiry_date: newExpiry
+      };
+      
+      parsedConfig.googleTokens = integration;
+      
+      await supabase
+        .from('CLIENTES ATENDIMENTO IA SITE')
+        .update({ dados_completos_json: JSON.stringify(parsedConfig) })
+        .eq('id', empresa_id);
     }
 
     const accessToken = integration.access_token;
