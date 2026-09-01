@@ -16,7 +16,8 @@ import {
   Star,
   ArrowRight,
   Check,
-  Send
+  Send,
+  Cloud
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -372,7 +373,7 @@ export default function LandingPage() {
             {[
               "Ligações perdidas no meio do dia",
               "WhatsApp ignorado por horas",
-              "Agendamentos esquecidos no papel",
+              "Consultas perdidas por causa da bateria",
               "Pacientes desistindo pela demora",
               "Secretária sobrecarregada",
               "Consultas não confirmadas a tempo"
@@ -419,7 +420,7 @@ export default function LandingPage() {
                   </svg>
                 )
               },
-              { t: "Confirma presença sem intervenção", i: CheckCircle2 },
+              { t: "Responde mesmo sem bateria ou internet", i: Cloud },
               { t: "Reagenda horários inteligentemente", i: ArrowRight },
               { 
                 t: "Integra com Google Agenda direto no site", 
