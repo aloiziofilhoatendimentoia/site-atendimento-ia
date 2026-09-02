@@ -752,7 +752,7 @@ function ConfigurarFormContent() {
                 
                 {/* WhatsApp para Receber Agendamentos */}
                 <div className="bg-[#121417] p-6 rounded-2xl border border-teal-900/30 animate-fade-in">
-                  <h4 className="font-bold text-white mb-1">WhatsApp para Receber Agendamentos *</h4>
+                  <h4 className="font-bold text-white mb-1">WhatsApp para Receber Agendamentos</h4>
                   <p className="text-xs text-gray-400 mb-4">Insira o número onde você quer que a IA notifique sobre os agendamentos realizados.</p>
                   <input type="text" value={whatsappReceberAgendamento} onChange={(e) => setWhatsappReceberAgendamento(e.target.value)} placeholder="(11) 99999-9999" className="w-full bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-colors" />
                 </div>
@@ -762,7 +762,7 @@ function ConfigurarFormContent() {
                   <div className="bg-[#121417] p-6 rounded-2xl border border-blue-900/30">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                       <div>
-                        <h4 className="font-bold text-white mb-1">Autorizar Google Agenda *</h4>
+                        <h4 className="font-bold text-white mb-1">Autorizar Google Agenda</h4>
                         <p className="text-xs text-gray-400">Dê permissão para nossa IA criar eventos na sua agenda.</p>
                       </div>
                       <button onClick={handleGoogleLogin} className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center space-x-2 ${googleConnected ? 'bg-blue-600/20 text-blue-400 border border-blue-500/50' : 'bg-white text-gray-900 hover:bg-gray-100'}`}>
@@ -774,7 +774,7 @@ function ConfigurarFormContent() {
 
                 {/* WhatsApp Humano */}
                 <div className="bg-[#181a1f] p-6 rounded-2xl border border-[#27272a]">
-                  <h4 className="font-bold text-white mb-1">Atendimento humano (falar com assistente humano) *</h4>
+                  <h4 className="font-bold text-white mb-1">Atendimento humano (falar com assistente humano)</h4>
                   <p className="text-xs text-gray-400 mb-4">Caso o paciente deseje falar com um assistente humano, a IA notificará este número.</p>
                   <input type="text" value={whatsappHumano} onChange={(e) => setWhatsappHumano(e.target.value)} placeholder="(11) 98888-8888" className="w-full bg-[#121417] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-colors" />
                 </div>
