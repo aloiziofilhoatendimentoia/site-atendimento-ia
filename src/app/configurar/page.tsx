@@ -394,11 +394,32 @@ function ConfigurarFormContent() {
     }
   };
 
-  const handleGoogleDisconnect = () => {
-    if(confirm("Tem certeza que deseja desconectar o Google Agenda?")) {
+  const handleGoogleDisconnect = async () => {
+    if(confirm("Tem certeza que deseja desconectar o Google Agenda? Isso removerá a integração imediatamente.")) {
       setGoogleConnected(false);
       setGoogleTokens(null);
-      alert("Desconectado do Google Agenda localmente. Clique em 'Salvar Configurações' no final da página para confirmar no sistema.");
+      try {
+        const payload = {
+          ownerEmail: emailAdmin || (typeof window !== 'undefined' ? (localStorage.getItem('onboarding_email') || localStorage.getItem('user_email') || localStorage.getItem('email') || null) : null),
+          clinica: { nomeClinica, nomeSecretaria, endereco, linkGoogleMaps: `https://maps.google.com/?q=${encodeURIComponent(endereco)}`, whatsappClinica, especialistas },
+          integracoes: { opcoesAgendamento, emailCalendar, whatsappHumano, whatsappReceberAgendamento, googleConnected: false },
+          horarios: { tempoConsulta, valorConsulta, blocosHorario },
+          googleTokens: null,
+          forceDisconnect: true
+        };
+        const res = await fetch('/api/empresa/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          alert("O Google Agenda foi desconectado e as configurações foram atualizadas com sucesso!");
+        } else {
+          alert("Aviso: Falha ao salvar a desconexão no banco. Clique em Salvar Configurações.");
+        }
+      } catch (err) {
+        alert("Erro ao salvar. Clique no botão de Salvar Configurações.");
+      }
     }
   };
 

@@ -285,7 +285,7 @@ export async function POST(request: Request) {
             const parsed = typeof existing.dados_completos_json === 'string' ? JSON.parse(existing.dados_completos_json) : existing.dados_completos_json;
             if (parsed.is_active === false) currentIsActive = false;
             // PRESERVE GOOGLE TOKENS se o frontend enviar vazio/null
-            if ((!payload.googleTokens || payload.googleTokens === null) && parsed.googleTokens) {
+            if ((!payload.googleTokens || payload.googleTokens === null) && parsed.googleTokens && !payload.forceDisconnect) {
               payload.googleTokens = parsed.googleTokens;
             }
           } catch(e){}

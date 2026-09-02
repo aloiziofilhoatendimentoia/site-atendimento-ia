@@ -15,41 +15,10 @@ export default function PagamentoPage() {
   const [pixGerado, setPixGerado] = useState(false);
 
   // Redirecionamento automático se o usuário já possui cadastro/licença
+  // Removido o checkExistingUser para permitir que usuários comprem mais de uma vez ou que novos usuários na mesma máquina não sejam bloqueados.
   React.useEffect(() => {
-    async function checkExistingUser() {
-      if (typeof window === 'undefined') return;
-
-      const isPaid = window.localStorage.getItem('licenca_paga') === 'true';
-      const hasOnboarding = window.localStorage.getItem('onboarding_data') !== null;
-      const savedEmpresaId = window.localStorage.getItem('onboarding_empresa_id');
-
-      if (isPaid || hasOnboarding) {
-        if (savedEmpresaId) {
-          router.replace(`/configurar?empresa_id=${savedEmpresaId}`);
-        } else {
-          router.replace('/configurar');
-        }
-        return;
-      }
-
-      // Verificação em nuvem via API
-      try {
-        const email = localStorage.getItem('user_email') || localStorage.getItem('email') || '';
-        if (!email) return; // Trava: não faz sentido buscar se não temos um e-mail
-        
-        const res = await fetch(`/api/empresa/config?email=${encodeURIComponent(email)}&t=${Date.now()}`);
-        if (res.ok) {
-          const resData = await res.json();
-          if (resData && (resData.onboardingData?.nomeClinica || resData.data?.empresa?.id)) {
-            window.localStorage.setItem('licenca_paga', 'true');
-            router.replace('/configurar');
-          }
-        }
-      } catch (e) {}
-    }
-
-    checkExistingUser();
-  }, [router]);
+    // Apenas marcamos que a página de pagamento foi montada, sem redirecionar
+  }, []);
 
 
   const handleVoltarInicio = (e: React.MouseEvent) => {
