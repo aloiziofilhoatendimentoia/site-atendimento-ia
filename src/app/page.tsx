@@ -472,9 +472,14 @@ export default function LandingPage() {
           <div className="flex items-center space-x-3 mb-4 md:mb-0">
             <Logo size="md" className="grayscale opacity-70" />
           </div>
-          <p className="text-slate-500 text-sm">
-            © {new Date().getFullYear()} Atendimento IA. Inteligência Artificial para Clínicas.
-          </p>
+          <div className="flex flex-col md:items-end items-center space-y-2">
+            <p className="text-slate-500 text-sm">
+              © {new Date().getFullYear()} Atendimento IA. Inteligência Artificial para Clínicas.
+            </p>
+            <Link href="/privacidade" className="text-slate-500 text-sm hover:text-white transition-colors underline">
+              Política de Privacidade
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
