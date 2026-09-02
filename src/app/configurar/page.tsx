@@ -221,6 +221,8 @@ function ConfigurarFormContent() {
             if (ob.opcoesAgendamento) setOpcoesAgendamento(ob.opcoesAgendamento);
             if (ob.whatsappHumano) setWhatsappHumano(ob.whatsappHumano);
             if (ob.whatsappReceberAgendamento) setWhatsappReceberAgendamento(ob.whatsappReceberAgendamento);
+            if (ob.googleConnected !== undefined) setGoogleConnected(ob.googleConnected);
+            if (ob.googleTokens) setGoogleTokens(ob.googleTokens);
             if (ob.tempoConsulta) setTempoConsulta(ob.tempoConsulta);
             if (ob.valorConsulta) setValorConsulta(ob.valorConsulta);
             if (ob.blocosHorario && ob.blocosHorario.length > 0) setBlocosHorario(ob.blocosHorario);
@@ -389,6 +391,14 @@ function ConfigurarFormContent() {
       console.error(e.message);
     } finally {
       setQrLoading(false);
+    }
+  };
+
+  const handleGoogleDisconnect = () => {
+    if(confirm("Tem certeza que deseja desconectar o Google Agenda?")) {
+      setGoogleConnected(false);
+      setGoogleTokens(null);
+      alert("Desconectado do Google Agenda localmente. Clique em 'Salvar Configurações' no final da página para confirmar no sistema.");
     }
   };
 

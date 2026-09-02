@@ -134,6 +134,18 @@ export async function GET(request: Request) {
     const valorConsulta = savedPayload?.horarios?.valorConsulta || '';
     const blocosHorario = savedPayload?.horarios?.blocosHorario || [{ dias: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'], inicio: '08:00', fim: '18:00' }];
 
+
+    let hasGoogleTokens = false;
+    let existingGoogleTokens = null;
+    try {
+      if (siteClinic && siteClinic.dados_completos_json) {
+        const parsed = typeof siteClinic.dados_completos_json === 'string' ? JSON.parse(siteClinic.dados_completos_json) : siteClinic.dados_completos_json;
+        if (parsed.googleTokens) {
+           hasGoogleTokens = true;
+           existingGoogleTokens = parsed.googleTokens;
+        }
+      }
+    } catch(e) {}
     const onboardingData = {
       nomeClinica,
       nomeSecretaria,
@@ -148,6 +160,8 @@ export async function GET(request: Request) {
       emailCalendar: savedPayload?.integracoes?.emailCalendar || '',
       whatsappHumano,
       whatsappReceberAgendamento,
+      googleConnected: hasGoogleTokens,
+      googleTokens: existingGoogleTokens,
       tempoConsulta,
       valorConsulta,
       blocosHorario
