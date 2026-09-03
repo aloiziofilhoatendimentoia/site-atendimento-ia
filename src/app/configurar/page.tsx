@@ -351,11 +351,13 @@ function ConfigurarFormContent() {
 
   const [isConnected, setIsConnected] = useState(false);
 
-  // Polling para verificar se o QR Code foi lido
+    // Polling para verificar se o QR Code foi lido + Refresh Automático do QR
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let statusInterval: NodeJS.Timeout;
+    let qrRefreshInterval: NodeJS.Timeout;
+
     if (showQrModal && instanceName) {
-      interval = setInterval(async () => {
+      statusInterval = setInterval(async () => {
         try {
           const res = await fetch(`/api/empresa/status-conexao?instance=${instanceName}`);
           if (res.ok) {
@@ -368,31 +370,31 @@ function ConfigurarFormContent() {
           console.error(e);
         }
       }, 3000);
+
+      // Auto-refresh do QR Code a cada 35 segundos
+      qrRefreshInterval = setInterval(async () => {
+        try {
+          const res = await fetch('/api/empresa/gerar-qr', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ instanceName })
+          });
+          const data = await res.json();
+          if (res.ok && data.evolutionQrCode) {
+            setQrBase64(data.evolutionQrCode);
+          }
+        } catch (e) {
+          console.error('Falha ao dar refresh automático no QR:', e);
+        }
+      }, 35000);
     }
     return () => {
-      if (interval) clearInterval(interval);
+      if (statusInterval) clearInterval(statusInterval);
+      if (qrRefreshInterval) clearInterval(qrRefreshInterval);
     };
   }, [showQrModal, instanceName]);
 
-  const handleRegenerateQr = async () => {
-    setQrLoading(true);
-    try {
-      const res = await fetch('/api/empresa/gerar-qr', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Erro ao recarregar QR Code');
-      if (data.evolutionQrCode) {
-        setQrBase64(data.evolutionQrCode);
-      }
-    } catch (e: any) {
-      console.error(e.message);
-    } finally {
-      setQrLoading(false);
-    }
-  };
+  
 
   const handleGoogleDisconnect = async () => {
     if(confirm("Tem certeza que deseja desconectar o Google Agenda? Isso removerá a integração imediatamente.")) {
@@ -980,13 +982,7 @@ function ConfigurarFormContent() {
                     </div>
 
                     <div className="w-full mb-6">
-                      <button 
-                        onClick={handleRegenerateQr}
-                        disabled={qrLoading}
-                        className="w-full py-3 px-4 bg-teal-600/10 border border-teal-500/30 hover:bg-teal-600/20 text-teal-400 font-semibold rounded-xl transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
-                      >
-                        <RefreshCw className={`w-4 h-4 ${qrLoading ? 'animate-spin' : ''}`} /> <span>Gerar Novamente</span>
-                      </button>
+                      <p className="text-center text-xs text-gray-500 mb-6 italic">O QR Code é atualizado automaticamente por segurança.</p>
                     </div>
                   </>
                 ) : (
