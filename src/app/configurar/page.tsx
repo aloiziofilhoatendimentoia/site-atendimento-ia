@@ -444,7 +444,18 @@ function ConfigurarFormContent() {
       router.push('/pagamento');
     }
   };
-  const validateStep1 = (): string | null => {
+
+  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let rawValue = e.target.value.replace(/\D/g, ''); // keep only numbers
+    if (rawValue === '') rawValue = '0';
+    const floatValue = parseInt(rawValue, 10) / 100;
+    const formatted = floatValue.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
+    setValorConsulta(formatted);
+  };
+\n  const validateStep1 = (): string | null => {
     if (!nomeClinica || !nomeClinica.trim()) return 'Preencha o Nome da Clínica.';
     if (!nomeSecretaria || !nomeSecretaria.trim() || nomeSecretaria === 'Secretária Virtual') {
       return 'Preencha o Nome da Secretária(o) Virtual.';
@@ -804,7 +815,7 @@ function ConfigurarFormContent() {
                   </div>
                   <div className="bg-[#181a1f] p-5 rounded-2xl border border-[#27272a]">
                     <label className="block text-sm font-semibold text-gray-300 mb-2 flex items-center"><DollarSign className="w-4 h-4 mr-2 text-green-400" /> Valor da Consulta</label>
-                    <input type="text" value={valorConsulta} onChange={(e) => setValorConsulta(e.target.value)} placeholder="R$ 350,00" className="w-full bg-[#121417] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500" />
+                    <input type="text" value={valorConsulta} onChange={handleValorChange} placeholder="R$ 150,00" className="w-full bg-[#121417] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500" />
                   </div>
                 </div>
 
