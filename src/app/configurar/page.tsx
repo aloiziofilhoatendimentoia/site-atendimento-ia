@@ -455,7 +455,8 @@ function ConfigurarFormContent() {
     });
     setValorConsulta(formatted);
   };
-\n  const validateStep1 = (): string | null => {
+
+  const validateStep1 = (): string | null => {
     if (!nomeClinica || !nomeClinica.trim()) return 'Preencha o Nome da Clínica.';
     if (!nomeSecretaria || !nomeSecretaria.trim() || nomeSecretaria === 'Secretária Virtual') {
       return 'Preencha o Nome da Secretária(o) Virtual.';
