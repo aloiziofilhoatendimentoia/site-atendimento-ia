@@ -1,9 +1,18 @@
 "use client";
 
+import React, { useEffect } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import Logo from '@/components/Logo';
 
 export default function SucessoPage() {
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('onboarding_data');
+      localStorage.removeItem('onboarding_whatsapp');
+      localStorage.removeItem('onboarding_email');
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#08090a] text-white flex flex-col items-center justify-center p-6 text-center">
       <Logo size="xl" className="mb-12" />

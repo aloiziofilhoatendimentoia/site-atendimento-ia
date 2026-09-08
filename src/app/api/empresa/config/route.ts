@@ -95,8 +95,11 @@ export async function GET(request: Request) {
 
     // Tentar restaurar o rascunho completo do payload salvo (Supabase ou Local DB)
     let savedPayload: any = null;
-    if (emailToUse) savedPayload = await getDraftPayload(emailToUse);
-    if (!savedPayload && whatsappParam) savedPayload = await getDraftPayload(whatsappParam);
+    if (emailToUse) {
+      savedPayload = await getDraftPayload(emailToUse);
+    } else if (whatsappParam) {
+      savedPayload = await getDraftPayload(whatsappParam);
+    }
 
     if (!savedPayload && siteClinic?.dados_completos_json) {
       try {
