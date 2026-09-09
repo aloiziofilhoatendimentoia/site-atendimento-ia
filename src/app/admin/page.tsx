@@ -13,6 +13,7 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import Logo from '@/components/Logo';
+import BotMasterConnection from '@/components/BotMasterConnection';
 
 interface Clinica {
   id: string;
@@ -228,6 +229,7 @@ export default function AdminDashboardPage() {
       </header>
 
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full space-y-8">
+        <BotMasterConnection />
         
         {/* CARDS HEADER */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
