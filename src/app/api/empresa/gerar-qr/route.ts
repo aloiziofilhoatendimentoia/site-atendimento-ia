@@ -4,6 +4,7 @@ export async function POST(request: Request) {
   try {
     const payload = await request.json();
     const instanceName = payload.instanceName;
+    const customWebhook = payload.webhookUrl;
 
     if (!instanceName) {
       return NextResponse.json({ error: 'Faltando o parâmetro instanceName' }, { status: 400 });
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
 
       // Passo 2.5: Configurar o Webhook Definitivo da Instância
       try {
-        const webhookUrl = process.env.N8N_WEBHOOK_URL_MESSAGES || 'https://n8n.atendimentoiaclinicas.tech/webhook/demonstracao-webhook';
+        const webhookUrl = customWebhook || process.env.N8N_WEBHOOK_URL_MESSAGES || 'https://n8n.atendimentoiaclinicas.tech/webhook/demonstracao-webhook';
         await fetch(`${evoUrl}/webhook/set/${instanceName}`, {
           method: 'POST',
           headers: {
