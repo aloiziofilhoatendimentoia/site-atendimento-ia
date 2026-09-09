@@ -5,6 +5,7 @@ export async function POST(request: Request) {
     const payload = await request.json();
     const instanceName = payload.instanceName;
     const phoneNumber = payload.phoneNumber; // Formato internacional, ex: 5511999999999
+    const customWebhook = payload.webhookUrl;
 
     if (!instanceName || !phoneNumber) {
       return NextResponse.json({ error: 'Faltando parâmetros' }, { status: 400 });
@@ -77,6 +78,30 @@ export async function POST(request: Request) {
           })
         });
       }
+    }
+
+    // Passo 2.5: Configurar o Webhook Definitivo da Instância
+    try {
+      const webhookUrl = customWebhook || process.env.N8N_WEBHOOK_URL_MESSAGES || 'https://n8n.atendimentoiaclinicas.tech/webhook/demonstracao-webhook';
+      await fetch(`${evoUrl}/webhook/set/${instanceName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': evoKey
+        },
+        body: JSON.stringify({
+          webhook: {
+            enabled: true,
+            url: webhookUrl,
+            webhook_by_events: false,
+            webhook_base64: false,
+            events: ['MESSAGES_UPSERT']
+          }
+        })
+      });
+      console.log(`[Pairing] Webhook configurado com sucesso para a instância ${instanceName}.`);
+    } catch (err) {
+      console.log(`[Pairing] Falha silenciosa ao configurar webhook:`, err);
     }
 
     // Passo 3: Solicitar o código de pareamento via GET
