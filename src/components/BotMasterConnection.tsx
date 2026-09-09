@@ -41,7 +41,7 @@ export default function BotMasterConnection() {
         const res = await fetch('/api/empresa/gerar-qr', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ instanceName: INSTANCE_NAME, webhook: { enabled: true, url: 'https://n8n.atendimentoiaclinicas.tech/webhook/atendimento-ia-webhook', events: ['MESSAGES_UPSERT'] } })
+          body: JSON.stringify({ instanceName: INSTANCE_NAME, webhook: { enabled: true, url: 'https://n8n.atendimentoiaclinicas.tech/webhook/mensagem', events: ['MESSAGES_UPSERT'] } })
         });
         const data = await res.json();
         if (res.ok && data.evolutionQrCode) {
