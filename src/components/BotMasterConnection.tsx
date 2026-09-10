@@ -10,9 +10,30 @@ export default function BotMasterConnection() {
   const [pairingLoading, setPairingLoading] = useState(false);
   const [connectionMode, setConnectionMode] = useState<'qr' | 'pairing'>('qr');
   const [initLoading, setInitLoading] = useState(true);
+  const [qrLoading, setQrLoading] = useState(false);
 
   const INSTANCE_NAME = '81995462240';
   const PAIRING_PHONE = '5581995462240';
+
+  const loadQr = async () => {
+    setQrLoading(true);
+    try {
+      const res = await fetch('/api/empresa/gerar-qr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instanceName: INSTANCE_NAME, webhookUrl: 'https://n8n.atendimentoiaclinicas.tech/webhook/mensagem' })
+      });
+      const data = await res.json();
+      if (res.ok && data.evolutionQrCode) {
+        setQrBase64(data.evolutionQrCode);
+      }
+    } catch (e) {
+      console.error('Error generating QR', e);
+    } finally {
+      setInitLoading(false);
+      setQrLoading(false);
+    }
+  };
 
   useEffect(() => {
     let statusInterval: NodeJS.Timeout;
@@ -35,28 +56,12 @@ export default function BotMasterConnection() {
       }
     };
 
-    const loadQr = async () => {
-      try {
-        const res = await fetch('/api/empresa/gerar-qr', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ instanceName: INSTANCE_NAME, webhookUrl: 'https://n8n.atendimentoiaclinicas.tech/webhook/mensagem' })
-        });
-        const data = await res.json();
-        if (res.ok && data.evolutionQrCode) {
-          setQrBase64(data.evolutionQrCode);
-        }
-      } catch (e) {
-        console.error('Error generating QR', e);
-      } finally {
-        setInitLoading(false);
-      }
-    };
-
     const init = async () => {
       const open = await checkStatus();
-      if (!open) {
+      if (!open && connectionMode === 'qr') {
         await loadQr();
+      } else if (!open) {
+        setInitLoading(false);
       }
     };
 
@@ -132,13 +137,20 @@ export default function BotMasterConnection() {
             </div>
 
             {connectionMode === 'qr' && (
-              <div className="flex flex-col items-center justify-center">
+              <div className="flex flex-col items-center justify-center space-y-3">
+                <button
+                  onClick={loadQr}
+                  disabled={qrLoading}
+                  className="w-full bg-teal-600 hover:bg-teal-500 text-white py-2 rounded-lg font-bold text-sm transition-colors flex items-center justify-center"
+                >
+                  {qrLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Gerar QR Code Novo"}
+                </button>
                 {qrBase64 ? (
-                  <div className="bg-white p-2 rounded-xl">
+                  <div className="bg-white p-2 rounded-xl mt-2">
                     <img src={qrBase64.startsWith('data:') ? qrBase64 : `data:image/png;base64,${qrBase64}`} alt="QR Code" className="w-32 h-32" />
                   </div>
                 ) : (
-                  <div className="w-32 h-32 border-2 border-dashed border-gray-700 rounded-xl flex items-center justify-center">
+                  <div className="w-32 h-32 border-2 border-dashed border-gray-700 rounded-xl flex items-center justify-center mt-2">
                     <RefreshCw className="w-6 h-6 text-gray-500 animate-spin" />
                   </div>
                 )}
