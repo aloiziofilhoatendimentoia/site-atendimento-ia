@@ -16,7 +16,6 @@ export default function BotMasterConnection() {
 
   useEffect(() => {
     let statusInterval: NodeJS.Timeout;
-    let qrRefreshInterval: NodeJS.Timeout;
 
     const checkStatus = async () => {
       try {
@@ -65,15 +64,8 @@ export default function BotMasterConnection() {
 
     statusInterval = setInterval(checkStatus, 5000);
 
-    qrRefreshInterval = setInterval(() => {
-      if (!isConnected && connectionMode === 'qr') {
-        loadQr();
-      }
-    }, 35000);
-
     return () => {
       clearInterval(statusInterval);
-      clearInterval(qrRefreshInterval);
     };
   }, [isConnected, connectionMode]);
 
@@ -150,7 +142,6 @@ export default function BotMasterConnection() {
                     <RefreshCw className="w-6 h-6 text-gray-500 animate-spin" />
                   </div>
                 )}
-                <p className="text-[10px] text-gray-500 mt-3 text-center">Atualiza automaticamente a cada 35s</p>
               </div>
             )}
 
