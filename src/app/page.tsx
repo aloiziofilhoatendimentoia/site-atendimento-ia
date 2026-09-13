@@ -472,7 +472,6 @@ export default function LandingPage() {
           
           {/* Coluna Esquerda: Contatos e QR Code */}
           <div className="flex flex-col items-start space-y-4">
-            <Logo size="md" className="grayscale opacity-70 mb-2" />
             
             <div className="flex items-center space-x-4">
               <div className="w-24 h-24 bg-white p-2 rounded-lg flex-shrink-0">
