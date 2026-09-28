@@ -141,32 +141,18 @@ export default function LandingPage() {
 
           {/* LADO DIREITO: BOTÃO DE ASSINATURA & ACESSO */}
           <div className="flex items-center flex-1 justify-end gap-3">
-            {/* BOTÕES COM BLOQUEIO TEMPORÁRIO (EM BREVE) */}
-            <div className="relative group flex items-center">
-              <button 
-                type="button"
-                className="border border-slate-300 text-slate-400 px-5 py-2.5 rounded-full font-bold whitespace-nowrap text-sm cursor-not-allowed opacity-80"
-                disabled
-              >
-                Acesse sua Clínica
-              </button>
-              <div className="absolute top-12 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                EM BREVE
-              </div>
-            </div>
-            
-            <div className="relative group flex items-center">
-              <button 
-                type="button"
-                className="bg-teal-600/60 text-white px-5 py-2.5 rounded-full font-bold shadow-sm whitespace-nowrap text-sm cursor-not-allowed"
-                disabled
-              >
-                Assinar Plano
-              </button>
-              <div className="absolute top-12 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white text-xs font-bold px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                EM BREVE
-              </div>
-            </div>
+            <Link 
+              href="/dashboard"
+              className="border border-slate-300 hover:border-teal-500 text-slate-700 hover:text-teal-600 px-5 py-2.5 rounded-full font-bold transition-colors whitespace-nowrap text-sm"
+            >
+              Acesse sua Clínica
+            </Link>
+            <Link 
+              href="/pagamento"
+              className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-full font-bold transition-colors shadow-lg whitespace-nowrap text-sm"
+            >
+              Assinar Plano
+            </Link>
           </div>
           
         </div>
