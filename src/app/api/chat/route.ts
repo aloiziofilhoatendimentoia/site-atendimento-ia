@@ -281,8 +281,8 @@ export async function POST(req: Request) {
     const horaFormatada = horaCitada ? horaCitada.replace(/as\s*/gi, "").replace(/\bh\b/gi, ":00").trim() : "";
     
     let fallbackReply = hasConfirmedAppointment 
-      ? "Como posso te ajudar hoje? Ficou alguma dúvida sobre o seu agendamento?"
-      : "Como posso te ajudar hoje? Quer agendar uma consulta, saber o endereço da clínica ou consultar nossos horários?";
+      ? "Ficou alguma dúvida sobre o seu agendamento ou posso te ajudar com mais alguma informação da clínica?"
+      : "Sou a Fernanda, assistente virtual da Clínica Vitae (atendimento pediátrico). 😊\n\nPor ser uma assistente da clínica, posso te ajudar exclusivamente com agendamentos de consultas, horários, endereço e informações sobre nosso atendimento. Como posso ajudar com a saúde do seu pequeno hoje?";
 
     // 0. Emergência e Urgência Pediátrica (Protocolo de Segurança Máxima Médica)
     if (/\b(febre|queimando|urgencia|urgente|emergencia|grave|socorro|convuls|convulsion|engasg|falta\s*de\s*ar|desmaio|desmai|sangramen|vomito|diarreia|dor\s*forte)\b/i.test(normMsg)) {
