@@ -292,31 +292,47 @@ export async function POST(req: Request) {
         : `${saudacao}Em que posso te ajudar hoje? Gostaria de agendar uma consulta, saber nosso endereço ou consultar nossos horários de funcionamento?`;
     }
     // 2. Endereço e Localização (3 Balões Separados por \n\n)
+    // 0. Emergência e Urgência Pediátrica (Protocolo de Segurança Máxima Médica)
+    if (/\b(febre\s*(alta|muito\s*alta|38|39|40)|convuls|convulsion|engasg|falta\s*de\s*ar|desmaio|desmai|sangramen|socorro|urgente|emergencia|grave)\b/i.test(normMsg)) {
+      fallbackReply = "⚠️ ATENÇÃO: Identificamos um quadro que pode necessitar de avaliação médica urgente.\n\nComo nossas consultas são agendadas e ambulatoriais, recomendamos levar a criança imediatamente ao pronto-socorro infantil mais próximo ou acionar o SAMU pelo 192.\n\nA saúde e segurança do pequeno devem ser sempre a prioridade! 🏥";
+    }
+    // 0b. Perguntas Fora de Escopo / Guardrails
+    else if (/\b(receita|bolo|futebol|politica|programacao|codigo|piada|tempo\s*hoje|clima|restaurante)\b/i.test(normMsg) && !/\b(consulta|medico|pediatra|agendar)\b/i.test(normMsg)) {
+      fallbackReply = "Sou a Fernanda, assistente virtual da Clínica Vitae, e estou aqui exclusivamente para te ajudar com informações e agendamentos pediátricos da nossa clínica. 😊\n\nComo posso te ajudar com a saúde do seu pequeno hoje?";
+    }
+    // 1. Saudação simples (oi, olá, bom dia, boa tarde)
+    else if (/^(oi|ola|bom dia|boa tarde|boa noite|oii|oie|opa)[\s!.]*$/i.test(normMsg)) {
+      const saudacao = messages.length <= 1 ? "Olá! " : "";
+      fallbackReply = hasConfirmedAppointment
+        ? `${saudacao}Em que posso te ajudar hoje? Ficou alguma dúvida sobre a sua consulta marcada ou quer saber mais sobre a clínica?`
+        : `${saudacao}Sou a Fernanda da Clínica Vitae, especializada exclusivamente em pediatria e atendimento infantil. 👶🏥\n\nEm que posso te ajudar hoje? Gostaria de agendar uma consulta, saber nosso endereço ou consultar nossos horários?`;
+    }
+    // 2. Endereço e Localização (3 Balões Separados por \n\n)
     else if (/\b(endereco|localizacao|onde fica|onde e|como chegar|mapa|rua)\b/i.test(normMsg)) {
       fallbackReply = hasConfirmedAppointment
         ? "O endereço da Clínica Vitae é R. Barão de Souza Leão, 729 - Boa Viagem * Recife.\n\nVocê pode conferir no Google Maps por este link: https://maps.app.goo.gl/2W1J8uyGvsMkyDWz5\n\nPosso ajudar em mais alguma coisa?"
         : "O endereço da Clínica Vitae é R. Barão de Souza Leão, 729 - Boa Viagem * Recife.\n\nVocê pode conferir no Google Maps por este link: https://maps.app.goo.gl/2W1J8uyGvsMkyDWz5\n\nGostaria de agendar uma consulta conosco?";
     }
-    // 3. Especialidades e Médicos
-    else if (/\b(especialidade|especialidades|medico|doutor|dr|pediatra|pediatria)\b/i.test(normMsg)) {
+    // 3. Especialidades e Médicos (Pediatria, Puericultura, Médicos)
+    else if (/\b(especialidade|especialidades|medico|medicos|doutor|doutores|dr|dra|pediatra|pediatras|pediatria|atende\s*so|so\s*crianca|adulto)\b/i.test(normMsg)) {
       fallbackReply = hasConfirmedAppointment
-        ? "A Clínica Vitae é especializada exclusivamente em pediatria e atendimento infantil com foco no desenvolvimento das crianças."
-        : "A Clínica Vitae é especializada exclusivamente em pediatria e atendimento infantil. Nossos especialistas (como o Dr. Roberto) são focados em oferecer o melhor cuidado para os pequenos. 👶🏥\n\nGostaria de verificar a disponibilidade de horários para agendar uma consulta?";
+        ? "A Clínica Vitae é um centro médico dedicado exclusivamente à pediatria e puericultura, cuidando de bebês, crianças e adolescentes com muito carinho e precisão médica. Nossos pediatras (como o Dr. Roberto e equipe) realizam acompanhamento integral do desenvolvimento infantil."
+        : "A Clínica Vitae é especializada única e exclusivamente em pediatria e puericultura, com atendimento dedicado a bebês, crianças e adolescentes. 👶🩺\n\nNosso corpo clínico conta com pediatras altamente qualificados, como o Dr. Roberto. Realizamos consultas de rotina, puericultura e acompanhamento do desenvolvimento.\n\nGostaria de verificar os horários disponíveis para agendar uma consulta?";
     }
     // 3b. Valor e Tempo Juntos
-    else if (/\b(valor|preco|quanto custa|quanto e|preco|consulta)\b/i.test(normMsg) && /\b(tempo|duracao|minutos|min|durar|hora|horas)\b/i.test(normMsg)) {
+    else if (/\b(valor|preco|quanto custa|quanto e|tabela)\b/i.test(normMsg) && /\b(tempo|duracao|minutos|min|durar|hora|horas)\b/i.test(normMsg)) {
       fallbackReply = "A consulta médica na Clínica Vitae tem o valor de R$ 120,00.\n\nA consulta tem duração de 60 minutos de atendimento personalizado.";
     }
     // 3c. Tempo / Duração
-    else if (/\b(tempo|duracao|minutos|min|durar|hora|horas)\b/i.test(normMsg)) {
+    else if (/\b(tempo|duracao|quantos\s*minutos|quantas\s*horas)\b/i.test(normMsg) && !/\b(agend|marcar)\b/i.test(normMsg)) {
       fallbackReply = "A consulta tem duração de 60 minutos de atendimento personalizado.";
     }
-    // 3d. Valor / Preço
-    else if (/\b(valor|preco|quanto custa|quanto e|preco|particular|convenio|consulta)\b/i.test(normMsg)) {
-      fallbackReply = "A consulta médica na Clínica Vitae tem o valor de R$ 120,00.";
+    // 3d. Valor / Preço (SEM a palavra 'consulta' solta para não colidir com pedidos de agendamento!)
+    else if (/\b(valor|preco|quanto custa|quanto e|particular|convenio|aceita\s*plano)\b/i.test(normMsg) && !/\b(agend|marcar|quero\s*agendar|gostaria\s*de\s*agendar)\b/i.test(normMsg)) {
+      fallbackReply = "A consulta médica na Clínica Vitae tem o valor de R$ 120,00.\n\nNosso atendimento é particular com emissão de recibo para reembolso junto ao seu plano de saúde. 😊";
     }
     // 4. Horário de Funcionamento da Clínica
-    else if (/\b(funcionamento|funciona|atendimento|aberto|abre|expediente)\b/i.test(normMsg)) {
+    else if (/\b(funcionamento|funciona|horario|horarios|expediente|aberto|abre)\b/i.test(normMsg) && !diaMatch && !horaMatch && !isManha && !isTarde) {
       fallbackReply = hasConfirmedAppointment
         ? "Nosso horário de funcionamento é de Segunda a Sexta, das 08:00 às 18:00, e aos Sábados, das 08:00 às 12:00.\n\nDomingos e feriados estamos fechados. 😊"
         : "Nosso horário de funcionamento é de Segunda a Sexta, das 08:00 às 18:00, e aos Sábados, das 08:00 às 12:00.\n\nDomingos e feriados estamos fechados. 😊\n\nQual dia e horário você prefere para a sua consulta?";
@@ -326,11 +342,15 @@ export async function POST(req: Request) {
       if (diaCitado && horaCitada) {
         fallbackReply = `Vou verificar a disponibilidade para reagendamento em nossa agenda, só um instante...\n\nProntinho! Consultei nossa agenda e o seu agendamento foi reagendado com sucesso! 🎉\n\n**Ficha da consulta**:\n- Paciente: ${nomePaciente || 'Paciente'}\n- Data: ${diaFormatado}\n- Horário: ${horaFormatada}\n\nPosso ajudar em mais alguma coisa?`;
       } else {
-        fallbackReply = "Claro! Para qual dia e horário você deseja reagendar?";
+        fallbackReply = "Claro! Para qual dia e horário você deseja reagendar a consulta do pequeno?";
       }
     }
+    // 4c. Cancelamento
+    else if (/\b(cancelar|cancela|desistir|cancelamento)\b/i.test(normMsg)) {
+      fallbackReply = "Compreendo perfeitamente! O agendamento foi cancelado com sucesso no nosso sistema.\n\nQuando precisar de uma nova consulta para o pequeno, estaremos sempre de portas abertas. Se precisar de mais alguma informação, estou à disposição! 💙";
+    }
     // 5. Se o paciente informou o DIA E O HORÁRIO JUNTOS (ou já temos ambos definidos)
-    else if (diaCitado && horaCitada) {
+    else if (diaCitado && horaCitada && !hasConfirmedAppointment) {
       if (!nomePaciente) {
         fallbackReply = "Para finalizar, qual o nome completo do paciente?";
       } else {
@@ -338,7 +358,7 @@ export async function POST(req: Request) {
       }
     }
     // 6. Agendamento com dia citado (sem horário ainda)
-    else if (diaMatch) {
+    else if (diaMatch && !hasConfirmedAppointment) {
       if (isManha) {
         fallbackReply = `Vou verificar a disponibilidade em nossa agenda para ${diaCitado} pela manhã, só um instante...\n\nTemos horários disponíveis para ${diaCitado} às 09:00 e às 11:00 horas pela manhã.\n\nQual destes dois horários fica melhor para você?`;
       } else if (isTarde) {
@@ -347,18 +367,18 @@ export async function POST(req: Request) {
         fallbackReply = `Vou verificar a disponibilidade em nossa agenda para ${diaCitado}, só um instante...\n\nTemos horários disponíveis para ${diaCitado} às 09:00 e às 11:00 horas pela manhã, e à tarde, às 14:00 e às 16:00 horas.\n\nQual horário fica melhor para você?`;
       }
     }
-    // 6. Consulta por período apenas (sem dia específico)
-    else if (isManha) {
+    // 6b. Consulta por período apenas (sem dia específico)
+    else if (isManha && !hasConfirmedAppointment) {
       fallbackReply = "Vou verificar em nossa agenda os horários disponíveis pela manhã, só um instante...\n\nTemos horários disponíveis às 09:00 e às 11:00 horas pela manhã.\n\nQual dia e horário você prefere?";
-    } else if (isTarde) {
+    } else if (isTarde && !hasConfirmedAppointment) {
       fallbackReply = "Vou verificar em nossa agenda os horários disponíveis à tarde, só um instante...\n\nTemos horários disponíveis à tarde, às 14:00 e às 16:00 horas.\n\nQual dia e horário você prefere?";
     }
     // 7. Pedido genérico de agendamento (sem dia nem período)
-    else if (/\b(agend|agendar|agendamento|marcar|reagendar|remarcar|consulta|consultas)\b/i.test(normMsg)) {
-      fallbackReply = "Claro! Qual dia e horário você prefere para o seu agendamento?";
+    else if (/\b(agend|agendar|agendamento|marcar|consulta|consultas)\b/i.test(normMsg) && !hasConfirmedAppointment) {
+      fallbackReply = "Claro! Atendemos de segunda a sexta das 08h às 18h e aos sábados das 08h às 12h. 😊\n\nQual dia e horário você prefere para a consulta do pequeno?";
     }
     // 8. Confirmação (SÓ CONFIRMA SE O DIA E HORÁRIO JÁ FORAM DEFINIDOS)
-    else if (/\b(sim|pode|ok|confirma|confirmar|positivo|claro|pode ser)\b/i.test(normMsg)) {
+    else if (/\b(sim|pode|ok|confirma|confirmar|positivo|claro|pode ser)\b/i.test(normMsg) && !hasConfirmedAppointment) {
       if (diaCitado && horaCitada) {
         if (!nomePaciente) {
           fallbackReply = "Para finalizar, qual o nome completo do paciente?";
@@ -371,7 +391,7 @@ export async function POST(req: Request) {
     }
     // 9. Agradecimento e despedida
     else if (/\b(obrigado|obrigada|valeu|perfeito|nada|tchau|ate logo)\b/i.test(normMsg)) {
-      fallbackReply = "Fico à disposição! Se precisar de algo mais, estou por aqui. Tenha um ótimo dia! 😊";
+      fallbackReply = "Fico à disposição! Se precisar de algo mais para o pequeno, estou por aqui. Tenha um ótimo dia! 😊💙";
     }
 
     return NextResponse.json({ reply: fallbackReply });
