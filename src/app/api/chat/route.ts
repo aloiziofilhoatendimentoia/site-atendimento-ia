@@ -285,8 +285,8 @@ export async function POST(req: Request) {
       : "Como posso te ajudar hoje? Quer agendar uma consulta, saber o endereço da clínica ou consultar nossos horários?";
 
     // 0. Emergência e Urgência Pediátrica (Protocolo de Segurança Máxima Médica)
-    if (/\b(febre\s*(alta|muito\s*alta|38|39|40)|convuls|convulsion|engasg|falta\s*de\s*ar|desmaio|desmai|sangramen|socorro|urgente|emergencia|grave)\b/i.test(normMsg)) {
-      fallbackReply = "⚠️ ATENÇÃO: Identificamos um quadro que pode necessitar de avaliação médica urgente.\n\nComo nossas consultas são agendadas e ambulatoriais, recomendamos levar a criança imediatamente ao pronto-socorro infantil mais próximo ou acionar o SAMU pelo 192.\n\nA saúde e segurança do pequeno devem ser sempre a prioridade! 🏥";
+    if (/\b(febre|queimando|urgencia|urgente|emergencia|grave|socorro|convuls|convulsion|engasg|falta\s*de\s*ar|desmaio|desmai|sangramen|vomito|diarreia|dor\s*forte)\b/i.test(normMsg)) {
+      fallbackReply = "⚠️ ATENÇÃO: Identificamos uma situação que pode exigir cuidados médicos imediatos.\n\nComo a Clínica Vitae realiza exclusivamente consultas ambulatoriais e agendadas, orientamos levar o pequeno imediatamente ao pronto-socorro infantil mais próximo ou acionar o SAMU pelo 192.\n\nA segurança e a saúde da criança devem ser sempre prioridade número um! 🏥💙";
     }
     // 0b. Perguntas Fora de Escopo / Guardrails
     else if (/\b(receita|bolo|futebol|politica|programacao|codigo|piada|tempo\s*hoje|clima|restaurante)\b/i.test(normMsg) && !/\b(consulta|medico|pediatra|agendar)\b/i.test(normMsg)) {
