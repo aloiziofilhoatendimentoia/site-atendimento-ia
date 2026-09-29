@@ -282,22 +282,22 @@ export async function POST(req: Request) {
     
     let fallbackReply = hasConfirmedAppointment 
       ? "Ficou alguma dúvida sobre o seu agendamento ou posso te ajudar com mais alguma informação da clínica?"
-      : "Sou a Fernanda, assistente virtual da Clínica Vitae (atendimento pediátrico). 😊\n\nPor ser uma assistente da clínica, posso te ajudar exclusivamente com agendamentos de consultas, horários, endereço e informações sobre nosso atendimento. Como posso ajudar com a saúde do seu pequeno hoje?";
+      : "Como assistente da Clínica Vitae, posso te ajudar exclusivamente com agendamentos de consultas, horários, endereço e informações sobre nosso atendimento pediátrico. 😊\n\nComo posso ajudar com a saúde do seu pequeno hoje?";
 
     // 0. Emergência e Urgência Pediátrica (Protocolo de Segurança Máxima Médica)
     if (/\b(febre|queimando|urgencia|urgente|emergencia|grave|socorro|convuls|convulsion|engasg|falta\s*de\s*ar|desmaio|desmai|sangramen|vomito|diarreia|dor\s*forte)\b/i.test(normMsg)) {
       fallbackReply = "⚠️ ATENÇÃO: Identificamos uma situação que pode exigir cuidados médicos imediatos.\n\nComo a Clínica Vitae realiza exclusivamente consultas ambulatoriais e agendadas, orientamos levar o pequeno imediatamente ao pronto-socorro infantil mais próximo ou acionar o SAMU pelo 192.\n\nA segurança e a saúde da criança devem ser sempre prioridade número um! 🏥💙";
     }
     // 0b. Perguntas Fora de Escopo / Guardrails
-    else if (/\b(receita|bolo|futebol|politica|programacao|codigo|piada|tempo\s*hoje|clima|restaurante)\b/i.test(normMsg) && !/\b(consulta|medico|pediatra|agendar)\b/i.test(normMsg)) {
-      fallbackReply = "Sou a Fernanda, assistente virtual da Clínica Vitae, e estou aqui exclusivamente para te ajudar com informações e agendamentos pediátricos da nossa clínica. 😊\n\nComo posso te ajudar com a saúde do seu pequeno hoje?";
+    else if (/\b(receita|bolo|futebol|politica|programacao|codigo|piada|tempo\s*hoje|clima|restaurante|cabelo|filme|netflix)\b/i.test(normMsg) && !/\b(consulta|medico|pediatra|agendar)\b/i.test(normMsg)) {
+      fallbackReply = "Como assistente da Clínica Vitae, estou aqui exclusivamente para te ajudar com informações e agendamentos pediátricos da nossa clínica. 😊\n\nComo posso te ajudar com a saúde do seu pequeno hoje?";
     }
     // 1. Saudação simples (oi, olá, bom dia, boa tarde)
     else if (/^(oi|ola|bom dia|boa tarde|boa noite|oii|oie|opa)[\s!.]*$/i.test(normMsg)) {
       const saudacao = messages.length <= 1 ? "Olá! " : "";
       fallbackReply = hasConfirmedAppointment
         ? `${saudacao}Em que posso te ajudar hoje? Ficou alguma dúvida sobre a sua consulta marcada ou quer saber mais sobre a clínica?`
-        : `${saudacao}Sou a Fernanda da Clínica Vitae, especializada exclusivamente em pediatria e atendimento infantil. 👶🏥\n\nEm que posso te ajudar hoje? Gostaria de agendar uma consulta, saber nosso endereço ou consultar nossos horários?`;
+        : `${saudacao}Em que posso te ajudar hoje? Gostaria de agendar uma consulta, saber nosso endereço ou consultar nossos horários de atendimento?`;
     }
     // 2. Endereço e Localização (3 Balões Separados por \n\n)
     else if (/\b(endereco|localizacao|onde fica|onde e|como chegar|mapa|rua)\b/i.test(normMsg)) {
@@ -391,7 +391,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("Erro na API de Chat:", error);
     return NextResponse.json({ 
-      reply: "Desculpe a demora! Sou a Fernanda da Clínica Vitae.\n\nComo posso te ajudar hoje? 😊" 
+      reply: "Desculpe a demora! Tive uma pequena instabilidade no sistema da Clínica Vitae.\n\nComo posso te ajudar com a consulta do pequeno hoje? 😊" 
     });
   }
 }
