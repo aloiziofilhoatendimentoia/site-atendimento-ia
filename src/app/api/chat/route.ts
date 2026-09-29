@@ -284,14 +284,6 @@ export async function POST(req: Request) {
       ? "Como posso te ajudar hoje? Ficou alguma dúvida sobre o seu agendamento?"
       : "Como posso te ajudar hoje? Quer agendar uma consulta, saber o endereço da clínica ou consultar nossos horários?";
 
-    // 1. Saudação simples (oi, olá, bom dia, boa tarde)
-    if (/^(oi|ola|bom dia|boa tarde|boa noite|oii|oie|opa)[\s!.]*$/i.test(normMsg)) {
-      const saudacao = messages.length <= 1 ? "Olá! " : "";
-      fallbackReply = hasConfirmedAppointment
-        ? `${saudacao}Em que posso te ajudar hoje? Ficou alguma dúvida sobre a sua consulta marcada ou quer saber mais sobre a clínica?`
-        : `${saudacao}Em que posso te ajudar hoje? Gostaria de agendar uma consulta, saber nosso endereço ou consultar nossos horários de funcionamento?`;
-    }
-    // 2. Endereço e Localização (3 Balões Separados por \n\n)
     // 0. Emergência e Urgência Pediátrica (Protocolo de Segurança Máxima Médica)
     if (/\b(febre\s*(alta|muito\s*alta|38|39|40)|convuls|convulsion|engasg|falta\s*de\s*ar|desmaio|desmai|sangramen|socorro|urgente|emergencia|grave)\b/i.test(normMsg)) {
       fallbackReply = "⚠️ ATENÇÃO: Identificamos um quadro que pode necessitar de avaliação médica urgente.\n\nComo nossas consultas são agendadas e ambulatoriais, recomendamos levar a criança imediatamente ao pronto-socorro infantil mais próximo ou acionar o SAMU pelo 192.\n\nA saúde e segurança do pequeno devem ser sempre a prioridade! 🏥";
