@@ -36,27 +36,27 @@ interface ScriptStep {
 
 const CONVERSATION_SCRIPT: ScriptStep[] = [
   { sender: 'user', text: 'Olá, bom dia! Gostaria de tirar umas dúvidas sobre a clínica.' },
-  { sender: 'bot', text: 'Olá! Seja muito bem-vindo(a) à Clínica Vitae Odontologia. 😊', typingDelay: 6000 },
-  { sender: 'bot', text: 'Sou a **Giovanna**, assistente da equipe. Como posso te ajudar hoje?', typingDelay: 7000 },
+  { sender: 'bot', text: 'Olá! Seja muito bem-vindo(a) à Clínica Vitae Odontologia. 😊', typingDelay: 7500 },
+  { sender: 'bot', text: 'Sou a **Giovanna**, assistente da equipe. Como posso te ajudar hoje?', typingDelay: 8500 },
   { sender: 'user', text: 'O Dr. Lucas ainda atende aí? Queria ver se consigo consulta com ele.' },
-  { sender: 'bot', text: 'Sim, com certeza! O Dr. Lucas atende aqui na área de clínica geral e prótese.', typingDelay: 7500 },
-  { sender: 'bot', text: 'Além dele, nossa equipe conta também com a Dra. Camila (especialista em Ortodontia e Estética) e o Dr. Marcelo (Implantes e Cirurgia). Temos excelente disponibilidade com eles também! 🦷✨', typingDelay: 9500 },
+  { sender: 'bot', text: 'Sim, com certeza! O Dr. Lucas atende aqui como cirurgião-dentista, cuidando de limpeza profilática, restaurações e próteses dentárias.', typingDelay: 9500 },
+  { sender: 'bot', text: 'Além dele, nossa equipe conta também com a Dra. Camila (especialista em manutenção de aparelhos e ortodontia) e o Dr. Marcelo (cirurgião-dentista especialista em implantes e extrações). Temos excelente disponibilidade com todos eles! 🦷✨', typingDelay: 12000 },
   { sender: 'user', text: 'Que ótimo! E qual é o valor da avaliação inicial?' },
-  { sender: 'bot', text: 'A consulta de avaliação com check-up digital completo tem o valor de R$ 120,00. Esse valor já inclui o planejamento detalhado do seu tratamento e fotos intraorais.', typingDelay: 9000 },
+  { sender: 'bot', text: 'A consulta de avaliação odontológica com check-up digital completo tem o valor de R$ 120,00. Esse valor já inclui o planejamento detalhado do tratamento, avaliação da gengiva e fotos intraorais.', typingDelay: 11000 },
   { sender: 'user', text: 'Entendi, perfeito. E quais são os dias e horários de funcionamento de vocês?' },
-  { sender: 'bot', text: 'Nosso horário de funcionamento é de Segunda a Sexta das 08:00 às 19:00, e aos Sábados das 08:00 às 13:00.\n\nFechamos apenas aos domingos e feriados. 😊', typingDelay: 8500 },
+  { sender: 'bot', text: 'Nosso horário de funcionamento é de Segunda a Sexta das 08:00 às 19:00, e aos Sábados das 08:00 às 13:00.\n\nFechamos apenas aos domingos e feriados. 😊', typingDelay: 10000 },
   { sender: 'user', text: 'Onde a clínica fica localizada?' },
-  { sender: 'bot', text: 'Estamos localizados na Av. Boa Viagem, 1420 - Sala 402 - Boa Viagem, Recife/PE.', typingDelay: 6500 },
-  { sender: 'bot', isMapCard: true, typingDelay: 6000 },
+  { sender: 'bot', text: 'Estamos localizados na Av. Boa Viagem, 1420 - Sala 402 - Boa Viagem, Recife/PE.', typingDelay: 8000 },
+  { sender: 'bot', isMapCard: true, typingDelay: 7000 },
   { sender: 'user', text: 'Perfeito, achei bem perto! Quero marcar com o Dr. Lucas para amanhã.' },
-  { sender: 'bot', text: 'Vou verificar a disponibilidade em nossa agenda, só um instante...', typingDelay: 6000 },
-  { sender: 'bot', text: 'Temos horários disponíveis para amanhã com o Dr. Lucas às 10:00 e às 15:30 horas.\n\nQual destes dois horários fica melhor para você?', typingDelay: 8500 },
+  { sender: 'bot', text: 'Vou verificar a disponibilidade em nossa agenda odontológica, só um instante...', typingDelay: 7500 },
+  { sender: 'bot', text: 'Temos horários disponíveis para amanhã com o Dr. Lucas às 10:00 e às 15:30 horas.\n\nQual destes dois horários fica melhor para você?', typingDelay: 10000 },
   { sender: 'user', text: 'Pode ser às 10:00, por favor.' },
-  { sender: 'bot', text: 'Combinado! Para finalizar e emitir sua ficha, qual o nome completo do paciente?', typingDelay: 6500 },
+  { sender: 'bot', text: 'Combinado! Para finalizar e emitir sua ficha, qual o nome completo do paciente?', typingDelay: 8000 },
   { sender: 'user', text: 'Mariana Souza Alves' },
-  { sender: 'bot', text: 'Agendamento confirmado com sucesso! 🎉', typingDelay: 6000 },
-  { sender: 'bot', text: '**Ficha do Agendamento**:\n- Paciente: Mariana Souza Alves\n- Especialista: Dr. Lucas\n- Data: Amanhã às 10:00h\n- Local: Av. Boa Viagem, 1420 - Sala 402', typingDelay: 8500 },
-  { sender: 'bot', text: 'Já reservei seu horário em nosso sistema. Qualquer dúvida antes da consulta, estamos à disposição por aqui! Tenha um ótimo dia! 💙🦷', typingDelay: 9000 },
+  { sender: 'bot', text: 'Agendamento confirmado com sucesso! 🎉', typingDelay: 7000 },
+  { sender: 'bot', text: '**Ficha do Agendamento Odontológico**:\n- Paciente: Mariana Souza Alves\n- Cirurgião-Dentista: Dr. Lucas\n- Procedimento: Avaliação / Limpeza\n- Data: Amanhã às 10:00h\n- Local: Av. Boa Viagem, 1420 - Sala 402', typingDelay: 10500 },
+  { sender: 'bot', text: 'Já reservei a sala e seu horário no sistema. Qualquer dúvida antes da consulta, estamos à disposição por aqui! Tenha um ótimo dia e até breve! 💙🦷', typingDelay: 11000 },
 ];
 
 export default function LandingPage() {
@@ -107,8 +107,8 @@ export default function LandingPage() {
       while (!isCancelled) {
         setMessages([]);
         setIsTyping(false);
-        // Pequena pausa inicial (3.5 segundos) para o visitante contemplar a tela antes da primeira mensagem
-        await new Promise(r => setTimeout(r, 3500));
+        // Pausa inicial confortável de 5 segundos para o visitante se situar
+        await new Promise(r => setTimeout(r, 5000));
 
         for (let i = 0; i < CONVERSATION_SCRIPT.length; i++) {
           if (isCancelled) break;
@@ -116,24 +116,24 @@ export default function LandingPage() {
           const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
           if (step.sender === 'user') {
-            // Tempo triplicado entre a mensagem do usuário (4.2 segundos)
-            await new Promise(r => setTimeout(r, 4200));
+            // Tempo humano de leitura e resposta do paciente (5.5 segundos)
+            await new Promise(r => setTimeout(r, 5500));
             if (isCancelled) break;
             setMessages(prev => [...prev, { ...step, time }]);
           } else {
             setIsTyping(true);
-            const delay = step.typingDelay || 7500;
+            const delay = step.typingDelay || 8500;
             await new Promise(r => setTimeout(r, delay));
             if (isCancelled) break;
             setIsTyping(false);
             setMessages(prev => [...prev, { ...step, time }]);
-            // Pausa triplicada entre balões do bot (2.4 segundos)
-            await new Promise(r => setTimeout(r, 2400));
+            // Pausa humana entre mensagens da secretária (3.5 segundos)
+            await new Promise(r => setTimeout(r, 3500));
           }
         }
 
-        // Aguarda 18 segundos antes de reiniciar o loop para leitura completa
-        await new Promise(r => setTimeout(r, 18000));
+        // Aguarda 22 segundos antes de reiniciar o ciclo completo
+        await new Promise(r => setTimeout(r, 22000));
       }
     }
 
