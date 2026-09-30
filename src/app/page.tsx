@@ -16,108 +16,103 @@ import {
   Star,
   ArrowRight,
   Check,
-  Send,
-  Cloud
+  MapPin,
+  ExternalLink,
+  Sparkles,
+  Wifi,
+  Battery,
+  Cloud,
+  Send
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-interface Message {
+interface ScriptStep {
   sender: 'user' | 'bot';
-  text: string;
-  time: string;
+  text?: string;
+  isMapCard?: boolean;
+  typingDelay?: number;
 }
 
+const CONVERSATION_SCRIPT: ScriptStep[] = [
+  { sender: 'user', text: 'Olá, bom dia! Gostaria de tirar umas dúvidas sobre a clínica.' },
+  { sender: 'bot', text: 'Olá! Seja muito bem-vindo(a) à Clínica Vitae Odontologia. 😊', typingDelay: 2200 },
+  { sender: 'bot', text: 'Sou a assistente da equipe. Como posso te ajudar hoje?', typingDelay: 2400 },
+  { sender: 'user', text: 'O Dr. Lucas ainda atende aí? Queria ver se consigo consulta com ele.' },
+  { sender: 'bot', text: 'Sim, com certeza! O Dr. Lucas atende aqui na área de clínica geral e prótese.', typingDelay: 2600 },
+  { sender: 'bot', text: 'Além dele, nossa equipe conta também com a Dra. Camila (especialista em Ortodontia e Estética) e o Dr. Marcelo (Implantes e Cirurgia). Temos excelente disponibilidade com eles também! 🦷✨', typingDelay: 3200 },
+  { sender: 'user', text: 'Que ótimo! E qual é o valor da avaliação inicial?' },
+  { sender: 'bot', text: 'A consulta de avaliação com check-up digital completo tem o valor de R$ 120,00. Esse valor já inclui o planejamento detalhado do seu tratamento e fotos intraorais.', typingDelay: 3000 },
+  { sender: 'user', text: 'Entendi, perfeito. E quais são os dias e horários de funcionamento de vocês?' },
+  { sender: 'bot', text: 'Nosso horário de funcionamento é de Segunda a Sexta das 08:00 às 19:00, e aos Sábados das 08:00 às 13:00.\n\nFechamos apenas aos domingos e feriados. 😊', typingDelay: 2800 },
+  { sender: 'user', text: 'Onde a clínica fica localizada?' },
+  { sender: 'bot', text: 'Estamos localizados na Av. Boa Viagem, 1420 - Sala 402 - Boa Viagem, Recife/PE.', typingDelay: 2200 },
+  { sender: 'bot', isMapCard: true, typingDelay: 2000 },
+  { sender: 'user', text: 'Perfeito, achei bem perto! Quero marcar com o Dr. Lucas para amanhã.' },
+  { sender: 'bot', text: 'Vou verificar a disponibilidade em nossa agenda, só um instante...', typingDelay: 2000 },
+  { sender: 'bot', text: 'Temos horários disponíveis para amanhã com o Dr. Lucas às 10:00 e às 15:30 horas.\n\nQual destes dois horários fica melhor para você?', typingDelay: 2800 },
+  { sender: 'user', text: 'Pode ser às 10:00, por favor.' },
+  { sender: 'bot', text: 'Combinado! Para finalizar e emitir sua ficha, qual o nome completo do paciente?', typingDelay: 2200 },
+  { sender: 'user', text: 'Mariana Souza Alves' },
+  { sender: 'bot', text: 'Agendamento confirmado com sucesso! 🎉', typingDelay: 2000 },
+  { sender: 'bot', text: '**Ficha do Agendamento**:\n- Paciente: Mariana Souza Alves\n- Especialista: Dr. Lucas\n- Data: Amanhã às 10:00h\n- Local: Av. Boa Viagem, 1420 - Sala 402', typingDelay: 2800 },
+  { sender: 'bot', text: 'Já reservei seu horário em nosso sistema. Qualquer dúvida antes da consulta, estamos à disposição por aqui! Tenha um ótimo dia! 💙🦷', typingDelay: 3000 },
+];
+
 export default function LandingPage() {
-  // --- LÓGICA DO CHAT WEB ---
-  const [messages, setMessages] = useState<Message[]>([]);
-  // Input já vem com a primeira frase predefinida para o usuário só enviar
-  const [inputMsg, setInputMsg] = useState('Olá, bom dia!');
+  const [messages, setMessages] = useState<Array<ScriptStep & { time: string }>>([]);
   const [isTyping, setIsTyping] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-
-
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   }, [messages, isTyping]);
 
-  const handleSendMessage = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!inputMsg.trim() || isTyping) return;
+  useEffect(() => {
+    let isCancelled = false;
 
-    const userText = inputMsg.trim();
-    const newTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    
-    // Adiciona msg do usuário na tela
-    const newMessages: Message[] = [...messages, { sender: 'user', text: userText, time: newTime }];
-    setMessages(newMessages);
-    setInputMsg('');
-    setIsTyping(true);
-
-    // Se for a PRIMEIRA MENSAGEM, o doutor responde localmente a saudação sem bater na API.
-    if (newMessages.length === 1) {
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev, 
-          { sender: 'bot', text: 'Olá, sou a **Fernanda**, assistente do Dr. Roberto da Clínica Vitae. Em que posso te ajudar hoje?', time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }
-        ]);
+    async function runScript() {
+      while (!isCancelled) {
+        setMessages([]);
         setIsTyping(false);
-      }, 5000);
-      return;
-    }
+        await new Promise(r => setTimeout(r, 1200));
 
-    // Se for as próximas mensagens, chama o Gemini Cérebro na Rota API
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages })
-      });
+        for (let i = 0; i < CONVERSATION_SCRIPT.length; i++) {
+          if (isCancelled) break;
+          const step = CONVERSATION_SCRIPT[i];
+          const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      const data = await response.json();
-      
-      if (response.ok && data.reply) {
-        // Fatiar a resposta em balões (baseado estritamente em Enter duplo \n\n da API, mantendo linhas simples \n no mesmo balão)
-        const frases = data.reply.split(/\n\n+/).map((f: string) => f.trim()).filter((f: string) => f.length > 0);
-        
-        for (let i = 0; i < frases.length; i++) {
-           const frase = frases[i];
-           setIsTyping(true); // Liga a barrinha para a frase atual
-           
-           // Tempo de digitação realista e humanizado (para simular leitura e digitação humana)
-           const readingDelay = Math.min(Math.max(5000, frase.length * 60), 12000);
-           
-           await new Promise(resolve => setTimeout(resolve, readingDelay)); // Espera digitando
-           
-           setMessages((prev) => [
-             ...prev, 
-             { sender: 'bot', text: frase, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }
-           ]);
-           
-           // Se tiver mais frases pela frente, pisca o isTyping pra false um segundinho
-           if (i < frases.length - 1) {
-              setIsTyping(false);
-              await new Promise(resolve => setTimeout(resolve, 800)); // Pequena pausa onde ele "respira" antes de digitar o próximo balão
-           }
+          if (step.sender === 'user') {
+            await new Promise(r => setTimeout(r, 1400));
+            if (isCancelled) break;
+            setMessages(prev => [...prev, { ...step, time }]);
+          } else {
+            setIsTyping(true);
+            const delay = step.typingDelay || 2500;
+            await new Promise(r => setTimeout(r, delay));
+            if (isCancelled) break;
+            setIsTyping(false);
+            setMessages(prev => [...prev, { ...step, time }]);
+            await new Promise(r => setTimeout(r, 800));
+          }
         }
-        setIsTyping(false);
-      } else {
-        throw new Error(data.error || 'Erro na API');
+
+        // Aguarda 14 segundos antes de reiniciar o loop para leitura completa
+        await new Promise(r => setTimeout(r, 14000));
       }
-    } catch (err) {
-      console.error(err);
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev, 
-          { sender: 'bot', text: 'Desculpe, meu sistema está indisponível no momento. Tente novamente mais tarde.', time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }
-        ]);
-        setIsTyping(false);
-      }, 3000);
     }
-  };
+
+    runScript();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen relative font-sans bg-slate-50 text-slate-900 overflow-x-hidden flex flex-col selection:bg-teal-200">
@@ -129,7 +124,6 @@ export default function LandingPage() {
           {/* LADO ESQUERDO: LINKS */}
           <div className="hidden md:flex space-x-6 lg:space-x-8 items-center flex-1 justify-start">
             <a href="#solucoes" className="text-slate-600 hover:text-teal-600 font-medium transition-colors whitespace-nowrap">Soluções</a>
-            <a href="#simulador" className="text-slate-600 hover:text-teal-600 font-medium transition-colors whitespace-nowrap">Simule Agora</a>
             <a href="#planos" className="text-slate-600 hover:text-teal-600 font-medium transition-colors whitespace-nowrap">Planos</a>
           </div>
 
@@ -143,14 +137,6 @@ export default function LandingPage() {
           {/* LADO DIREITO: BOTÃO DE ASSINATURA & ACESSO */}
           <div className="flex items-center flex-1 justify-end gap-3">
             <div className="flex flex-col items-center">
-              {/*
-              <Link 
-                href="/dashboard"
-                className="border border-slate-300 hover:border-teal-500 text-slate-700 hover:text-teal-600 px-5 py-2.5 rounded-full font-bold transition-colors whitespace-nowrap text-sm"
-              >
-                Acesse sua Clínica
-              </Link>
-              */}
               <button 
                 onClick={(e) => { e.preventDefault(); alert("🚀 EM BREVE! A plataforma estará disponível nos próximos dias."); }}
                 className="relative group overflow-hidden border border-slate-300 hover:border-red-500 text-slate-700 px-5 py-2.5 rounded-full font-bold transition-colors whitespace-nowrap text-sm min-w-[150px]"
@@ -164,14 +150,7 @@ export default function LandingPage() {
               </button>
               <span className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider font-semibold">Pós pagamento</span>
             </div>
-            {/*
-            <Link 
-              href="/pagamento"
-              className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-full font-bold transition-colors shadow-lg whitespace-nowrap text-sm"
-            >
-              Assinar Plano
-            </Link>
-            */}
+            
             <button 
               onClick={(e) => { e.preventDefault(); alert("🚀 EM BREVE! A plataforma estará disponível nos próximos dias."); }}
               className="relative group overflow-hidden bg-teal-600 text-white px-5 py-2.5 rounded-full font-bold transition-colors shadow-lg whitespace-nowrap text-sm min-w-[130px]"
@@ -189,21 +168,20 @@ export default function LandingPage() {
       </nav>
 
       {/* HERO SECTION COM BACKGROUND */}
-      <section className="relative pt-20 pb-32 overflow-hidden bg-white">
+      <section className="relative pt-16 pb-28 overflow-hidden bg-white">
         {/* Background Imagem Clara */}
         <div 
           className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/assets/bg-clinica.png')" }}
         >
-          {/* Overlay suave para melhorar visibilidade do texto sem esconder o fundo */}
           <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px]"></div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-10 items-center">
             
             {/* TEXTO HERO */}
-            <div className="flex flex-col space-y-6 text-center lg:text-left bg-white/70 p-8 rounded-3xl backdrop-blur-md shadow-xl border border-white/50">
+            <div className="flex flex-col space-y-6 text-center lg:text-left bg-white/70 p-8 sm:p-10 rounded-3xl backdrop-blur-md shadow-xl border border-white/50">
               <div className="inline-flex items-center justify-center lg:justify-start space-x-2 px-4 py-2 rounded-full bg-teal-50 text-teal-700 font-semibold text-sm border border-teal-100 w-fit mx-auto lg:mx-0">
                 <Shield className="w-4 h-4" />
                 <span>Não fornecemos automação, fornecemos mais pacientes</span>
@@ -231,13 +209,13 @@ export default function LandingPage() {
                   </span>
                 </p>
 
-                <div className="flex flex-col lg:flex-row items-center space-y-2 lg:space-y-0 lg:space-x-3 text-teal-700 font-bold text-xl pt-4 lg:pt-2 justify-center lg:justify-start">
-                  <span className="bg-teal-100/80 px-4 py-2 rounded-full border border-teal-200 shadow-sm animate-pulse">
-                    Teste nossa secretária virtual
+                <div className="flex flex-col lg:flex-row items-center space-y-2 lg:space-y-0 lg:space-x-3 text-teal-800 font-bold text-lg sm:text-xl pt-4 lg:pt-2 justify-center lg:justify-start">
+                  <span className="bg-gradient-to-r from-teal-500/15 to-emerald-500/15 border border-teal-300 text-teal-800 px-5 py-2.5 rounded-full shadow-sm flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-teal-600 animate-spin" style={{ animationDuration: '4s' }} />
+                    Veja a nossa Secretária em Ação
                   </span>
-                  {/* Seta gigante que gira dependendo de mobile ou desktop */}
-                  <ArrowRight className="w-10 h-10 text-teal-600 hidden lg:block animate-bounce-x" style={{ animation: 'bounce-x 1s infinite' }} />
-                  <ArrowRight className="w-10 h-10 text-teal-600 rotate-90 lg:hidden block animate-bounce" />
+                  <ArrowRight className="w-9 h-9 text-teal-600 hidden lg:block animate-bounce-x" style={{ animation: 'bounce-x 1s infinite' }} />
+                  <ArrowRight className="w-9 h-9 text-teal-600 rotate-90 lg:hidden block animate-bounce" />
                 </div>
               </div>
               <style dangerouslySetInnerHTML={{__html: `
@@ -246,20 +224,154 @@ export default function LandingPage() {
                   50% { transform: translateX(25%); }
                 }
               `}} />
+            </div>
 
-              <div className="pt-6 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                {/*
-                <Link 
-                  href="/pagamento"
-                  className="w-full sm:w-auto px-8 py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-full font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 flex items-center justify-center"
-                >
-                  <Calendar className="w-5 h-5 mr-2" />
-                  Saiba Mais e Assine
-                </Link>
-                */}
+            {/* MOCKUP iPHONE MODERNO (TITANIUM NATURAL COM DYNAMIC ISLAND) */}
+            <div id="simulador" className="flex flex-col items-center justify-center lg:justify-end relative mt-6 lg:mt-0">
+              
+              {/* Moldura Externa do iPhone (Bordas Ultrafinas, Titânio e Reflexo) */}
+              <div className="relative mx-auto bg-slate-900 border-[10px] border-slate-800 rounded-[3rem] h-[610px] w-[310px] sm:h-[660px] sm:w-[350px] shadow-[0_25px_60px_-15px_rgba(15,23,42,0.4)] ring-1 ring-white/20 overflow-hidden flex flex-col transform hover:scale-[1.01] transition-transform duration-500">
+                
+                {/* Dynamic Island Moderna no Topo */}
+                <div className="absolute top-2.5 left-1/2 -translate-x-1/2 z-40 bg-black h-[22px] w-[86px] rounded-full flex items-center justify-between px-2.5 shadow-md">
+                  <div className="w-2.5 h-2.5 rounded-full bg-slate-900/90 border border-slate-800"></div>
+                  <div className="w-2 h-2 rounded-full bg-teal-500/80 animate-pulse"></div>
+                </div>
+
+                {/* WhatsApp UI Interna */}
+                <div className="absolute inset-0 bg-[#EFEAE2] flex flex-col font-sans">
+                  {/* Fundo Padrão Clássico */}
+                  <div className="absolute inset-0 opacity-[0.04] z-0" style={{ backgroundImage: 'url("https://w0.peakpx.com/wallpaper/818/148/HD-wallpaper-whatsapp-background-cool-dark-green-new-theme-whatsapp.jpg")', backgroundSize: 'cover' }}></div>
+                  
+                  {/* Status Bar Estilo iOS */}
+                  <div className="bg-[#008069] text-white pt-1.5 px-6 pb-1 flex justify-between items-center text-[11px] font-semibold tracking-tight z-20">
+                    <span>09:41</span>
+                    <div className="flex items-center space-x-1.5 opacity-90">
+                      <Wifi className="w-3 h-3" />
+                      <Battery className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+
+                  {/* Header Chat WhatsApp Oficial */}
+                  <div className="bg-[#008069] text-white p-3 flex items-center space-x-3 z-10 shadow-sm border-b border-[#006e5a]">
+                    <div className="relative">
+                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center overflow-hidden border border-[#00A884] shadow-sm">
+                        <img src="/assets/logo-vitae.png" alt="Clinica Vitae Odontologia" className="w-full h-full object-cover" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm sm:text-base truncate">Clínica Vitae Odontologia</h3>
+                      <p className="text-[11px] text-teal-100 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 inline-block animate-pulse"></span>
+                        Online
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Feed de Mensagens Animado */}
+                  <div ref={chatContainerRef} className="flex-1 p-3 overflow-y-auto space-y-3 z-10 flex flex-col scrollbar-hide pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    <div className="flex justify-center mb-2 mt-1">
+                      <span className="bg-[#E1F3FB] text-slate-700 text-[10px] sm:text-[11px] px-3 py-1 rounded-full uppercase tracking-wider font-bold shadow-xs border border-teal-100/50">
+                        Atendimento Odontológico 24h
+                      </span>
+                    </div>
+
+                    {messages.map((msg, i) => (
+                      <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} transition-all duration-300 animate-in fade-in slide-in-from-bottom-2`}>
+                        
+                        {/* Se for o Card de Localização Google Maps */}
+                        {msg.isMapCard ? (
+                          <div className="max-w-[90%] sm:max-w-[85%] rounded-2xl rounded-tl-sm bg-white overflow-hidden shadow-sm border border-slate-200">
+                            <div className="relative h-28 w-full bg-slate-100 overflow-hidden">
+                              <img 
+                                src="/assets/bg-clinica.png" 
+                                alt="Fachada Clínica Vitae Odontologia" 
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                              <div className="absolute bottom-2 left-2 flex items-center gap-1.5 text-white">
+                                <span className="p-1 rounded-full bg-red-600 text-white shadow-sm">
+                                  <MapPin className="w-3.5 h-3.5 fill-current" />
+                                </span>
+                                <span className="text-xs font-bold drop-shadow-md">Clínica Vitae Odontologia</span>
+                              </div>
+                            </div>
+                            <div className="p-2.5 bg-slate-50">
+                              <div className="flex items-center justify-between">
+                                <p className="text-[12px] font-bold text-slate-800">Av. Boa Viagem, 1420 - Sala 402</p>
+                                <span className="flex items-center text-amber-500 text-[11px] font-bold">
+                                  ★ 4.9
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-500 mt-0.5">Boa Viagem • Recife/PE</p>
+                              <div className="mt-2 pt-2 border-t border-slate-200 flex items-center justify-between">
+                                <span className="text-[11px] font-semibold text-teal-700 flex items-center gap-1">
+                                  <ExternalLink className="w-3 h-3" />
+                                  Abrir no Google Maps
+                                </span>
+                                <span className="text-[10px] text-slate-400">{msg.time}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          /* Balão de Texto Regular */
+                          <div className={`max-w-[88%] rounded-2xl p-2.5 shadow-sm text-sm relative ${
+                            msg.sender === 'user' ? 'bg-[#E7FFDB] text-slate-800 rounded-tr-sm' : 'bg-white text-slate-800 rounded-tl-sm border border-slate-100'
+                          }`}>
+                            <p className="whitespace-pre-wrap break-words leading-relaxed text-[13.5px] sm:text-[14.5px]">
+                              {msg.text?.split(/(https?:\/\/[^\s]+|\*\*.*?\*\*|\*.*?\*)/g).map((part, index) => {
+                                if (part.startsWith('**') && part.endsWith('**')) {
+                                  return <strong key={index} className="font-bold text-slate-900">{part.slice(2, -2)}</strong>;
+                                } else if (part.startsWith('*') && part.endsWith('*')) {
+                                  return <span key={index} className="font-semibold text-slate-900">{part.slice(1, -1)}</span>;
+                                }
+                                return part;
+                              })}
+                            </p>
+                            <div className="flex justify-end items-center mt-1 space-x-1">
+                              <span className="text-[10px] text-slate-400">{msg.time}</span>
+                              {msg.sender === 'user' && <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />}
+                            </div>
+                          </div>
+                        )}
+
+                      </div>
+                    ))}
+
+                    {/* Três Pontinhos de Digitando (Humanizado) */}
+                    {isTyping && (
+                      <div className="flex justify-start animate-in fade-in duration-300">
+                        <div className="bg-white rounded-2xl rounded-tl-sm px-3.5 py-2.5 shadow-sm border border-slate-100 flex items-center space-x-1.5">
+                          <span className="text-[11px] text-slate-400 font-medium mr-1">Digitando</span>
+                          <div className="w-1.5 h-1.5 bg-teal-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-1.5 h-1.5 bg-teal-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-1.5 h-1.5 bg-teal-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Barra Inferior Estilo WhatsApp (Simulada sem input interativo) */}
+                  <div className="bg-[#f0f2f5] px-3 py-2 flex items-center justify-between border-t border-slate-200 z-10 text-slate-500">
+                    <div className="flex-1 bg-white rounded-full px-4 py-2 text-xs text-slate-400 border border-slate-200 shadow-2xs select-none">
+                      Atendimento automatizado com IA...
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-[#008069] flex items-center justify-center text-white ml-2 shadow-xs">
+                      <Sparkles className="w-4 h-4 fill-current" />
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Home Indicator Inferior do iPhone */}
+                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-28 h-1 bg-slate-900 rounded-full z-40 opacity-70"></div>
+              </div>
+
+              {/* BOTÃO DE ALTA CONVERSÃO: LOCALIZADO LOGO ABAIXO DO CELULAR */}
+              <div className="w-full max-w-[340px] sm:max-w-[360px] pt-5 flex justify-center">
                 <button 
                   onClick={(e) => { e.preventDefault(); alert("🚀 EM BREVE! A plataforma estará disponível nos próximos dias."); }}
-                  className="relative group overflow-hidden w-full sm:w-auto px-8 py-4 bg-teal-600 text-white rounded-full font-bold text-lg shadow-lg transition-all flex items-center justify-center min-w-[250px]"
+                  className="relative group overflow-hidden w-full py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-0.5 flex items-center justify-center cursor-pointer border border-teal-500"
                 >
                   <span className="group-hover:opacity-0 transition-opacity duration-300 flex items-center justify-center">
                     <Calendar className="w-5 h-5 mr-2" />
@@ -269,117 +381,8 @@ export default function LandingPage() {
                     EM BREVE
                   </span>
                 </button>
-                <a 
-                  href="#simulador"
-                  className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-full font-semibold text-lg transition-colors flex items-center justify-center shadow-md"
-                >
-                  Simular Atendimento Web
-                </a>
               </div>
-            </div>
 
-            {/* MOCKUP WHATSAPP (SIMULADOR DARK MODE PRETO) */}
-            <div id="simulador" className="flex justify-center lg:justify-end relative mt-12 lg:mt-0">
-              <div className="relative mx-auto border-slate-900 bg-slate-900 border-[8px] rounded-[2.5rem] h-[550px] w-[300px] sm:h-[650px] sm:w-[340px] shadow-2xl ring-1 ring-slate-800 overflow-hidden isolate flex flex-col transform hover:scale-[1.02] transition-transform duration-500">
-                {/* Notch Preto */}
-                <div className="w-[120px] sm:w-[148px] h-[18px] bg-slate-900 top-0 rounded-b-[1rem] left-1/2 -translate-x-1/2 absolute z-30 shadow-sm"></div>
-                
-                {/* WhatsApp UI */}
-                <div className="absolute inset-0 bg-[#EFEAE2] flex flex-col font-sans">
-                  {/* Background Padrão do WhatsApp clarinho */}
-                  <div className="absolute inset-0 opacity-[0.05] z-0" style={{ backgroundImage: 'url("https://w0.peakpx.com/wallpaper/818/148/HD-wallpaper-whatsapp-background-cool-dark-green-new-theme-whatsapp.jpg")', backgroundSize: 'cover' }}></div>
-                  
-                  {/* Header Chat */}
-                  <div className="bg-[#008069] text-white p-3 pt-8 flex items-center space-x-3 z-10 shadow-sm">
-                    <div className="relative">
-                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center overflow-hidden border border-[#00A884]">
-                        {/* Imagem de perfil gerada pela IA (logo-vitae.png) */}
-                        <img src="/assets/logo-vitae.png" alt="Clinica Vitae" className="w-full h-full object-cover" />
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-base truncate">Clínica Vitae</h3>
-                      <p className="text-xs text-teal-100 truncate">Online</p>
-                    </div>
-                  </div>
-
-                  {/* Mensagens */}
-                  <div ref={chatContainerRef} className="flex-1 p-3 overflow-y-auto space-y-3 z-10 flex flex-col scrollbar-hide pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    <div className="flex justify-center mb-4 mt-2">
-                      <span className="bg-[#E1F3FB] text-slate-600 text-[11px] px-3 py-1 rounded-lg uppercase tracking-wide font-medium shadow-sm">
-                        Faça uma simulação do atendimento
-                      </span>
-                    </div>
-
-                    {messages.map((msg, i) => (
-                      <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} transition-all duration-300`}>
-                        <div className={`max-w-[85%] rounded-2xl p-2.5 shadow-sm text-sm relative ${
-                          msg.sender === 'user' ? 'bg-[#E7FFDB] text-slate-800 rounded-tr-sm' : 'bg-white text-slate-800 rounded-tl-sm border border-slate-100'
-                        }`}>
-                          <p className="whitespace-pre-wrap break-words leading-relaxed text-[14px] sm:text-[15px]">
-                            {msg.text?.split(/(https?:\/\/[^\s]+|\*\*.*?\*\*|\*.*?\*)/g).map((part, index) => {
-                              if (part.startsWith('http://') || part.startsWith('https://')) {
-                                return (
-                                  <span key={index} className="block mt-1">
-                                    <a
-                                      href={part}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-blue-600 underline break-all font-medium block max-w-full"
-                                    >
-                                      {part}
-                                    </a>
-                                  </span>
-                                );
-                              } else if (part.startsWith('**') && part.endsWith('**')) {
-                                return <strong key={index} className="font-bold text-slate-900">{part.slice(2, -2)}</strong>;
-                              } else if (part.startsWith('*') && part.endsWith('*')) {
-                                return <span key={index} className="font-semibold text-slate-900">{part.slice(1, -1)}</span>;
-                              }
-                              return part;
-                            })}
-                          </p>
-                          <div className="flex justify-end items-center mt-1 space-x-1">
-                            <span className="text-[10px] text-slate-400">{msg.time}</span>
-                            {msg.sender === 'user' && <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-
-                    {isTyping && (
-                      <div className="flex justify-start animate-in fade-in duration-300">
-                        <div className="bg-white rounded-2xl rounded-tl-sm p-3 shadow-sm border border-slate-100">
-                          <div className="flex items-center space-x-1.5 h-4 px-1">
-                            <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                            <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                            <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Input Base (REAL) */}
-                  <form onSubmit={handleSendMessage} className="bg-[#f0f2f5] p-2 flex items-center space-x-2 z-10 border-t border-slate-200">
-                    <input 
-                      type="text"
-                      className="flex-1 bg-white rounded-full px-4 py-2.5 text-sm text-slate-800 shadow-sm border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00A884]"
-                      placeholder="Fale com a IA..."
-                      value={inputMsg}
-                      onChange={(e) => setInputMsg(e.target.value)}
-                      disabled={isTyping}
-                    />
-                    <button 
-                      type="submit"
-                      disabled={!inputMsg.trim() || isTyping}
-                      className="w-10 h-10 bg-[#00A884] rounded-full flex items-center justify-center text-white shadow-sm hover:bg-[#008f6f] disabled:opacity-50 transition-colors shrink-0"
-                    >
-                      <Send className="w-4 h-4 fill-current ml-0.5" />
-                    </button>
-                  </form>
-                </div>
-              </div>
             </div>
 
           </div>
