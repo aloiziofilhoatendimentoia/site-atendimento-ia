@@ -95,14 +95,15 @@ export async function POST(req: Request) {
        - Balão 2: "A consulta tem duração de 60 minutos de atendimento personalizado."
 
     11. REGRA DE REAGENDAMENTO (SE O PACIENTE SOLICITAR REAGENDAR, ALTERAR OU REMARCAR A CONSULTA):
-        - Se o paciente solicitar reagendar a consulta E informar a nova data/horário (ex: "quero reagendar para dia 08 no mesmo horário"):
-          * Você deve enviar obrigatoriamente 4 balões separados por \n\n:
+        - Se o paciente perguntar ou solicitar reagendar SEM dizer a nova data e o novo horário juntos na mesma mensagem (ex: "posso reagendar?", "gostaria de reagendar para outro dia", "quero mudar a data"):
+          * Responda estritamente em 1 único balão perguntando: "Claro! Para qual dia e horário você deseja reagendar a consulta do pequeno?"
+          * NUNCA invente, presuma ou confirme agendamento sem antes o paciente dizer o dia e o horário desejados.
+        - Quando o paciente responder informando o novo dia e horário:
+          * Envie obrigatoriamente os balões:
             - BALÃO 1: "Vou verificar a disponibilidade para reagendamento em nossa agenda, só um instante..."
             - BALÃO 2: "Prontinho! Consultei nossa agenda e o seu agendamento foi reagendado com sucesso! 🎉"
             - BALÃO 3: "**Ficha da consulta**:\n- Paciente: [Nome Completo do Paciente]\n- Data: [Nova Data Calculada no formato DD/MM/AAAA]\n- Horário: [Novo Horário]"
             - BALÃO 4: "Posso ajudar em mais alguma coisa?"
-        - Se o paciente disser apenas que quer reagendar (sem informar a nova data/horário):
-          * Responda em 1 único balão: "Claro! Para qual dia e horário você deseja reagendar?"
 
     12. RESTRIÇÃO DE ESCOPO (GUARDRAIL):
         - A Fernanda é uma assistente focada exclusivamente no atendimento da Clínica Vitae.
@@ -177,45 +178,15 @@ export async function POST(req: Request) {
       (m.text.includes('confirmado com sucesso') || m.text.includes('agendamento confirmado') || m.text.includes('Agendamento confirmado'))
     );
 
-    const diaMatch = normMsg.match(/\b(dia\s+\d{1,2}|amanha|hoje|segunda|terca|quarta|quinta|sexta|sabado|\d{1,2}\/\d{1,2})\b/i);
-    let diaCitado = diaMatch ? diaMatch[0] : "";
-    if (!diaCitado) {
-      for (let i = messages.length - 2; i >= 0; i--) {
-        const text = messages[i].text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const match = text.match(/\b(dia\s+\d{1,2}|amanha|hoje|segunda|terca|quarta|quinta|sexta|sabado|\d{1,2}\/\d{1,2})\b/i);
-        if (match) {
-          diaCitado = match[0];
-          break;
-        }
-      }
-    }
-
-    const horaMatch = normMsg.match(/\b(09:00|11:00|14:00|16:00|09h|11h|14h|16h|9h|as 14|as 9|as 11|as 16|\d{1,2}\s*h|\d{1,2}\s*horas?)\b/i);
-    let horaCitada = horaMatch ? horaMatch[0] : "";
-    if (!horaCitada) {
-      for (let i = messages.length - 2; i >= 0; i--) {
-        const text = messages[i].text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const match = text.match(/\b(09:00|11:00|14:00|16:00|09h|11h|14h|16h|9h|as 14|as 9|as 11|as 16|\d{1,2}\s*h|\d{1,2}\s*horas?)\b/i);
-        if (match) {
-          horaCitada = match[0];
-          break;
-        }
-      }
-    }
-
-    const isManha = /\b(manha|cedo|matutino)\b/i.test(normMsg.replace(/\bamanha\b/gi, ""));
-    const isTarde = /\b(tarde|vespertino)\b/i.test(normMsg);
-
     let nomePaciente = "";
     let isAguardandoNome = false;
 
-    // Verificar se o bot pediu o nome na ultima mensagem
+    // Verificar a última mensagem do bot
     const lastBotMsgIndex = messages.map((m: any) => m.sender).lastIndexOf('bot');
-    if (lastBotMsgIndex !== -1) {
-      const lastBotText = messages[lastBotMsgIndex].text.toLowerCase();
-      if (lastBotText.includes("qual o nome completo do paciente")) {
-        isAguardandoNome = true;
-      }
+    const lastBotText = lastBotMsgIndex !== -1 ? messages[lastBotMsgIndex].text.toLowerCase() : "";
+
+    if (lastBotText.includes("qual o nome completo do paciente")) {
+      isAguardandoNome = true;
     }
 
     // Tentar recuperar o nome do paciente no histórico
@@ -229,6 +200,40 @@ export async function POST(req: Request) {
     if (isAguardandoNome && !nomePaciente) {
       nomePaciente = messages[messages.length - 1].text.trim();
     }
+
+    // Se o agendamento já foi confirmado anteriormente, os dias/horários citados antes NÃO devem ser reutilizados para reagendamento
+    const diaMatch = normMsg.match(/\b(dia\s+\d{1,2}|amanha|hoje|segunda|terca|quarta|quinta|sexta|sabado|\d{1,2}\/\d{1,2})\b/i);
+    let diaCitado = diaMatch ? diaMatch[0] : "";
+    if (!diaCitado && !hasConfirmedAppointment) {
+      for (let i = messages.length - 2; i >= 0; i--) {
+        const text = messages[i].text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const match = text.match(/\b(dia\s+\d{1,2}|amanha|hoje|segunda|terca|quarta|quinta|sexta|sabado|\d{1,2}\/\d{1,2})\b/i);
+        if (match) {
+          diaCitado = match[0];
+          break;
+        }
+      }
+    }
+
+    const horaMatch = normMsg.match(/\b(09:00|11:00|14:00|16:00|09h|11h|14h|16h|9h|as 14|as 9|as 11|as 16|\d{1,2}\s*h|\d{1,2}\s*horas?)\b/i);
+    let horaCitada = horaMatch ? horaMatch[0] : "";
+    if (!horaCitada && !hasConfirmedAppointment) {
+      for (let i = messages.length - 2; i >= 0; i--) {
+        const text = messages[i].text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const match = text.match(/\b(09:00|11:00|14:00|16:00|09h|11h|14h|16h|9h|as 14|as 9|as 11|as 16|\d{1,2}\s*h|\d{1,2}\s*horas?)\b/i);
+        if (match) {
+          horaCitada = match[0];
+          break;
+        }
+      }
+    }
+
+    // Verificar se a conversa está em fluxo de reagendamento
+    const isReagendamentoMsg = /\b(reagendar|remarcar|alterar|mudar)\b/i.test(normMsg);
+    const lastBotIsAskingReagendamento = lastBotText.includes("qual dia e horario voce deseja reagendar") || lastBotText.includes("para qual dia e horario") || lastBotText.includes("deseja reagendar");
+
+    const isManha = /\b(manha|cedo|matutino)\b/i.test(normMsg.replace(/\bamanha\b/gi, ""));
+    const isTarde = /\b(tarde|vespertino)\b/i.test(normMsg);
 
     function getFormattedDateForDay(diaStr: string): string {
       if (!diaStr) return "";
@@ -330,9 +335,19 @@ export async function POST(req: Request) {
         : "Nosso horário de funcionamento é de Segunda a Sexta, das 08:00 às 18:00, e aos Sábados, das 08:00 às 12:00.\n\nDomingos e feriados estamos fechados. 😊\n\nQual dia e horário você prefere para a sua consulta?";
     }
     // 4b. Reagendamento
-    else if (/\b(reagendar|remarcar|alterar|mudar)\b/i.test(normMsg)) {
-      if (diaCitado && horaCitada) {
+    else if (isReagendamentoMsg || lastBotIsAskingReagendamento) {
+      if (diaMatch && horaMatch) {
         fallbackReply = `Vou verificar a disponibilidade para reagendamento em nossa agenda, só um instante...\n\nProntinho! Consultei nossa agenda e o seu agendamento foi reagendado com sucesso! 🎉\n\n**Ficha da consulta**:\n- Paciente: ${nomePaciente || 'Paciente'}\n- Data: ${diaFormatado}\n- Horário: ${horaFormatada}\n\nPosso ajudar em mais alguma coisa?`;
+      } else if (diaMatch && !horaMatch) {
+        if (isManha) {
+          fallbackReply = `Vou verificar a disponibilidade para reagendar para ${diaCitado} pela manhã, só um instante...\n\nTemos horários disponíveis para ${diaCitado} às 09:00 e às 11:00 horas pela manhã.\n\nQual destes dois horários fica melhor para você?`;
+        } else if (isTarde) {
+          fallbackReply = `Vou verificar a disponibilidade para reagendar para ${diaCitado} à tarde, só um instante...\n\nTemos horários disponíveis para ${diaCitado} à tarde, às 14:00 e às 16:00 horas.\n\nQual destes dois horários fica melhor para você?`;
+        } else {
+          fallbackReply = `Vou verificar a disponibilidade para reagendar para ${diaCitado}, só um instante...\n\nTemos horários disponíveis para ${diaCitado} às 09:00 e às 11:00 horas pela manhã, e à tarde às 14:00 e às 16:00 horas.\n\nQual horário fica melhor para você?`;
+        }
+      } else if (horaMatch && !diaMatch) {
+        fallbackReply = `Vou verificar a disponibilidade para às ${horaFormatada}, só um instante...\n\nPara qual dia você prefere agendar esse horário?`;
       } else {
         fallbackReply = "Claro! Para qual dia e horário você deseja reagendar a consulta do pequeno?";
       }
