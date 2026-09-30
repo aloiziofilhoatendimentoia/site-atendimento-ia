@@ -70,8 +70,20 @@ export default function LandingPage() {
   const [messages, setMessages] = useState<Array<ScriptStep & { time: string }>>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [isPhoneVisible, setIsPhoneVisible] = useState(false);
+  const [phoneTime, setPhoneTime] = useState("09:41");
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const phoneSectionRef = useRef<HTMLDivElement>(null);
+
+  // Sincroniza o relógio do topo do celular com o horário real (Brasília / dispositivo)
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date();
+      setPhoneTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    };
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Monitora quando o aparelho celular entra no campo de visão do usuário
   useEffect(() => {
@@ -282,7 +294,7 @@ export default function LandingPage() {
                   
                   {/* Status Bar Estilo iOS */}
                   <div className="bg-[#008069] text-white pt-1.5 px-6 pb-1 flex justify-between items-center text-[11px] font-semibold tracking-tight z-20">
-                    <span>09:41</span>
+                    <span>{phoneTime}</span>
                     <div className="flex items-center space-x-1.5 opacity-90">
                       <Wifi className="w-3 h-3" />
                       <Battery className="w-3.5 h-3.5" />
