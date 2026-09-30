@@ -36,33 +36,57 @@ interface ScriptStep {
 
 const CONVERSATION_SCRIPT: ScriptStep[] = [
   { sender: 'user', text: 'Olá, bom dia! Gostaria de tirar umas dúvidas sobre a clínica.' },
-  { sender: 'bot', text: 'Olá! Seja muito bem-vindo(a) à Clínica Vitae Odontologia. 😊', typingDelay: 2200 },
-  { sender: 'bot', text: 'Sou a assistente da equipe. Como posso te ajudar hoje?', typingDelay: 2400 },
+  { sender: 'bot', text: 'Olá! Seja muito bem-vindo(a) à Clínica Vitae Odontologia. 😊', typingDelay: 6000 },
+  { sender: 'bot', text: 'Sou a **Giovanna**, assistente da equipe. Como posso te ajudar hoje?', typingDelay: 7000 },
   { sender: 'user', text: 'O Dr. Lucas ainda atende aí? Queria ver se consigo consulta com ele.' },
-  { sender: 'bot', text: 'Sim, com certeza! O Dr. Lucas atende aqui na área de clínica geral e prótese.', typingDelay: 2600 },
-  { sender: 'bot', text: 'Além dele, nossa equipe conta também com a Dra. Camila (especialista em Ortodontia e Estética) e o Dr. Marcelo (Implantes e Cirurgia). Temos excelente disponibilidade com eles também! 🦷✨', typingDelay: 3200 },
+  { sender: 'bot', text: 'Sim, com certeza! O Dr. Lucas atende aqui na área de clínica geral e prótese.', typingDelay: 7500 },
+  { sender: 'bot', text: 'Além dele, nossa equipe conta também com a Dra. Camila (especialista em Ortodontia e Estética) e o Dr. Marcelo (Implantes e Cirurgia). Temos excelente disponibilidade com eles também! 🦷✨', typingDelay: 9500 },
   { sender: 'user', text: 'Que ótimo! E qual é o valor da avaliação inicial?' },
-  { sender: 'bot', text: 'A consulta de avaliação com check-up digital completo tem o valor de R$ 120,00. Esse valor já inclui o planejamento detalhado do seu tratamento e fotos intraorais.', typingDelay: 3000 },
+  { sender: 'bot', text: 'A consulta de avaliação com check-up digital completo tem o valor de R$ 120,00. Esse valor já inclui o planejamento detalhado do seu tratamento e fotos intraorais.', typingDelay: 9000 },
   { sender: 'user', text: 'Entendi, perfeito. E quais são os dias e horários de funcionamento de vocês?' },
-  { sender: 'bot', text: 'Nosso horário de funcionamento é de Segunda a Sexta das 08:00 às 19:00, e aos Sábados das 08:00 às 13:00.\n\nFechamos apenas aos domingos e feriados. 😊', typingDelay: 2800 },
+  { sender: 'bot', text: 'Nosso horário de funcionamento é de Segunda a Sexta das 08:00 às 19:00, e aos Sábados das 08:00 às 13:00.\n\nFechamos apenas aos domingos e feriados. 😊', typingDelay: 8500 },
   { sender: 'user', text: 'Onde a clínica fica localizada?' },
-  { sender: 'bot', text: 'Estamos localizados na Av. Boa Viagem, 1420 - Sala 402 - Boa Viagem, Recife/PE.', typingDelay: 2200 },
-  { sender: 'bot', isMapCard: true, typingDelay: 2000 },
+  { sender: 'bot', text: 'Estamos localizados na Av. Boa Viagem, 1420 - Sala 402 - Boa Viagem, Recife/PE.', typingDelay: 6500 },
+  { sender: 'bot', isMapCard: true, typingDelay: 6000 },
   { sender: 'user', text: 'Perfeito, achei bem perto! Quero marcar com o Dr. Lucas para amanhã.' },
-  { sender: 'bot', text: 'Vou verificar a disponibilidade em nossa agenda, só um instante...', typingDelay: 2000 },
-  { sender: 'bot', text: 'Temos horários disponíveis para amanhã com o Dr. Lucas às 10:00 e às 15:30 horas.\n\nQual destes dois horários fica melhor para você?', typingDelay: 2800 },
+  { sender: 'bot', text: 'Vou verificar a disponibilidade em nossa agenda, só um instante...', typingDelay: 6000 },
+  { sender: 'bot', text: 'Temos horários disponíveis para amanhã com o Dr. Lucas às 10:00 e às 15:30 horas.\n\nQual destes dois horários fica melhor para você?', typingDelay: 8500 },
   { sender: 'user', text: 'Pode ser às 10:00, por favor.' },
-  { sender: 'bot', text: 'Combinado! Para finalizar e emitir sua ficha, qual o nome completo do paciente?', typingDelay: 2200 },
+  { sender: 'bot', text: 'Combinado! Para finalizar e emitir sua ficha, qual o nome completo do paciente?', typingDelay: 6500 },
   { sender: 'user', text: 'Mariana Souza Alves' },
-  { sender: 'bot', text: 'Agendamento confirmado com sucesso! 🎉', typingDelay: 2000 },
-  { sender: 'bot', text: '**Ficha do Agendamento**:\n- Paciente: Mariana Souza Alves\n- Especialista: Dr. Lucas\n- Data: Amanhã às 10:00h\n- Local: Av. Boa Viagem, 1420 - Sala 402', typingDelay: 2800 },
-  { sender: 'bot', text: 'Já reservei seu horário em nosso sistema. Qualquer dúvida antes da consulta, estamos à disposição por aqui! Tenha um ótimo dia! 💙🦷', typingDelay: 3000 },
+  { sender: 'bot', text: 'Agendamento confirmado com sucesso! 🎉', typingDelay: 6000 },
+  { sender: 'bot', text: '**Ficha do Agendamento**:\n- Paciente: Mariana Souza Alves\n- Especialista: Dr. Lucas\n- Data: Amanhã às 10:00h\n- Local: Av. Boa Viagem, 1420 - Sala 402', typingDelay: 8500 },
+  { sender: 'bot', text: 'Já reservei seu horário em nosso sistema. Qualquer dúvida antes da consulta, estamos à disposição por aqui! Tenha um ótimo dia! 💙🦷', typingDelay: 9000 },
 ];
 
 export default function LandingPage() {
   const [messages, setMessages] = useState<Array<ScriptStep & { time: string }>>([]);
   const [isTyping, setIsTyping] = useState(false);
+  const [isPhoneVisible, setIsPhoneVisible] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const phoneSectionRef = useRef<HTMLDivElement>(null);
+
+  // Monitora quando o aparelho celular entra no campo de visão do usuário
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsPhoneVisible(true);
+        }
+      },
+      {
+        threshold: 0.35 // Ativa quando pelo menos 35% do celular já estiver na tela (ideal para PC e celulares)
+      }
+    );
+
+    if (phoneSectionRef.current) {
+      observer.observe(phoneSectionRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -74,13 +98,17 @@ export default function LandingPage() {
   }, [messages, isTyping]);
 
   useEffect(() => {
+    // Só inicia a simulação quando o celular estiver visível na tela
+    if (!isPhoneVisible) return;
+
     let isCancelled = false;
 
     async function runScript() {
       while (!isCancelled) {
         setMessages([]);
         setIsTyping(false);
-        await new Promise(r => setTimeout(r, 1200));
+        // Pequena pausa inicial (3.5 segundos) para o visitante contemplar a tela antes da primeira mensagem
+        await new Promise(r => setTimeout(r, 3500));
 
         for (let i = 0; i < CONVERSATION_SCRIPT.length; i++) {
           if (isCancelled) break;
@@ -88,22 +116,24 @@ export default function LandingPage() {
           const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
           if (step.sender === 'user') {
-            await new Promise(r => setTimeout(r, 1400));
+            // Tempo triplicado entre a mensagem do usuário (4.2 segundos)
+            await new Promise(r => setTimeout(r, 4200));
             if (isCancelled) break;
             setMessages(prev => [...prev, { ...step, time }]);
           } else {
             setIsTyping(true);
-            const delay = step.typingDelay || 2500;
+            const delay = step.typingDelay || 7500;
             await new Promise(r => setTimeout(r, delay));
             if (isCancelled) break;
             setIsTyping(false);
             setMessages(prev => [...prev, { ...step, time }]);
-            await new Promise(r => setTimeout(r, 800));
+            // Pausa triplicada entre balões do bot (2.4 segundos)
+            await new Promise(r => setTimeout(r, 2400));
           }
         }
 
-        // Aguarda 14 segundos antes de reiniciar o loop para leitura completa
-        await new Promise(r => setTimeout(r, 14000));
+        // Aguarda 18 segundos antes de reiniciar o loop para leitura completa
+        await new Promise(r => setTimeout(r, 18000));
       }
     }
 
@@ -112,7 +142,7 @@ export default function LandingPage() {
     return () => {
       isCancelled = true;
     };
-  }, []);
+  }, [isPhoneVisible]);
 
   return (
     <div className="min-h-screen relative font-sans bg-slate-50 text-slate-900 overflow-x-hidden flex flex-col selection:bg-teal-200">
@@ -227,7 +257,7 @@ export default function LandingPage() {
             </div>
 
             {/* MOCKUP iPHONE MODERNO (TITANIUM NATURAL COM DYNAMIC ISLAND) */}
-            <div id="simulador" className="flex flex-col items-center justify-center lg:justify-end relative mt-6 lg:mt-0">
+            <div ref={phoneSectionRef} id="simulador" className="flex flex-col items-center justify-center lg:justify-end relative mt-6 lg:mt-0">
               
               {/* Moldura Externa do iPhone (Bordas Ultrafinas, Titânio e Reflexo) */}
               <div className="relative mx-auto bg-slate-900 border-[10px] border-slate-800 rounded-[3rem] h-[610px] w-[310px] sm:h-[660px] sm:w-[350px] shadow-[0_25px_60px_-15px_rgba(15,23,42,0.4)] ring-1 ring-white/20 overflow-hidden flex flex-col transform hover:scale-[1.01] transition-transform duration-500">
