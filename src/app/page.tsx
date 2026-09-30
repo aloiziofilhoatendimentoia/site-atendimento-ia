@@ -22,7 +22,14 @@ import {
   Wifi,
   Battery,
   Cloud,
-  Send
+  Send,
+  ArrowLeft,
+  Store,
+  MoreVertical,
+  Smile,
+  Paperclip,
+  Camera,
+  Mic
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -49,13 +56,13 @@ const CONVERSATION_SCRIPT: ScriptStep[] = [
   { sender: 'bot', text: 'Estamos localizados na Av. Boa Viagem, 1420 - Sala 402 - Boa Viagem, Recife/PE.', typingDelay: 8000 },
   { sender: 'bot', isMapCard: true, typingDelay: 7000 },
   { sender: 'user', text: 'Perfeito, achei bem perto! Quero marcar com o Dr. Lucas para amanhã.' },
-  { sender: 'bot', text: 'Vou verificar a disponibilidade em nossa agenda odontológica, só um instante...', typingDelay: 7500 },
+  { sender: 'bot', text: 'Vou verificar a disponibilidade em nossa agenda, só um instante...', typingDelay: 7500 },
   { sender: 'bot', text: 'Temos horários disponíveis para amanhã com o Dr. Lucas às 10:00 e às 15:30 horas.\n\nQual destes dois horários fica melhor para você?', typingDelay: 10000 },
   { sender: 'user', text: 'Pode ser às 10:00, por favor.' },
   { sender: 'bot', text: 'Combinado! Para finalizar e emitir sua ficha, qual o nome completo do paciente?', typingDelay: 8000 },
   { sender: 'user', text: 'Mariana Souza Alves' },
   { sender: 'bot', text: 'Agendamento confirmado com sucesso! 🎉', typingDelay: 7000 },
-  { sender: 'bot', text: '**Ficha do Agendamento Odontológico**:\n- Paciente: Mariana Souza Alves\n- Cirurgião-Dentista: Dr. Lucas\n- Procedimento: Avaliação / Limpeza\n- Data: Amanhã às 10:00h\n- Local: Av. Boa Viagem, 1420 - Sala 402', typingDelay: 10500 },
+  { sender: 'bot', text: '**Ficha do Agendamento Odontológico**:\n- Paciente: Mariana Souza Alves\n- Cirurgião-Dentista: Dr. Lucas\n- Data: Amanhã às 10:00h\n- Local: Av. Boa Viagem, 1420 - Sala 402', typingDelay: 10500 },
   { sender: 'bot', text: 'Já reservei a sala e seu horário no sistema. Qualquer dúvida antes da consulta, estamos à disposição por aqui! Tenha um ótimo dia e até breve! 💙🦷', typingDelay: 11000 },
 ];
 
@@ -282,24 +289,35 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  {/* Header Chat WhatsApp Oficial */}
-                  <div className="bg-[#008069] text-white p-3 flex items-center space-x-3 z-10 shadow-sm border-b border-[#006e5a]">
-                    <div className="relative">
-                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center overflow-hidden border border-[#00A884] shadow-sm">
+                  {/* Header Chat WhatsApp Business Oficial (Idêntico à Imagem do Usuário) */}
+                  <div className="bg-[#008069] text-white px-2.5 py-2.5 flex items-center justify-between z-10 shadow-sm border-b border-[#006e5a]">
+                    <div className="flex items-center space-x-2 min-w-0">
+                      <ArrowLeft className="w-5 h-5 text-white shrink-0 cursor-pointer opacity-95" />
+                      <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center overflow-hidden border border-white/40 shadow-xs shrink-0">
                         <img src="/assets/logo-vitae.png" alt="Clinica Vitae Odontologia" className="w-full h-full object-cover" />
                       </div>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-[13px] sm:text-[14px] truncate leading-tight">Clínica Vitae Odontologia</h3>
+                        <p className="text-[10px] text-teal-100 flex items-center gap-1 leading-none mt-0.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 inline-block animate-pulse"></span>
+                          Online
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm sm:text-base truncate">Clínica Vitae Odontologia</h3>
-                      <p className="text-[11px] text-teal-100 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 inline-block animate-pulse"></span>
-                        Online
-                      </p>
+
+                    {/* Ícones da Direita do Topo: Loja (Business), Telefone com seta dropdown, e Três Pontinhos */}
+                    <div className="flex items-center space-x-2.5 text-white opacity-95 shrink-0 pl-1">
+                      <Store className="w-4 h-4 cursor-pointer" />
+                      <div className="flex items-center cursor-pointer">
+                        <Phone className="w-4 h-4" />
+                        <span className="text-[8px] ml-0.5">▼</span>
+                      </div>
+                      <MoreVertical className="w-4 h-4 cursor-pointer" />
                     </div>
                   </div>
 
                   {/* Feed de Mensagens Animado */}
-                  <div ref={chatContainerRef} className="flex-1 p-3 overflow-y-auto space-y-3 z-10 flex flex-col scrollbar-hide pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                  <div ref={chatContainerRef} className="flex-1 p-3 overflow-y-auto space-y-3 z-10 flex flex-col scrollbar-hide pb-3" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     <div className="flex justify-center mb-2 mt-1">
                       <span className="bg-[#E1F3FB] text-slate-700 text-[10px] sm:text-[11px] px-3 py-1 rounded-full uppercase tracking-wider font-bold shadow-xs border border-teal-100/50">
                         Atendimento Odontológico 24h
@@ -381,13 +399,23 @@ export default function LandingPage() {
                     )}
                   </div>
 
-                  {/* Barra Inferior Estilo WhatsApp (Simulada sem input interativo) */}
-                  <div className="bg-[#f0f2f5] px-3 py-2 flex items-center justify-between border-t border-slate-200 z-10 text-slate-500">
-                    <div className="flex-1 bg-white rounded-full px-4 py-2 text-xs text-slate-400 border border-slate-200 shadow-2xs select-none">
-                      Atendimento automatizado com IA...
+                  {/* Barra Inferior Oficial WhatsApp (Idêntica à Imagem de Referência do Usuário) */}
+                  <div className="bg-transparent px-2 py-2 flex items-center space-x-1.5 z-10">
+                    {/* Campo em Cápsula Branca com Emoji, Mensagem, Clipe e Câmera */}
+                    <div className="flex-1 bg-white rounded-full px-3 py-2 flex items-center justify-between shadow-sm border border-slate-100">
+                      <div className="flex items-center space-x-2 text-slate-400 flex-1 min-w-0">
+                        <Smile className="w-5 h-5 text-slate-400 shrink-0 cursor-pointer" />
+                        <span className="text-sm text-slate-400 truncate">Mensagem</span>
+                      </div>
+                      <div className="flex items-center space-x-2.5 text-slate-400 shrink-0 pr-0.5">
+                        <Paperclip className="w-4 h-4 -rotate-45 cursor-pointer text-slate-400 hover:text-slate-600" />
+                        <Camera className="w-4 h-4 cursor-pointer text-slate-400 hover:text-slate-600" />
+                      </div>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-[#008069] flex items-center justify-center text-white ml-2 shadow-xs">
-                      <Sparkles className="w-4 h-4 fill-current" />
+
+                    {/* Botão Redondo Verde do Microfone de Áudio */}
+                    <div className="w-10 h-10 rounded-full bg-[#00A884] flex items-center justify-center text-white shadow-md shrink-0 cursor-pointer">
+                      <Mic className="w-5 h-5 fill-current" />
                     </div>
                   </div>
 
