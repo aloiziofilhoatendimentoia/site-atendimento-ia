@@ -134,18 +134,31 @@ export default function LandingPage() {
           const step = CONVERSATION_SCRIPT[i];
           const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+          // Se for o card da ficha de agendamento, calcula dinamicamente a data exata de amanhã (DD/MM/AAAA)
+          let messageText = step.text;
+          if (step.text && step.text.includes('Ficha do Agendamento Odontológico')) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const dia = String(tomorrow.getDate()).padStart(2, '0');
+            const mes = String(tomorrow.getMonth() + 1).padStart(2, '0');
+            const ano = tomorrow.getFullYear();
+            const dataFormatada = `${dia}/${mes}/${ano} às 10:00h`;
+
+            messageText = `**Ficha do Agendamento Odontológico**:\n- Paciente: Mariana Souza Alves\n- Cirurgião-Dentista: Dr. Lucas\n- Data: ${dataFormatada}\n- Local: Av. Boa Viagem, 1420 - Sala 402`;
+          }
+
           if (step.sender === 'user') {
             // Tempo humano de leitura e resposta do paciente (5.5 segundos)
             await new Promise(r => setTimeout(r, 5500));
             if (isCancelled) break;
-            setMessages(prev => [...prev, { ...step, time }]);
+            setMessages(prev => [...prev, { ...step, text: messageText, time }]);
           } else {
             setIsTyping(true);
             const delay = step.typingDelay || 8500;
             await new Promise(r => setTimeout(r, delay));
             if (isCancelled) break;
             setIsTyping(false);
-            setMessages(prev => [...prev, { ...step, time }]);
+            setMessages(prev => [...prev, { ...step, text: messageText, time }]);
             // Pausa humana entre mensagens da secretária (3.5 segundos)
             await new Promise(r => setTimeout(r, 3500));
           }
@@ -248,13 +261,19 @@ export default function LandingPage() {
                     </strong>{' '}
                     trabalhando para a sua clínica: equipe menor e mais agendamentos de consultas.
                   </span>
-                  <span className="inline-flex items-center gap-2 mt-1">
-                    {/* Ícone WhatsApp Oficial Verde */}
-                    <svg viewBox="0 0 24 24" className="w-8 h-8 fill-[#25D366]" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
-                    </svg>
-                    {/* Ícone Google Agenda */}
-                    <img src="/google-agenda.svg" className="w-8 h-8 rounded-lg object-contain shadow-md border border-slate-200" alt="Google Agenda" />
+                  {/* Destaque das Integrações WhatsApp + Google Agenda */}
+                  <span className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mt-3 pt-1">
+                    <span className="inline-flex items-center gap-2.5 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200 text-emerald-900 px-4 py-2 rounded-2xl shadow-sm transition-all transform hover:scale-105">
+                      <svg viewBox="0 0 24 24" className="w-9 h-9 fill-[#25D366] shrink-0 drop-shadow-sm" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                      </svg>
+                      <span className="font-extrabold text-base sm:text-lg tracking-tight text-emerald-950">WhatsApp</span>
+                    </span>
+
+                    <span className="inline-flex items-center gap-2.5 bg-blue-50 hover:bg-blue-100/80 border border-blue-200 text-blue-900 px-4 py-2 rounded-2xl shadow-sm transition-all transform hover:scale-105">
+                      <img src="/google-agenda.svg" className="w-9 h-9 rounded-xl object-contain drop-shadow-sm" alt="Google Agenda" />
+                      <span className="font-extrabold text-base sm:text-lg tracking-tight text-blue-950">Google Agenda</span>
+                    </span>
                   </span>
                 </p>
 
