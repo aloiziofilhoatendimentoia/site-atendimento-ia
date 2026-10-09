@@ -236,12 +236,8 @@ export async function POST(request: Request) {
       user = await createUser(ownerEmail, 'no_password_otp_only');
     }
 
-    // Buscar o rascunho ANTERIOR antes de sobrescrever com o novo payload
+    // Buscar o rascunho ANTERIOR antes de processar
     const previousDraft = (await getDraftPayload(ownerEmail)) || (await getDraftPayload(whatsappClinica));
-
-    // Salvar o novo rascunho completo local e em nuvem
-    if (ownerEmail) await saveDraftPayload(ownerEmail, payload);
-    if (whatsappClinica) await saveDraftPayload(whatsappClinica, payload);
 
     let hasChanges = true;
     let eventType = 'novo_cadastro';
@@ -303,21 +299,52 @@ export async function POST(request: Request) {
         if (previousDraft || existing) {
           eventType = 'alteracao_cadastro';
           
-          const cleanObj = (obj: any) => ({
-            clinica: obj?.clinica || {},
-            integracoes: obj?.integracoes || {},
-            horarios: obj?.horarios || {}
-          });
+          const normalizeForCompare = (obj: any) => {
+            const c = obj?.clinica || {};
+            const i = obj?.integracoes || {};
+            const h = obj?.horarios || {};
+            const normPhone = (p: any) => String(p || '').replace(/\D/g, '');
+            const normMoney = (m: any) => String(m || '').replace(/\D/g, '');
+            const normStr = (s: any) => String(s || '').trim().toLowerCase();
 
-          let baseParaComparar = previousDraft;
-          if (!baseParaComparar && existing?.dados_completos_json) {
-             baseParaComparar = typeof existing.dados_completos_json === 'string' ? JSON.parse(existing.dados_completos_json) : existing.dados_completos_json;
-          }
+            const especialistasList = (Array.isArray(c.especialistas) ? c.especialistas : [])
+              .map((e: any) => ({ nome: normStr(e?.nome), especialidade: normStr(e?.especialidade) }))
+              .filter((e: any) => e.nome);
+
+            const blocosList = (Array.isArray(h.blocosHorario) ? h.blocosHorario : [])
+              .map((b: any) => ({
+                dias: (Array.isArray(b?.dias) ? b.dias : []).map(normStr).sort(),
+                inicio: normStr(b?.inicio),
+                fim: normStr(b?.fim)
+              }));
+
+            return JSON.stringify({
+              nomeClinica: normStr(c.nomeClinica),
+              nomeSecretaria: normStr(c.nomeSecretaria),
+              endereco: normStr(c.endereco),
+              whatsappClinica: normPhone(c.whatsappClinica),
+              especialistas: especialistasList,
+              opcoesAgendamento: {
+                whatsapp: Boolean(i.opcoesAgendamento?.whatsapp),
+                calendar: Boolean(i.opcoesAgendamento?.calendar)
+              },
+              whatsappHumano: normPhone(i.whatsappHumano),
+              whatsappReceberAgendamento: normPhone(i.whatsappReceberAgendamento),
+              tempoConsulta: normMoney(h.tempoConsulta),
+              valorConsulta: normMoney(h.valorConsulta),
+              blocosHorario: blocosList
+            });
+          };
+
+          let baseParaComparar = existing?.dados_completos_json 
+            ? (typeof existing.dados_completos_json === 'string' ? JSON.parse(existing.dados_completos_json) : existing.dados_completos_json)
+            : previousDraft;
 
           if (baseParaComparar) {
-             const oldSig = JSON.stringify(cleanObj(baseParaComparar));
-             const newSig = JSON.stringify(cleanObj(payload));
+             const oldSig = normalizeForCompare(baseParaComparar);
+             const newSig = normalizeForCompare(payload);
              hasChanges = (oldSig !== newSig);
+             console.log(`[config] Comparação de alteração: hasChanges=${hasChanges}`);
           } else {
              hasChanges = true;
           }
@@ -325,6 +352,10 @@ export async function POST(request: Request) {
           eventType = 'novo_cadastro';
           hasChanges = true;
         }
+
+        // Salvar rascunho
+        if (ownerEmail) await saveDraftPayload(ownerEmail, payload);
+        if (whatsappClinica) await saveDraftPayload(whatsappClinica, payload);
 
         if (!hasChanges) {
           supabaseStatus = 'Pulado (Sem alterações)';

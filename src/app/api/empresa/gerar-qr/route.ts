@@ -13,86 +13,82 @@ export async function POST(request: Request) {
     const evoUrl = process.env.EVOLUTION_API_URL || 'https://api-whatsapp.atendimentoiaclinicas.tech';
     const evoKey = process.env.EVOLUTION_API_KEY || 'atendimentoia_mestre_evolution_2026';
 
-    // Passo 1: Deletar a instância se ela já existir para resetar o status 'connecting' ou 'qrcode'
+    let base64 = '';
+
+    // Passo 1: Verificar se a instância já existe e apenas renovar o QR Code via connect
     try {
-      console.log(`[QR Code] Removendo instância existente ${instanceName} para reset de estado...`);
-      await fetch(`${evoUrl}/instance/delete/${instanceName}`, {
-        method: 'DELETE',
+      const connectRes = await fetch(`${evoUrl}/instance/connect/${instanceName}`, {
+        method: 'GET',
         headers: { 'apikey': evoKey }
       });
-    } catch (err) {
-      console.log('[QR Code] Erro ao deletar:', err);
-    }
-
-    // Passo 2: Criar a instância fresh com qrcode: true
-    console.log(`[QR Code] Criando nova instância ${instanceName} com qrcode: true...`);
-    const createRes = await fetch(`${evoUrl}/instance/create`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': evoKey
-      },
-      body: JSON.stringify({
-        instanceName: instanceName,
-        qrcode: true,
-        integration: "WHATSAPP-BAILEYS"
-      })
-    });
-
-    let base64 = '';
-    if (createRes.ok) {
-      const createData = await createRes.json();
-      if (createData.qrcode && createData.qrcode.base64) {
-        base64 = createData.qrcode.base64;
-      } else if (createData.base64) {
-        base64 = createData.base64;
-      }
-
-      // Passo 2.5: Configurar o Webhook Definitivo da Instância
-      try {
-        const webhookUrl = customWebhook || process.env.N8N_WEBHOOK_URL_MESSAGES || 'https://n8n.atendimentoiaclinicas.tech/webhook/demonstracao-webhook';
-        await fetch(`${evoUrl}/webhook/set/${instanceName}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': evoKey
-          },
-          body: JSON.stringify({
-            webhook: {
-              enabled: true,
-              url: webhookUrl,
-              webhook_by_events: false,
-              webhook_base64: false,
-              events: ['MESSAGES_UPSERT']
-            }
-          })
-        });
-        console.log(`[QR Code] Webhook configurado com sucesso para a instância ${instanceName}.`);
-      } catch (err) {
-        console.log(`[QR Code] Falha silenciosa ao configurar webhook:`, err);
-      }
-    } else {
-      const errTxt = await createRes.text();
-      console.log(`[QR Code] Aviso ao criar instância: ${errTxt}`);
-      if (!createRes.status || (createRes.status !== 403 && !errTxt.includes('already in use'))) {
-        return NextResponse.json({ error: `Falha ao recriar instância para QR Code: ${errTxt}` }, { status: createRes.status });
-      }
-    }
-
-    // Passo 3: Se não veio no create, tenta connect
-    if (!base64) {
-      const res = await fetch(`${evoUrl}/instance/connect/${instanceName}`, {
-        method: 'GET',
-        headers: {
-          'apikey': evoKey,
+      if (connectRes.ok) {
+        const connectData = await connectRes.json();
+        if (connectData.base64) {
+          base64 = connectData.base64;
+        } else if (connectData.qrcode && connectData.qrcode.base64) {
+          base64 = connectData.qrcode.base64;
         }
+      }
+    } catch (errConnect) {
+      console.log('[QR Code] Instância não existia ou falha no connect inicial:', errConnect);
+    }
+
+    // Passo 2: Se ainda não obteve QR Code (instância não existe ou precisa ser criada)
+    if (!base64) {
+      console.log(`[QR Code] Criando nova instância ${instanceName} com qrcode: true...`);
+      const createRes = await fetch(`${evoUrl}/instance/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': evoKey
+        },
+        body: JSON.stringify({
+          instanceName: instanceName,
+          qrcode: true,
+          integration: "WHATSAPP-BAILEYS"
+        })
       });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.base64) {
-          base64 = data.base64;
-        } else if (data.qrcode && data.qrcode.base64) {
-          base64 = data.qrcode.base64;
+
+      if (createRes.ok) {
+        const createData = await createRes.json();
+        if (createData.qrcode && createData.qrcode.base64) {
+          base64 = createData.qrcode.base64;
+        } else if (createData.base64) {
+          base64 = createData.base64;
+        }
+
+        // Configurar o Webhook Definitivo da Instância
+        try {
+          const webhookUrl = customWebhook || process.env.N8N_WEBHOOK_URL_MESSAGES || 'https://n8n.atendimentoiaclinicas.tech/webhook/demonstracao-webhook';
+          await fetch(`${evoUrl}/webhook/set/${instanceName}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': evoKey
+            },
+            body: JSON.stringify({
+              webhook: {
+                enabled: true,
+                url: webhookUrl,
+                webhook_by_events: false,
+                webhook_base64: false,
+                events: ['MESSAGES_UPSERT']
+              }
+            })
+          });
+          console.log(`[QR Code] Webhook configurado com sucesso para a instância ${instanceName}.`);
+        } catch (err) {
+          console.log(`[QR Code] Falha silenciosa ao configurar webhook:`, err);
+        }
+      } else {
+        // Se a instância já existia e deu 403, tentar connect novamente
+        const retryConnect = await fetch(`${evoUrl}/instance/connect/${instanceName}`, {
+          method: 'GET',
+          headers: { 'apikey': evoKey }
+        });
+        if (retryConnect.ok) {
+          const rData = await retryConnect.json();
+          base64 = rData.base64 || (rData.qrcode && rData.qrcode.base64) || '';
         }
       }
     }
