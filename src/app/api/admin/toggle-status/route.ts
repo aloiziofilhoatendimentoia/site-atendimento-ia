@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
@@ -6,7 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_atendimento_ia_key';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'atendimentoia35@gmail.com';
 const evoUrl = process.env.EVOLUTION_API_URL || 'https://api-whatsapp.atendimentoiaclinicas.tech';
-const evoGlobalApiKey = process.env.EVOLUTION_API_KEY || '429683C4C977415CAAFCCE10F7D57E11';
+const evoGlobalApiKey = process.env.EVOLUTION_API_KEY || 'atendimentoia_mestre_evolution_2026';
 
 export async function POST(request: Request) {
   try {
@@ -14,14 +14,14 @@ export async function POST(request: Request) {
     const tokenCookie = cookieStore.get('auth_token');
 
     if (!tokenCookie || !tokenCookie.value) {
-      return NextResponse.json({ error: 'Nǜo autorizado' }, { status: 401 });
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
     let decoded: any;
     try {
       decoded = jwt.verify(tokenCookie.value, JWT_SECRET);
     } catch (e) {
-      return NextResponse.json({ error: 'Sessǜo invǭlida' }, { status: 401 });
+      return NextResponse.json({ error: 'Sessão inválida' }, { status: 401 });
     }
 
     if (!decoded || !decoded.email || decoded.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
@@ -31,22 +31,22 @@ export async function POST(request: Request) {
     const { clinicaId, is_active, instanceName } = await request.json();
 
     if (!clinicaId) {
-      return NextResponse.json({ error: 'ID da clnica obrigatrio.' }, { status: 400 });
+      return NextResponse.json({ error: 'ID da clínica obrigatório.' }, { status: 400 });
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json({ error: 'Supabase admin client nǜo configurado.' }, { status: 500 });
+      return NextResponse.json({ error: 'Supabase admin client não configurado.' }, { status: 500 });
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-        // Buscar o JSON atual
+    // Buscar o registro atual da clínica
     const { data: clinica } = await supabaseAdmin
       .from('CLIENTES ATENDIMENTO IA SITE')
-      .select('dados_completos_json')
+      .select('*')
       .eq('id', clinicaId)
       .single();
 
@@ -71,27 +71,54 @@ export async function POST(request: Request) {
 
     // Se estiver suspendendo, desconectar da Evolution API (logout)
     let logoutSuccess = true;
-    if (is_active === false && instanceName) {
+    if (is_active === false) {
+      // Coletar possíveis números e instâncias vinculadas a esta clínica
+      const candidates = new Set<string>();
+      if (instanceName) candidates.add(String(instanceName).replace(/\D/g, ''));
+      if (clinica?.telefone_principal) candidates.add(String(clinica.telefone_principal).replace(/\D/g, ''));
+      if (updatedJson?.clinica?.whatsappClinica) candidates.add(String(updatedJson.clinica.whatsappClinica).replace(/\D/g, ''));
+      if (updatedJson?.suporte?.whatsapp_empresa) candidates.add(String(updatedJson.suporte.whatsapp_empresa).replace(/\D/g, ''));
+
+      // Buscar instâncias ativas na Evolution API para encontrar qualquer correspondência
       try {
-        const evoRes = await fetch(`${evoUrl}/instance/logout/${instanceName}`, {
-          method: 'DELETE',
-          headers: {
-            'apikey': evoGlobalApiKey
-          }
+        const fetchRes = await fetch(`${evoUrl}/instance/fetchInstances`, {
+          headers: { 'apikey': evoGlobalApiKey }
         });
-        if (!evoRes.ok) {
-          console.warn(`Aviso: falha ao desconectar instǽncia ${instanceName}. Status: ${evoRes.status}`);
+        if (fetchRes.ok) {
+          const allInst: any[] = await fetchRes.json();
+          for (const inst of allInst) {
+            const instClean = String(inst.name || '').replace(/\D/g, '');
+            const ownerClean = String(inst.ownerJid || '').replace(/\D/g, '');
+            for (const c of candidates) {
+              if (!c) continue;
+              if (instClean === c || ownerClean === c || instClean.endsWith(c) || c.endsWith(instClean) || ownerClean.endsWith(c) || c.endsWith(ownerClean)) {
+                candidates.add(inst.name);
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Erro ao listar instâncias no toggle-status:', e);
+      }
+
+      for (const instToLogout of candidates) {
+        if (!instToLogout) continue;
+        try {
+          await fetch(`${evoUrl}/instance/logout/${instToLogout}`, {
+            method: 'DELETE',
+            headers: { 'apikey': evoGlobalApiKey }
+          });
+          console.log(`[toggle-status] Desconectado da Evolution API: ${instToLogout}`);
+        } catch (evoErr) {
+          console.error(`Erro ao deslogar instância ${instToLogout}:`, evoErr);
           logoutSuccess = false;
         }
-      } catch (evoErr) {
-        console.error('Erro de rede ao tentar deslogar instǽncia:', evoErr);
-        logoutSuccess = false;
       }
     }
 
     return NextResponse.json({ 
       success: true, 
-      message: `Clnica ${is_active ? 'ativada' : 'suspensa'} com sucesso.`,
+      message: `Clínica ${is_active ? 'ativada' : 'suspensa'} com sucesso.`,
       logoutSuccess
     }, { status: 200 });
 

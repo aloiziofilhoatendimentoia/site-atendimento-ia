@@ -249,6 +249,7 @@ export async function POST(request: Request) {
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+    let existing: any = null;
 
     if (supabaseUrl && supabaseServiceKey) {
       try {
@@ -273,7 +274,7 @@ export async function POST(request: Request) {
         const normDigits = (v: any) => String(v || '').replace(/\D/g, '');
 
         // Localizar registro existente por telefone (com ou sem 55) ou por nome exato da clínica
-        const existing = (allRows || []).find((r: any) => {
+        existing = (allRows || []).find((r: any) => {
           const rDigits = normDigits(r.telefone_principal);
           if (!rDigits && !cleanPhone) return false;
           if (rDigits === cleanPhone || rDigits.endsWith(cleanPhone) || cleanPhone.endsWith(rDigits)) return true;
@@ -451,6 +452,33 @@ export async function POST(request: Request) {
 
     try {
       const instanceName = (whatsappClinica || '123456789').replace(/\D/g, '') || 'NumeroDeTestes'; 
+
+      // Se for alteração de cadastro e o número mudou, desconectar e deletar o número antigo na Evolution API
+      const oldCandidates = new Set<string>();
+      if (previousDraft?.clinica?.whatsappClinica) {
+        oldCandidates.add(String(previousDraft.clinica.whatsappClinica).replace(/\D/g, ''));
+      }
+      if (existing?.telefone_principal) {
+        oldCandidates.add(String(existing.telefone_principal).replace(/\D/g, ''));
+      }
+
+      for (const oldNum of oldCandidates) {
+        if (oldNum && oldNum !== instanceName) {
+          try {
+            console.log(`[config] Detectada mudança de número. Desconectando instância antiga: ${oldNum}`);
+            await fetch(`${evoUrl}/instance/logout/${oldNum}`, {
+              method: 'DELETE',
+              headers: { 'apikey': evoKey }
+            });
+            await fetch(`${evoUrl}/instance/delete/${oldNum}`, {
+              method: 'DELETE',
+              headers: { 'apikey': evoKey }
+            });
+          } catch (oldErr) {
+            console.warn(`[config] Aviso ao limpar instância antiga ${oldNum}:`, oldErr);
+          }
+        }
+      }
       
       const evoRes = await fetch(`${evoUrl}/instance/create`, {
         method: 'POST',
