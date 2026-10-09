@@ -42,7 +42,7 @@ interface ScriptStep {
 }
 
 const CONVERSATION_SCRIPT: ScriptStep[] = [
-  { sender: 'user', text: 'Olá, bom dia! Gostaria de tirar umas dúvidas sobre a clínica.' },
+  { sender: 'user', text: 'Olá! Gostaria de tirar umas dúvidas sobre a clínica.' },
   { sender: 'bot', text: 'Olá! Seja muito bem-vindo(a) à Clínica Vitae Odontologia. 😊', typingDelay: 7500 },
   { sender: 'bot', text: 'Sou a **Giovanna**, assistente da equipe. Como posso te ajudar hoje?', typingDelay: 8500 },
   { sender: 'user', text: 'O Dr. Lucas ainda atende aí? Queria ver se consigo consulta com ele.' },
@@ -85,8 +85,25 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Monitora quando o aparelho celular entra no campo de visão do usuário
+  // Monitora quando o aparelho celular chega ao centro da tela (tanto no PC como no celular)
   useEffect(() => {
+    const handleCheckCenter = () => {
+      if (!phoneSectionRef.current) return;
+      const rect = phoneSectionRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+      const phoneCenter = rect.top + rect.height / 2;
+      const screenCenter = windowHeight / 2;
+
+      // Se o centro do celular estiver na faixa central da tela (ou celular bem enquadrado)
+      const distanceToCenter = Math.abs(phoneCenter - screenCenter);
+      const isNearCenter = distanceToCenter < windowHeight * 0.35 || (rect.top >= 0 && rect.bottom <= windowHeight);
+
+      if (isNearCenter) {
+        setIsPhoneVisible(true);
+      }
+    };
+
+    // Observer com rootMargin negativo para detectar o centro vertical exato
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -94,7 +111,9 @@ export default function LandingPage() {
         }
       },
       {
-        threshold: 0.35 // Ativa quando pelo menos 35% do celular já estiver na tela (ideal para PC e celulares)
+        // Foca a área de interseção nos 40% centrais da tela (ignora topos e rodapés distantes)
+        rootMargin: '-15% 0px -15% 0px',
+        threshold: [0.2, 0.4, 0.6]
       }
     );
 
@@ -102,8 +121,14 @@ export default function LandingPage() {
       observer.observe(phoneSectionRef.current);
     }
 
+    window.addEventListener('scroll', handleCheckCenter, { passive: true });
+    window.addEventListener('resize', handleCheckCenter, { passive: true });
+    handleCheckCenter();
+
     return () => {
       observer.disconnect();
+      window.removeEventListener('scroll', handleCheckCenter);
+      window.removeEventListener('resize', handleCheckCenter);
     };
   }, []);
 
@@ -117,7 +142,7 @@ export default function LandingPage() {
   }, [messages, isTyping]);
 
   useEffect(() => {
-    // Só inicia a simulação quando o celular estiver visível na tela
+    // Só inicia a simulação quando o celular estiver visível e centralizado na tela
     if (!isPhoneVisible) return;
 
     let isCancelled = false;
@@ -126,8 +151,8 @@ export default function LandingPage() {
       while (!isCancelled) {
         setMessages([]);
         setIsTyping(false);
-        // Pausa inicial confortável de 5 segundos para o visitante se situar
-        await new Promise(r => setTimeout(r, 5000));
+        // Dispara a primeira mensagem de imediato assim que chega ao centro da tela (breve pausa de 600ms apenas para fluidez)
+        await new Promise(r => setTimeout(r, 600));
 
         for (let i = 0; i < CONVERSATION_SCRIPT.length; i++) {
           if (isCancelled) break;
@@ -199,17 +224,12 @@ export default function LandingPage() {
           {/* LADO DIREITO: BOTÃO DE ASSINATURA & ACESSO */}
           <div className="flex items-center flex-1 justify-end gap-3">
             <div className="flex flex-col items-center">
-              <button 
-                onClick={(e) => { e.preventDefault(); alert("🚀 EM BREVE! A plataforma estará disponível nos próximos dias."); }}
-                className="relative group overflow-hidden border border-slate-300 hover:border-red-500 text-slate-700 px-5 py-2.5 rounded-full font-bold transition-colors whitespace-nowrap text-sm min-w-[150px]"
+              <Link 
+                href="/dashboard"
+                className="border border-teal-600 hover:bg-teal-50 text-teal-700 px-5 py-2.5 rounded-full font-bold transition-all whitespace-nowrap text-sm min-w-[150px] flex items-center justify-center shadow-sm"
               >
-                <span className="group-hover:opacity-0 transition-opacity duration-300 flex items-center justify-center">
-                  Acesse sua Clínica
-                </span>
-                <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-red-600 font-black text-lg tracking-widest bg-white/95 backdrop-blur-sm z-10">
-                  EM BREVE
-                </span>
-              </button>
+                Acesse sua Clínica
+              </Link>
               <span className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider font-semibold">Pós pagamento</span>
             </div>
             
