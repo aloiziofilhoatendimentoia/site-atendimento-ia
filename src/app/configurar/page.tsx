@@ -20,7 +20,9 @@ import {
   RefreshCw,
   XCircle,
   Smartphone,
-  LogOut
+  LogOut,
+  Shield,
+  Check
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -113,6 +115,40 @@ function ConfigurarFormContent() {
   const [emailAdmin, setEmailAdmin] = useState(''); // E-mail para acesso
   const [especialistas, setEspecialistas] = useState<Especialista[]>([{ nome: '', especialidade: '' }]);
 
+  // 1.1 CONVÊNIOS E PLANOS DE SAÚDE
+  const [aceitaConvenio, setAceitaConvenio] = useState(true);
+  const [conveniosSelecionados, setConveniosSelecionados] = useState<string[]>([
+    'Unimed', 'Bradesco Saúde', 'SulAmérica', 'Amil'
+  ]);
+  const [novoConvenioInput, setNovoConvenioInput] = useState('');
+  const [observacoesConvenio, setObservacoesConvenio] = useState('');
+
+  const conveniosSugeridos = [
+    'Unimed', 'Bradesco Saúde', 'SulAmérica', 'Amil', 'Hapvida', 
+    'Porto Seguro', 'Cassi', 'Golden Cross', 'Allianz Saúde', 'NotreDame Intermédica'
+  ];
+
+  const toggleConvenio = (nome: string) => {
+    if (conveniosSelecionados.includes(nome)) {
+      setConveniosSelecionados(conveniosSelecionados.filter(c => c !== nome));
+    } else {
+      setConveniosSelecionados([...conveniosSelecionados, nome]);
+    }
+  };
+
+  const handleAddCustomConvenio = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = novoConvenioInput.trim();
+    if (trimmed && !conveniosSelecionados.includes(trimmed)) {
+      setConveniosSelecionados([...conveniosSelecionados, trimmed]);
+      setNovoConvenioInput('');
+    }
+  };
+
+  const removeConvenio = (nome: string) => {
+    setConveniosSelecionados(conveniosSelecionados.filter(c => c !== nome));
+  };
+
   // 2. INTEGRAÇÕES (Z-API e CALENDAR)
   const [opcoesAgendamento, setOpcoesAgendamento] = useState({ whatsapp: true, calendar: true });
   const [emailCalendar, setEmailCalendar] = useState('');
@@ -192,6 +228,11 @@ function ConfigurarFormContent() {
           if (parsed.tempoConsulta) setTempoConsulta(parsed.tempoConsulta);
           if (parsed.valorConsulta) setValorConsulta(parsed.valorConsulta);
           if (parsed.blocosHorario) setBlocosHorario(parsed.blocosHorario);
+          if (parsed.convenios) {
+            if (parsed.convenios.aceitaConvenio !== undefined) setAceitaConvenio(parsed.convenios.aceitaConvenio);
+            if (Array.isArray(parsed.convenios.planos)) setConveniosSelecionados(parsed.convenios.planos);
+            if (parsed.convenios.observacoes) setObservacoesConvenio(parsed.convenios.observacoes);
+          }
         } catch (e) {
           console.error("Erro ao carregar dados salvos do localStorage:", e);
         }
@@ -226,6 +267,11 @@ function ConfigurarFormContent() {
             if (ob.tempoConsulta) setTempoConsulta(ob.tempoConsulta);
             if (ob.valorConsulta) setValorConsulta(ob.valorConsulta);
             if (ob.blocosHorario && ob.blocosHorario.length > 0) setBlocosHorario(ob.blocosHorario);
+            if (ob.convenios) {
+              if (ob.convenios.aceitaConvenio !== undefined) setAceitaConvenio(ob.convenios.aceitaConvenio);
+              if (Array.isArray(ob.convenios.planos)) setConveniosSelecionados(ob.convenios.planos);
+              if (ob.convenios.observacoes) setObservacoesConvenio(ob.convenios.observacoes);
+            }
           }
         })
         .catch(err => console.error("Erro ao carregar rascunho do servidor:", err));
@@ -248,6 +294,11 @@ function ConfigurarFormContent() {
         whatsappReceberAgendamento,
         tempoConsulta,
         valorConsulta,
+        convenios: {
+          aceitaConvenio,
+          planos: conveniosSelecionados,
+          observacoes: observacoesConvenio
+        },
         blocosHorario
       };
       localStorage.setItem('onboarding_data', JSON.stringify(data));
@@ -403,7 +454,7 @@ function ConfigurarFormContent() {
       try {
         const payload = {
           ownerEmail: emailAdmin || (typeof window !== 'undefined' ? (localStorage.getItem('onboarding_email') || localStorage.getItem('user_email') || localStorage.getItem('email') || null) : null),
-          clinica: { nomeClinica, nomeSecretaria, endereco, linkGoogleMaps: `https://maps.google.com/?q=${encodeURIComponent(endereco)}`, whatsappClinica, especialistas },
+          clinica: { nomeClinica, nomeSecretaria, endereco, linkGoogleMaps: `https://maps.google.com/?q=${encodeURIComponent(endereco)}`, whatsappClinica, especialistas, convenios: { aceitaConvenio, planos: aceitaConvenio ? conveniosSelecionados : [], observacoes: observacoesConvenio } },
           integracoes: { opcoesAgendamento, emailCalendar, whatsappHumano, whatsappReceberAgendamento, googleConnected: false },
           horarios: { tempoConsulta, valorConsulta, blocosHorario },
           googleTokens: null,
@@ -595,7 +646,12 @@ function ConfigurarFormContent() {
           endereco, 
           linkGoogleMaps: `https://maps.google.com/?q=${encodeURIComponent(endereco)}`,
           whatsappClinica, 
-          especialistas 
+          especialistas,
+          convenios: {
+            aceitaConvenio,
+            planos: aceitaConvenio ? conveniosSelecionados : [],
+            observacoes: observacoesConvenio
+          }
         },
         integracoes: { opcoesAgendamento, emailCalendar, whatsappHumano, whatsappReceberAgendamento, googleConnected },
         horarios: { tempoConsulta, valorConsulta, blocosHorario },
@@ -761,6 +817,176 @@ function ConfigurarFormContent() {
                   <button onClick={addEspecialista} className="mt-4 flex items-center space-x-2 text-sm text-teal-400 hover:text-teal-300 font-bold transition-colors">
                     <Plus className="w-4 h-4" /> <span>Adicionar Outro Especialista</span>
                   </button>
+                </div>
+
+                {/* Bloco de Convênios e Planos de Saúde */}
+                <div className="mt-8 bg-[#181a1f] p-6 rounded-2xl border border-[#27272a] shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-4 border-b border-gray-800">
+                    <div>
+                      <h4 className="text-lg font-bold text-white flex items-center">
+                        <Shield className="w-5 h-5 mr-2 text-teal-400" /> Convênios & Planos de Saúde
+                      </h4>
+                      <p className="text-xs text-gray-400 mt-1">
+                        A IA usará essas informações para confirmar aos pacientes se a clínica aceita os planos ou atende particular.
+                      </p>
+                    </div>
+
+                    {/* Switch Aceita Convênios ou Particular */}
+                    <div className="flex items-center gap-2 bg-[#121417] p-1.5 rounded-xl border border-gray-800 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setAceitaConvenio(true)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                          aceitaConvenio
+                            ? 'bg-teal-500 text-black shadow-md'
+                            : 'text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        <Check className="w-3.5 h-3.5" /> Aceitamos Planos
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAceitaConvenio(false)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          !aceitaConvenio
+                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                            : 'text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        100% Particular
+                      </button>
+                    </div>
+                  </div>
+
+                  {aceitaConvenio ? (
+                    <div className="space-y-5 animate-fade-in">
+                      {/* Tags de Seleção Rápida */}
+                      <div>
+                        <label className="block text-xs font-bold text-gray-300 uppercase tracking-wider mb-2">
+                          Selecione os planos aceitos (clique para ativar/desativar):
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {conveniosSugeridos.map((plano) => {
+                            const isSelected = conveniosSelecionados.includes(plano);
+                            return (
+                              <button
+                                key={plano}
+                                type="button"
+                                onClick={() => toggleConvenio(plano)}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border flex items-center gap-1.5 ${
+                                  isSelected
+                                    ? 'bg-teal-500/15 text-teal-300 border-teal-500/40 shadow-sm'
+                                    : 'bg-[#121417] text-gray-400 border-gray-800 hover:border-gray-700 hover:text-gray-200'
+                                }`}
+                              >
+                                {isSelected ? <Check className="w-3.5 h-3.5 text-teal-400" /> : <Plus className="w-3.5 h-3.5 text-gray-500" />}
+                                {plano}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Input para Adicionar Convênio Customizado */}
+                      <div className="bg-[#121417] p-4 rounded-xl border border-gray-800">
+                        <label className="block text-xs font-semibold text-gray-300 mb-2">
+                          Adicionar outro convênio, plano local ou parceria:
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={novoConvenioInput}
+                            onChange={(e) => setNovoConvenioInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddCustomConvenio();
+                              }
+                            }}
+                            placeholder="Ex: Cartão de Todos, Sindicato dos Bancários, Mediservice..."
+                            className="flex-1 bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleAddCustomConvenio()}
+                            disabled={!novoConvenioInput.trim()}
+                            className="px-4 py-2.5 bg-teal-500/20 text-teal-300 border border-teal-500/30 hover:bg-teal-500/30 font-bold text-xs rounded-xl disabled:opacity-40 transition-colors flex items-center gap-1"
+                          >
+                            <Plus className="w-4 h-4" /> Adicionar
+                          </button>
+                        </div>
+
+                        {/* Lista de Convênios Selecionados Ativos */}
+                        {conveniosSelecionados.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-gray-800/60">
+                            <span className="text-[11px] font-semibold text-gray-400 block mb-2">
+                              Planos que a IA confirmará aos pacientes ({conveniosSelecionados.length}):
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              {conveniosSelecionados.map((plano) => (
+                                <span
+                                  key={plano}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-teal-950/40 text-teal-200 border border-teal-700/40"
+                                >
+                                  {plano}
+                                  <button
+                                    type="button"
+                                    onClick={() => removeConvenio(plano)}
+                                    className="hover:text-red-400 text-gray-400 transition-colors ml-0.5"
+                                    title="Remover"
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Observações / Regra de Cobertura */}
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                          Observações de Cobertura ou Regra de Reembolso (Opcional):
+                        </label>
+                        <input
+                          type="text"
+                          value={observacoesConvenio}
+                          onChange={(e) => setObservacoesConvenio(e.target.value)}
+                          placeholder="Ex: Consultas pelo plano; procedimentos estéticos e cirúrgicos apenas no particular."
+                          className="w-full bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
+                        />
+                        <p className="text-[11px] text-gray-500 mt-1">
+                          A IA usará esta orientação caso o paciente pergunte detalhes sobre o que o plano cobre.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Caso a clínica seja 100% particular */
+                    <div className="bg-[#121417] p-5 rounded-xl border border-amber-500/20 animate-fade-in space-y-3">
+                      <div className="flex items-start gap-3">
+                        <span className="text-xl">⭐</span>
+                        <div>
+                          <h5 className="text-sm font-bold text-amber-300">Atendimento Exclusivamente Particular</h5>
+                          <p className="text-xs text-gray-400 mt-1 leading-relaxed">
+                            Quando os pacientes perguntarem sobre planos de saúde no WhatsApp, a IA informará com elegância que a clínica atende de forma particular para oferecer total dedicação, e reforçará a emissão de recibo/nota fiscal detalhada para que o paciente solicite o reembolso diretamente ao plano.
+                          </p>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                          Instrução para a IA sobre Reembolso / Particular (Opcional):
+                        </label>
+                        <input
+                          type="text"
+                          value={observacoesConvenio}
+                          onChange={(e) => setObservacoesConvenio(e.target.value)}
+                          placeholder="Ex: Fornecemos nota fiscal detalhada com CRM para reembolso imediato."
+                          className="w-full bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

@@ -167,7 +167,13 @@ export async function GET(request: Request) {
       googleTokens: existingGoogleTokens,
       tempoConsulta,
       valorConsulta,
-      blocosHorario
+      blocosHorario,
+      convenios: savedPayload?.clinica?.convenios || (siteClinic?.dados_completos_json ? (() => {
+        try {
+          const parsed = typeof siteClinic.dados_completos_json === 'string' ? JSON.parse(siteClinic.dados_completos_json) : siteClinic.dados_completos_json;
+          return parsed?.clinica?.convenios || null;
+        } catch(e) { return null; }
+      })() : null)
     };
 
     return NextResponse.json({
@@ -324,6 +330,11 @@ export async function POST(request: Request) {
               endereco: normStr(c.endereco),
               whatsappClinica: normPhone(c.whatsappClinica),
               especialistas: especialistasList,
+              convenios: {
+                aceitaConvenio: Boolean(c.convenios?.aceitaConvenio ?? true),
+                planos: (Array.isArray(c.convenios?.planos) ? c.convenios.planos : []).map(normStr).sort(),
+                observacoes: normStr(c.convenios?.observacoes)
+              },
               opcoesAgendamento: {
                 whatsapp: Boolean(i.opcoesAgendamento?.whatsapp),
                 calendar: Boolean(i.opcoesAgendamento?.calendar)
@@ -454,7 +465,15 @@ export async function POST(request: Request) {
       dias_atendimento: diasStr,
       horarios_atendimento: horarioStr,
       intervalo_consulta: tempoConsulta,
-      valor_consulta: valorConsulta
+      valor_consulta: valorConsulta,
+      convenios_formatados: (() => {
+        const conv = payload?.clinica?.convenios;
+        if (!conv) return 'Não informado';
+        if (conv.aceitaConvenio === false) return 'Atendimento 100% Particular (não aceita convênios)';
+        const lista = Array.isArray(conv.planos) && conv.planos.length > 0 ? conv.planos.join(', ') : 'Nenhum plano específico selecionado';
+        const obs = conv.observacoes ? ` (Obs: ${conv.observacoes})` : '';
+        return `${lista}${obs}`;
+      })()
     };
 
     // 3. Disparo pro n8n para acionar o Webhook e o WhatsApp do Médico (apenas se houver alterações!)
