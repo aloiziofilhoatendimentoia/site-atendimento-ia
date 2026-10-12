@@ -712,10 +712,20 @@ function ConfigurarFormContent() {
                     <input type="text" value={nomeSecretaria === 'Secretária Virtual' ? '' : nomeSecretaria} onChange={(e) => setNomeSecretaria(e.target.value)} placeholder="Ex: Sofia, Dra. Clara, Secretária Julia" className="w-full bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-colors" />
                     <p className="text-xs text-gray-500 mt-1">O nome com o qual a IA se apresentará aos pacientes.</p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-300 mb-2">WhatsApp Oficial da Clínica *</label>
-                    <input type="text" value={whatsappClinica} onChange={(e) => setWhatsappClinica(e.target.value)} placeholder="(11) 99999-9999" className="w-full bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-colors" />
-                    <p className="text-xs text-gray-500 mt-1">O número onde a IA responderá os clientes.</p>
+                  <div className="p-4 bg-[#14181d] border border-amber-500/30 rounded-2xl relative overflow-hidden shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                      <label className="text-base font-bold text-teal-400 flex items-center gap-1.5">
+                        <MessageCircle className="w-5 h-5 text-teal-400 inline" />
+                        WhatsApp Oficial da Clínica *
+                      </label>
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                        ⚠️ Não cadastre um WhatsApp recém-criado
+                      </span>
+                    </div>
+                    <input type="text" value={whatsappClinica} onChange={(e) => setWhatsappClinica(e.target.value)} placeholder="(11) 99999-9999" className="w-full bg-[#181a1f] border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500 transition-colors font-medium text-base" />
+                    <p className="text-xs text-amber-200/80 mt-2 leading-relaxed">
+                      💡 <strong>Dica de Segurança:</strong> Utilize o número oficial ou já aquecido da clínica (com histórico de conversas). Chips novos ativados no mesmo dia correm alto risco de bloqueio temporário pela Meta.
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-300 mb-2">E-mail do Administrador (Login) *</label>
