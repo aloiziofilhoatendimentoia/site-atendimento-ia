@@ -22,15 +22,26 @@ import {
   Smartphone,
   LogOut,
   Shield,
-  Check
+  Check,
+  CreditCard,
+  ClipboardList,
+  MapPin,
+  Car,
+  Users
 } from 'lucide-react';
 import Link from 'next/link';
 
-type Tab = 'clinica' | 'integracoes' | 'horarios';
+type Tab = 'clinica' | 'integracoes' | 'horarios' | 'procedimentos';
 
 interface Especialista {
   nome: string;
   especialidade: string;
+}
+
+interface ExameProcedimento {
+  nome: string;
+  valor: string; // Opcional (R$ 0,00 ou texto vazio)
+  preparo: string; // Opcional (Jejum, etc)
 }
 
 interface BlocoHorario {
@@ -44,7 +55,7 @@ function ConfigurarFormContent() {
   const searchParams = useSearchParams();
   const stepParam = searchParams.get('step') || '1';
 
-  const currentTab: Tab = stepParam === '3' ? 'horarios' : stepParam === '2' ? 'integracoes' : 'clinica';
+  const currentTab: Tab = stepParam === '4' ? 'procedimentos' : stepParam === '3' ? 'horarios' : stepParam === '2' ? 'integracoes' : 'clinica';
 
   const [isFromDashboard, setIsFromDashboard] = useState(false);
 
@@ -114,6 +125,62 @@ function ConfigurarFormContent() {
   const [whatsappClinica, setWhatsappClinica] = useState(''); // Número onde a IA vai responder clientes
   const [emailAdmin, setEmailAdmin] = useState(''); // E-mail para acesso
   const [especialistas, setEspecialistas] = useState<Especialista[]>([{ nome: '', especialidade: '' }]);
+
+  // 1.0 LOCALIZAÇÃO & ACESSO (Ponto de referência e estacionamento)
+  const [pontoReferencia, setPontoReferencia] = useState('');
+  const [temEstacionamento, setTemEstacionamento] = useState<boolean | null>(null);
+  const [detalhesEstacionamento, setDetalhesEstacionamento] = useState('');
+
+  // 1.0.1 FAIXA ETÁRIA DE ATENDIMENTO
+  const [faixasEtarias, setFaixasEtarias] = useState<string[]>(['Adultos']);
+  const [regrasFaixaEtaria, setRegrasFaixaEtaria] = useState('');
+
+  const opcoesFaixaEtaria = ['Bebês (0 a 2 anos)', 'Crianças / Pediatria (3 a 12 anos)', 'Adolescentes', 'Adultos', 'Idosos / Geriatria'];
+
+  const toggleFaixaEtaria = (opcao: string) => {
+    if (faixasEtarias.includes(opcao)) {
+      setFaixasEtarias(faixasEtarias.filter(f => f !== opcao));
+    } else {
+      setFaixasEtarias([...faixasEtarias, opcao]);
+    }
+  };
+
+  // 3.1 FORMAS DE PAGAMENTO & PARCELAMENTO
+  const [formasPagamento, setFormasPagamento] = useState<string[]>(['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro']);
+  const [parcelamentoMaximo, setParcelamentoMaximo] = useState('Até 3x');
+  const [regraJuros, setRegraJuros] = useState('Sem juros');
+
+  const opcoesPagamento = ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro'];
+
+  const toggleFormaPagamento = (forma: string) => {
+    if (formasPagamento.includes(forma)) {
+      setFormasPagamento(formasPagamento.filter(f => f !== forma));
+    } else {
+      setFormasPagamento([...formasPagamento, forma]);
+    }
+  };
+
+  // 4.0 EXAMES, PROCEDIMENTOS & RECOMENDAÇÕES
+  const [examesProcedimentos, setExamesProcedimentos] = useState<ExameProcedimento[]>([
+    { nome: '', valor: '', preparo: '' }
+  ]);
+  const [instrucoesGerais, setInstrucoesGerais] = useState('');
+
+  const addExameProcedimento = () => {
+    setExamesProcedimentos([...examesProcedimentos, { nome: '', valor: '', preparo: '' }]);
+  };
+
+  const removeExameProcedimento = (index: number) => {
+    if (examesProcedimentos.length > 1) {
+      setExamesProcedimentos(examesProcedimentos.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateExameProcedimento = (index: number, campo: keyof ExameProcedimento, valor: string) => {
+    const list = [...examesProcedimentos];
+    list[index][campo] = valor;
+    setExamesProcedimentos(list);
+  };
 
   // 1.1 CONVÊNIOS E PLANOS DE SAÚDE
   const [aceitaConvenio, setAceitaConvenio] = useState(true);
@@ -233,6 +300,16 @@ function ConfigurarFormContent() {
             if (Array.isArray(parsed.convenios.planos)) setConveniosSelecionados(parsed.convenios.planos);
             if (parsed.convenios.observacoes) setObservacoesConvenio(parsed.convenios.observacoes);
           }
+          if (parsed.pontoReferencia) setPontoReferencia(parsed.pontoReferencia);
+          if (parsed.temEstacionamento !== undefined) setTemEstacionamento(parsed.temEstacionamento);
+          if (parsed.detalhesEstacionamento) setDetalhesEstacionamento(parsed.detalhesEstacionamento);
+          if (Array.isArray(parsed.faixasEtarias) && parsed.faixasEtarias.length > 0) setFaixasEtarias(parsed.faixasEtarias);
+          if (parsed.regrasFaixaEtaria) setRegrasFaixaEtaria(parsed.regrasFaixaEtaria);
+          if (Array.isArray(parsed.formasPagamento) && parsed.formasPagamento.length > 0) setFormasPagamento(parsed.formasPagamento);
+          if (parsed.parcelamentoMaximo) setParcelamentoMaximo(parsed.parcelamentoMaximo);
+          if (parsed.regraJuros) setRegraJuros(parsed.regraJuros);
+          if (Array.isArray(parsed.examesProcedimentos) && parsed.examesProcedimentos.length > 0) setExamesProcedimentos(parsed.examesProcedimentos);
+          if (parsed.instrucoesGerais) setInstrucoesGerais(parsed.instrucoesGerais);
         } catch (e) {
           console.error("Erro ao carregar dados salvos do localStorage:", e);
         }
@@ -272,6 +349,16 @@ function ConfigurarFormContent() {
               if (Array.isArray(ob.convenios.planos)) setConveniosSelecionados(ob.convenios.planos);
               if (ob.convenios.observacoes) setObservacoesConvenio(ob.convenios.observacoes);
             }
+            if (ob.pontoReferencia) setPontoReferencia(ob.pontoReferencia);
+            if (ob.temEstacionamento !== undefined) setTemEstacionamento(ob.temEstacionamento);
+            if (ob.detalhesEstacionamento) setDetalhesEstacionamento(ob.detalhesEstacionamento);
+            if (Array.isArray(ob.faixasEtarias) && ob.faixasEtarias.length > 0) setFaixasEtarias(ob.faixasEtarias);
+            if (ob.regrasFaixaEtaria) setRegrasFaixaEtaria(ob.regrasFaixaEtaria);
+            if (Array.isArray(ob.formasPagamento) && ob.formasPagamento.length > 0) setFormasPagamento(ob.formasPagamento);
+            if (ob.parcelamentoMaximo) setParcelamentoMaximo(ob.parcelamentoMaximo);
+            if (ob.regraJuros) setRegraJuros(ob.regraJuros);
+            if (Array.isArray(ob.examesProcedimentos) && ob.examesProcedimentos.length > 0) setExamesProcedimentos(ob.examesProcedimentos);
+            if (ob.instrucoesGerais) setInstrucoesGerais(ob.instrucoesGerais);
           }
         })
         .catch(err => console.error("Erro ao carregar rascunho do servidor:", err));
@@ -299,6 +386,16 @@ function ConfigurarFormContent() {
           planos: conveniosSelecionados,
           observacoes: observacoesConvenio
         },
+        pontoReferencia,
+        temEstacionamento,
+        detalhesEstacionamento,
+        faixasEtarias,
+        regrasFaixaEtaria,
+        formasPagamento,
+        parcelamentoMaximo,
+        regraJuros,
+        examesProcedimentos,
+        instrucoesGerais,
         blocosHorario
       };
       localStorage.setItem('onboarding_data', JSON.stringify(data));
@@ -487,7 +584,9 @@ function ConfigurarFormContent() {
       e.stopPropagation();
     }
     setErrorMessage('');
-    if (currentTab === 'horarios') {
+    if (currentTab === 'procedimentos') {
+      goToTab('horarios');
+    } else if (currentTab === 'horarios') {
       goToTab('integracoes');
     } else if (currentTab === 'integracoes') {
       goToTab('clinica');
@@ -522,6 +621,28 @@ function ConfigurarFormContent() {
         return `Preencha o nome e a especialidade do médico ${i + 1}.`;
       }
     }
+
+    // Validação obrigatória de Ponto de Referência e Estacionamento
+    if (!pontoReferencia || !pontoReferencia.trim()) {
+      return 'Preencha o Ponto de Referência da clínica para orientar os pacientes.';
+    }
+    if (temEstacionamento === null) {
+      return 'Informe se a clínica possui estacionamento (Selecione Sim ou Não).';
+    }
+    if (temEstacionamento === true && (!detalhesEstacionamento || !detalhesEstacionamento.trim())) {
+      return 'Descreva os detalhes do estacionamento (Ex: Gratuito, Rotativo pago, Convênio).';
+    }
+
+    // Validação obrigatória de Faixa Etária
+    if (!faixasEtarias || faixasEtarias.length === 0) {
+      return 'Selecione pelo menos 1 Faixa Etária de atendimento permitida na clínica.';
+    }
+
+    // Validação obrigatória de Convênios
+    if (aceitaConvenio && (!conveniosSelecionados || conveniosSelecionados.length === 0)) {
+      return 'Selecione ou adicione pelo menos 1 convênio aceito, ou marque a opção 100% Particular.';
+    }
+
     return null;
   };
 
@@ -568,6 +689,30 @@ function ConfigurarFormContent() {
         return `Preencha os horários de abertura e fechamento para o bloco ${i + 1}.`;
       }
     }
+
+    // Validação obrigatória de Formas de Pagamento
+    if (!formasPagamento || formasPagamento.length === 0) {
+      return 'Selecione pelo menos 1 Forma de Pagamento aceita pela clínica (Ex: Pix, Cartão, Dinheiro).';
+    }
+
+    return null;
+  };
+
+  const validateStep4 = (): string | null => {
+    const step3Err = validateStep3();
+    if (step3Err) return step3Err;
+
+    // Pelo menos 1 exame ou procedimento com nome preenchido
+    const examesValidos = examesProcedimentos.filter(e => e.nome && e.nome.trim());
+    if (examesValidos.length === 0) {
+      return 'Cadastre pelo menos 1 Exame ou Procedimento oferecido pela clínica (o valor é opcional).';
+    }
+
+    // Instruções gerais obrigatórias
+    if (!instrucoesGerais || !instrucoesGerais.trim()) {
+      return 'Preencha as Instruções e Recomendações aos Pacientes (Ex: Chegar com 15 min de antecedência, trazer documentos/exames).';
+    }
+
     return null;
   };
 
@@ -588,7 +733,14 @@ function ConfigurarFormContent() {
         return;
       }
     }
-    const stepNum = tab === 'horarios' ? '3' : tab === 'integracoes' ? '2' : '1';
+    if (tab === 'procedimentos') {
+      const err = validateStep3();
+      if (err) {
+        showError(err);
+        return;
+      }
+    }
+    const stepNum = tab === 'procedimentos' ? '4' : tab === 'horarios' ? '3' : tab === 'integracoes' ? '2' : '1';
     router.push(`/configurar?step=${stepNum}`);
     setTimeout(scrollToTop, 50);
   };
@@ -609,13 +761,20 @@ function ConfigurarFormContent() {
         return;
       }
       goToTab('horarios');
+    } else if (currentTab === 'horarios') {
+      const err = validateStep3();
+      if (err) {
+        showError(err);
+        return;
+      }
+      goToTab('procedimentos');
     }
   };
 
   const handleSalvarConfiguracoes = async () => {
     setErrorMessage('');
     
-    const err = validateStep3();
+    const err = validateStep4();
     if (err) {
       const step1Err = validateStep1();
       if (step1Err) {
@@ -627,6 +786,12 @@ function ConfigurarFormContent() {
       if (step2Err) {
         goToTab('integracoes', true);
         showError(step2Err);
+        return;
+      }
+      const step3Err = validateStep3();
+      if (step3Err) {
+        goToTab('horarios', true);
+        showError(step3Err);
         return;
       }
       showError(err);
@@ -651,10 +816,32 @@ function ConfigurarFormContent() {
             aceitaConvenio,
             planos: aceitaConvenio ? conveniosSelecionados : [],
             observacoes: observacoesConvenio
+          },
+          localizacaoAcesso: {
+            pontoReferencia,
+            temEstacionamento,
+            detalhesEstacionamento: temEstacionamento ? detalhesEstacionamento : 'Não possui estacionamento no local'
+          },
+          faixaEtaria: {
+            faixasPermitidas: faixasEtarias,
+            regrasEspecificas: regrasFaixaEtaria
           }
         },
         integracoes: { opcoesAgendamento, emailCalendar, whatsappHumano, whatsappReceberAgendamento, googleConnected },
-        horarios: { tempoConsulta, valorConsulta, blocosHorario },
+        horarios: { 
+          tempoConsulta, 
+          valorConsulta, 
+          blocosHorario,
+          formasPagamento: {
+            opcoesAceitas: formasPagamento,
+            parcelamentoMaximo: formasPagamento.includes('Cartão de Crédito') ? parcelamentoMaximo : 'Não se aplica',
+            regraJuros: formasPagamento.includes('Cartão de Crédito') ? regraJuros : 'Não se aplica'
+          }
+        },
+        procedimentosExames: {
+          lista: examesProcedimentos.filter(e => e.nome && e.nome.trim()),
+          instrucoesGerais: instrucoesGerais
+        },
         googleTokens: googleTokens
       };
 
@@ -735,7 +922,15 @@ function ConfigurarFormContent() {
             <div className={`p-2 rounded-lg ${currentTab === 'horarios' ? 'bg-purple-500/20 text-purple-400' : 'bg-[#27272a] text-gray-400'}`}><Calendar className="w-5 h-5" /></div>
             <div>
               <p className="font-semibold text-sm">3. Regras da Agenda</p>
-              <p className="text-xs opacity-70">Preço, Tempo e Horários</p>
+              <p className="text-xs opacity-70">Preço, Horários e Pagamento</p>
+            </div>
+          </button>
+
+          <button type="button" onClick={(e) => { e.preventDefault(); goToTab('procedimentos'); }} className={`flex items-center space-x-3 w-full p-4 rounded-xl text-left transition-all ${currentTab === 'procedimentos' ? 'bg-emerald-600/10 border border-emerald-500/50 text-emerald-400' : 'hover:bg-[#18181b] border border-transparent text-gray-400'}`}>
+            <div className={`p-2 rounded-lg ${currentTab === 'procedimentos' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-[#27272a] text-gray-400'}`}><ClipboardList className="w-5 h-5" /></div>
+            <div>
+              <p className="font-semibold text-sm">4. Exames & Preparo</p>
+              <p className="text-xs opacity-70">Procedimentos e Orientações</p>
             </div>
           </button>
         </div>
@@ -794,6 +989,77 @@ function ConfigurarFormContent() {
                   </div>
                 </div>
 
+                {/* Bloco: Ponto de Referência & Estacionamento */}
+                <div className="mt-6 bg-[#181a1f] p-6 rounded-2xl border border-[#27272a] space-y-5">
+                  <h4 className="text-base font-bold text-white flex items-center">
+                    <MapPin className="w-5 h-5 mr-2 text-teal-400" /> Ponto de Referência & Estacionamento *
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-2">
+                        Ponto de Referência Próximo *
+                      </label>
+                      <input 
+                        type="text" 
+                        value={pontoReferencia} 
+                        onChange={(e) => setPontoReferencia(e.target.value)} 
+                        placeholder="Ex: Em frente ao Shopping, ao lado do Banco do Brasil" 
+                        className="w-full bg-[#121417] border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors" 
+                      />
+                      <p className="text-[11px] text-gray-500 mt-1">A IA indicará este ponto quando o paciente perguntar onde fica a clínica.</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-2">
+                        Possui Estacionamento no Local? *
+                      </label>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setTemEstacionamento(true)}
+                          className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
+                            temEstacionamento === true
+                              ? 'bg-teal-500/20 text-teal-300 border-teal-500'
+                              : 'bg-[#121417] text-gray-400 border-gray-800 hover:border-gray-700'
+                          }`}
+                        >
+                          <Car className="w-4 h-4" /> Sim, Possui
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTemEstacionamento(false);
+                            setDetalhesEstacionamento('');
+                          }}
+                          className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
+                            temEstacionamento === false
+                              ? 'bg-red-500/20 text-red-300 border-red-500'
+                              : 'bg-[#121417] text-gray-400 border-gray-800 hover:border-gray-700'
+                          }`}
+                        >
+                          Não Possui
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {temEstacionamento === true && (
+                    <div className="bg-[#121417] p-4 rounded-xl border border-teal-900/30 animate-fade-in">
+                      <label className="block text-xs font-semibold text-teal-300 mb-2">
+                        Instruções do Estacionamento aos Pacientes *
+                      </label>
+                      <input 
+                        type="text" 
+                        value={detalhesEstacionamento} 
+                        onChange={(e) => setDetalhesEstacionamento(e.target.value)} 
+                        placeholder="Ex: Estacionamento rotativo no subsolo (pago) ou Vagas gratuitas exclusivas na frente" 
+                        className="w-full bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors" 
+                      />
+                    </div>
+                  )}
+                </div>
+
                 {/* Bloco Dinâmico de Especialistas */}
                 <div className="mt-8 bg-[#181a1f] p-6 rounded-2xl border border-[#27272a]">
                   <h4 className="text-lg font-bold text-white mb-4 flex items-center"><Stethoscope className="w-5 h-5 mr-2 text-teal-500" /> Corpo Clínico</h4>
@@ -817,6 +1083,50 @@ function ConfigurarFormContent() {
                   <button onClick={addEspecialista} className="mt-4 flex items-center space-x-2 text-sm text-teal-400 hover:text-teal-300 font-bold transition-colors">
                     <Plus className="w-4 h-4" /> <span>Adicionar Outro Especialista</span>
                   </button>
+                </div>
+
+                {/* Bloco: Faixa Etária de Atendimento */}
+                <div className="mt-6 bg-[#181a1f] p-6 rounded-2xl border border-[#27272a] space-y-4">
+                  <h4 className="text-base font-bold text-white flex items-center">
+                    <Users className="w-5 h-5 mr-2 text-teal-400" /> Faixa Etária de Atendimento *
+                  </h4>
+                  <p className="text-xs text-gray-400">
+                    Selecione quais faixas etárias os especialistas da sua clínica atendem (obrigatório pelo menos uma):
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {opcoesFaixaEtaria.map(faixa => {
+                      const isSelected = faixasEtarias.includes(faixa);
+                      return (
+                        <button
+                          key={faixa}
+                          type="button"
+                          onClick={() => toggleFaixaEtaria(faixa)}
+                          className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border flex items-center gap-1.5 ${
+                            isSelected
+                              ? 'bg-teal-500/20 text-teal-300 border-teal-500/50'
+                              : 'bg-[#121417] text-gray-400 border-gray-800 hover:border-gray-700'
+                          }`}
+                        >
+                          {isSelected ? <Check className="w-3.5 h-3.5 text-teal-400" /> : <Plus className="w-3.5 h-3.5 text-gray-500" />}
+                          {faixa}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                      Observações sobre idade ou atendimento pediátrico (Opcional):
+                    </label>
+                    <input 
+                      type="text" 
+                      value={regrasFaixaEtaria} 
+                      onChange={(e) => setRegrasFaixaEtaria(e.target.value)} 
+                      placeholder="Ex: Atendimento infantil a partir de 2 anos de idade com a Dra. Giovanna." 
+                      className="w-full bg-[#121417] border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors" 
+                    />
+                  </div>
                 </div>
 
                 {/* Bloco de Convênios e Planos de Saúde */}
@@ -1088,6 +1398,185 @@ function ConfigurarFormContent() {
                     <Plus className="w-4 h-4" /> <span>Adicionar Novo Bloco (Ex: Sábado 08h as 12h)</span>
                   </button>
                 </div>
+
+                {/* Bloco: Formas de Pagamento Aceitas */}
+                <div className="mt-8 bg-[#181a1f] p-6 rounded-2xl border border-[#27272a] space-y-5">
+                  <h4 className="text-base font-bold text-white flex items-center">
+                    <CreditCard className="w-5 h-5 mr-2 text-purple-400" /> Formas de Pagamento Aceitas *
+                  </h4>
+                  <p className="text-xs text-gray-400">
+                    Selecione quais opções a clínica aceita para que a IA informe os pacientes no WhatsApp:
+                  </p>
+
+                  <div className="flex flex-wrap gap-2.5">
+                    {opcoesPagamento.map(forma => {
+                      const isSelected = formasPagamento.includes(forma);
+                      return (
+                        <button
+                          key={forma}
+                          type="button"
+                          onClick={() => toggleFormaPagamento(forma)}
+                          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all border flex items-center gap-1.5 ${
+                            isSelected
+                              ? 'bg-purple-600/20 text-purple-300 border-purple-500'
+                              : 'bg-[#121417] text-gray-400 border-gray-800 hover:border-gray-700'
+                          }`}
+                        >
+                          {isSelected ? <Check className="w-3.5 h-3.5 text-purple-400" /> : <Plus className="w-3.5 h-3.5 text-gray-500" />}
+                          {forma}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {formasPagamento.includes('Cartão de Crédito') && (
+                    <div className="bg-[#121417] p-5 rounded-xl border border-purple-900/30 grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                          Parcelamento Máximo no Cartão *
+                        </label>
+                        <select
+                          value={parcelamentoMaximo}
+                          onChange={(e) => setParcelamentoMaximo(e.target.value)}
+                          className="w-full bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500"
+                        >
+                          <option value="1x (À vista)">1x (À vista)</option>
+                          <option value="Até 2x">Até 2x</option>
+                          <option value="Até 3x">Até 3x</option>
+                          <option value="Até 4x">Até 4x</option>
+                          <option value="Até 6x">Até 6x</option>
+                          <option value="Até 10x">Até 10x</option>
+                          <option value="Até 12x">Até 12x</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                          Condição de Juros / Parcelas (Opcional)
+                        </label>
+                        <input
+                          type="text"
+                          value={regraJuros}
+                          onChange={(e) => setRegraJuros(e.target.value)}
+                          placeholder="Ex: Sem juros ou Com acréscimo da operadora"
+                          className="w-full bg-[#181a1f] border border-gray-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ABA: PROCEDIMENTOS & EXAMES */}
+            {currentTab === 'procedimentos' && (
+              <div className="animate-fade-in space-y-6">
+                <div className="border-b border-[#27272a] pb-6 mb-6">
+                  <h3 className="text-2xl font-bold text-white mb-2">Exames, Procedimentos & Orientações</h3>
+                  <p className="text-gray-400 text-sm">Cadastre os serviços oferecidos e as recomendações de preparo aos pacientes.</p>
+                </div>
+
+                {/* Lista de Exames e Procedimentos */}
+                <div className="bg-[#181a1f] p-6 rounded-2xl border border-[#27272a] space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-800">
+                    <div>
+                      <h4 className="text-base font-bold text-white flex items-center">
+                        <ClipboardList className="w-5 h-5 mr-2 text-emerald-400" /> Tabela de Exames e Procedimentos *
+                      </h4>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        Cadastre os exames realizados. A IA consultará esta lista quando o paciente perguntar se vocês realizam o procedimento.
+                      </p>
+                    </div>
+                    <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-xs font-semibold shrink-0">
+                      💰 Valor do Exame é 100% OPCIONAL
+                    </span>
+                  </div>
+
+                  <div className="space-y-4">
+                    {examesProcedimentos.map((exame, idx) => (
+                      <div key={idx} className="bg-[#121417] p-4 rounded-xl border border-gray-800 flex flex-col md:flex-row gap-4 items-end">
+                        <div className="flex-1 w-full">
+                          <label className="block text-xs font-semibold text-gray-300 mb-1">
+                            Nome do Exame / Procedimento *
+                          </label>
+                          <input
+                            type="text"
+                            value={exame.nome}
+                            onChange={(e) => updateExameProcedimento(idx, 'nome', e.target.value)}
+                            placeholder="Ex: Hemograma, Ultrassonografia, Limpeza Dental, Raio-X"
+                            className="w-full bg-[#181a1f] border border-gray-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                          />
+                        </div>
+
+                        <div className="w-full md:w-44">
+                          <label className="block text-xs font-semibold text-gray-300 mb-1 flex items-center justify-between">
+                            <span>Valor</span>
+                            <span className="text-[10px] text-emerald-400 font-bold uppercase">(Opcional)</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={exame.valor}
+                            onChange={(e) => updateExameProcedimento(idx, 'valor', e.target.value)}
+                            placeholder="Ex: R$ 80,00 ou deixe vazio"
+                            className="w-full bg-[#181a1f] border border-gray-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                          />
+                        </div>
+
+                        <div className="flex-1 w-full">
+                          <label className="block text-xs font-semibold text-gray-300 mb-1 flex items-center justify-between">
+                            <span>Preparo / Requisitos</span>
+                            <span className="text-[10px] text-gray-500 uppercase">(Opcional)</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={exame.preparo}
+                            onChange={(e) => updateExameProcedimento(idx, 'preparo', e.target.value)}
+                            placeholder="Ex: Jejum de 8h, trazer pedido médico"
+                            className="w-full bg-[#181a1f] border border-gray-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                          />
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => removeExameProcedimento(idx)}
+                          disabled={examesProcedimentos.length === 1}
+                          className="p-2 mb-0.5 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-lg disabled:opacity-30 transition-colors"
+                          title="Remover"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={addExameProcedimento}
+                    className="flex items-center space-x-2 text-sm text-emerald-400 hover:text-emerald-300 font-bold transition-colors pt-1"
+                  >
+                    <Plus className="w-4 h-4" /> <span>Adicionar Outro Exame / Procedimento</span>
+                  </button>
+                </div>
+
+                {/* Instruções e Recomendações Gerais aos Pacientes */}
+                <div className="bg-[#181a1f] p-6 rounded-2xl border border-[#27272a] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-base font-bold text-white flex items-center">
+                      <ShieldCheck className="w-5 h-5 mr-2 text-emerald-400" /> Instruções & Recomendações de Comparecimento *
+                    </h4>
+                    <span className="text-xs text-emerald-400 font-semibold">Obrigatório</span>
+                  </div>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    A IA enviará essas orientações aos pacientes sempre que confirmar um agendamento ou quando o paciente perguntar o que precisa levar:
+                  </p>
+                  <textarea
+                    rows={4}
+                    value={instrucoesGerais}
+                    onChange={(e) => setInstrucoesGerais(e.target.value)}
+                    placeholder="Ex: Chegar com 15 minutos de antecedência. Trazer documento oficial com foto, carteirinha do convênio (se houver) e exames anteriores. É permitido 1 acompanhante por paciente."
+                    className="w-full bg-[#121417] border border-gray-800 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors leading-relaxed"
+                  />
+                </div>
               </div>
             )}
 
@@ -1106,7 +1595,7 @@ function ConfigurarFormContent() {
               </div>
               
               <div className="flex space-x-3">
-                {currentTab !== 'horarios' ? (
+                {currentTab !== 'procedimentos' ? (
                   <button type="button" onClick={handleNextTab} className="px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl transition-colors flex items-center space-x-2 shadow-lg cursor-pointer">
                     <span>Próxima Etapa</span><ArrowRight className="w-4 h-4" />
                 </button>

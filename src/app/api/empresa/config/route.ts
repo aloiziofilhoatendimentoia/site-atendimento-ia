@@ -173,6 +173,30 @@ export async function GET(request: Request) {
           const parsed = typeof siteClinic.dados_completos_json === 'string' ? JSON.parse(siteClinic.dados_completos_json) : siteClinic.dados_completos_json;
           return parsed?.clinica?.convenios || null;
         } catch(e) { return null; }
+      })() : null),
+      localizacaoAcesso: savedPayload?.clinica?.localizacaoAcesso || (siteClinic?.dados_completos_json ? (() => {
+        try {
+          const parsed = typeof siteClinic.dados_completos_json === 'string' ? JSON.parse(siteClinic.dados_completos_json) : siteClinic.dados_completos_json;
+          return parsed?.clinica?.localizacaoAcesso || null;
+        } catch(e) { return null; }
+      })() : null),
+      faixaEtaria: savedPayload?.clinica?.faixaEtaria || (siteClinic?.dados_completos_json ? (() => {
+        try {
+          const parsed = typeof siteClinic.dados_completos_json === 'string' ? JSON.parse(siteClinic.dados_completos_json) : siteClinic.dados_completos_json;
+          return parsed?.clinica?.faixaEtaria || null;
+        } catch(e) { return null; }
+      })() : null),
+      formasPagamento: savedPayload?.clinica?.formasPagamento || (siteClinic?.dados_completos_json ? (() => {
+        try {
+          const parsed = typeof siteClinic.dados_completos_json === 'string' ? JSON.parse(siteClinic.dados_completos_json) : siteClinic.dados_completos_json;
+          return parsed?.clinica?.formasPagamento || null;
+        } catch(e) { return null; }
+      })() : null),
+      procedimentosExames: savedPayload?.procedimentosExames || (siteClinic?.dados_completos_json ? (() => {
+        try {
+          const parsed = typeof siteClinic.dados_completos_json === 'string' ? JSON.parse(siteClinic.dados_completos_json) : siteClinic.dados_completos_json;
+          return parsed?.procedimentosExames || null;
+        } catch(e) { return null; }
       })() : null)
     };
 
@@ -335,6 +359,25 @@ export async function POST(request: Request) {
                 planos: (Array.isArray(c.convenios?.planos) ? c.convenios.planos : []).map(normStr).sort(),
                 observacoes: normStr(c.convenios?.observacoes)
               },
+              localizacaoAcesso: {
+                pontoReferencia: normStr(c.localizacaoAcesso?.pontoReferencia),
+                possuiEstacionamento: Boolean(c.localizacaoAcesso?.possuiEstacionamento),
+                detalhesEstacionamento: normStr(c.localizacaoAcesso?.detalhesEstacionamento)
+              },
+              faixaEtaria: {
+                faixas: (Array.isArray(c.faixaEtaria?.faixas) ? c.faixaEtaria.faixas : []).map(normStr).sort(),
+                regrasEspecificas: normStr(c.faixaEtaria?.regrasEspecificas)
+              },
+              formasPagamento: {
+                metodos: (Array.isArray(c.formasPagamento?.metodos) ? c.formasPagamento.metodos : []).map(normStr).sort(),
+                parcelamentoCartao: normStr(c.formasPagamento?.parcelamentoCartao),
+                observacoes: normStr(c.formasPagamento?.observacoes)
+              },
+              procedimentosExames: {
+                lista: (Array.isArray(obj?.procedimentosExames?.lista) ? obj.procedimentosExames.lista : [])
+                  .map((ex: any) => ({ nome: normStr(ex?.nome), valor: normStr(ex?.valor) })),
+                instrucoesGerais: normStr(obj?.procedimentosExames?.instrucoesGerais)
+              },
               opcoesAgendamento: {
                 whatsapp: Boolean(i.opcoesAgendamento?.whatsapp),
                 calendar: Boolean(i.opcoesAgendamento?.calendar)
@@ -473,6 +516,37 @@ export async function POST(request: Request) {
         const lista = Array.isArray(conv.planos) && conv.planos.length > 0 ? conv.planos.join(', ') : 'Nenhum plano específico selecionado';
         const obs = conv.observacoes ? ` (Obs: ${conv.observacoes})` : '';
         return `${lista}${obs}`;
+      })(),
+      localizacao_formatada: (() => {
+        const loc = payload?.clinica?.localizacaoAcesso;
+        if (!loc) return 'Não informado';
+        const ref = loc.pontoReferencia ? `Ponto de Referência: ${loc.pontoReferencia}` : 'Sem ponto de referência';
+        const est = loc.possuiEstacionamento ? `Estacionamento: Sim (${loc.detalhesEstacionamento || 'Disponível no local'})` : 'Estacionamento: Não possui no local';
+        return `${ref} | ${est}`;
+      })(),
+      faixa_etaria_formatada: (() => {
+        const fa = payload?.clinica?.faixaEtaria;
+        if (!fa) return 'Não informado';
+        const fStr = Array.isArray(fa.faixas) && fa.faixas.length > 0 ? fa.faixas.join(', ') : 'Todas as idades';
+        const regras = fa.regrasEspecificas ? ` (Regras: ${fa.regrasEspecificas})` : '';
+        return `${fStr}${regras}`;
+      })(),
+      formas_pagamento_formatadas: (() => {
+        const fp = payload?.clinica?.formasPagamento;
+        if (!fp) return 'Não informado';
+        const met = Array.isArray(fp.metodos) && fp.metodos.length > 0 ? fp.metodos.join(', ') : 'A combinar';
+        const parc = fp.parcelamentoCartao ? ` | Parcelamento: ${fp.parcelamentoCartao}` : '';
+        const obs = fp.observacoes ? ` | Obs: ${fp.observacoes}` : '';
+        return `${met}${parc}${obs}`;
+      })(),
+      procedimentos_formatados: (() => {
+        const pe = payload?.procedimentosExames;
+        if (!pe) return 'Não informado';
+        const lista = Array.isArray(pe.lista) && pe.lista.length > 0 
+          ? pe.lista.map((x: any) => `- ${x.nome || 'Exame'}${x.valor ? ` (${x.valor})` : ''}`).join('\n')
+          : 'Nenhum exame cadastrado';
+        const instr = pe.instrucoesGerais ? `\nInstruções/Recomendações: ${pe.instrucoesGerais}` : '';
+        return `${lista}${instr}`;
       })()
     };
 
