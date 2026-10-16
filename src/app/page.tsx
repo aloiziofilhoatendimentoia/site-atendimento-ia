@@ -43,24 +43,39 @@ interface ScriptStep {
 
 const CONVERSATION_SCRIPT: ScriptStep[] = [
   { sender: 'user', text: 'Olá! Gostaria de tirar umas dúvidas sobre a clínica.' },
-  { sender: 'bot', text: 'Olá! Seja muito bem-vindo(a) à Clínica Vitae Odontologia. 😊\n\nSou a **Giovanna**, assistente virtual. Como posso te ajudar hoje?', typingDelay: 6000 },
+  { sender: 'bot', text: 'Olá! Seja muito bem-vindo(a) à Clínica Vitae Odontologia. 😊', typingDelay: 2800 },
+  { sender: 'bot', text: 'Sou a **Giovanna**, assistente virtual da equipe. Como posso te ajudar hoje?', typingDelay: 3200 },
+  
   { sender: 'user', text: 'Vocês atendem crianças e idosos? Queria saber a faixa etária e se aceitam convênios.' },
-  { sender: 'bot', text: 'Sim! Atendemos todas as faixas etárias: odontopediatria para bebês e crianças, jovens, adultos e odontogeriatria especializada para a terceira idade. 👶👵\n\nTrabalhamos com os convênios **Unimed, SulAmérica, Bradesco Saúde e Amil**. Para outros planos, fornecemos recibo detalhado com CRM/CRO para reembolso integral!', typingDelay: 8500 },
-  { sender: 'user', text: 'Ótimo! O Dr. Lucas faz clareamento a laser e radiografia panorâmica? Qual o valor do clareamento?' },
-  { sender: 'bot', text: 'Sim! Realizamos exames de imagem e raio-X panorâmico aqui mesmo na clínica.\n\nO Dr. Lucas é especialista em estética e o **clareamento a laser** fica por R$ 450,00 por sessão (ou em até 6x no cartão). Recomendamos chegar com 15 minutos de antecedência e trazer documento com foto. ✨', typingDelay: 9000 },
+  { sender: 'bot', text: 'Sim! Atendemos todas as faixas etárias: odontopediatria para bebês e crianças, jovens, adultos e odontogeriatria para a terceira idade. 👶👵', typingDelay: 3800 },
+  { sender: 'bot', text: 'Trabalhamos com os convênios **Unimed, SulAmérica, Bradesco Saúde e Amil**.', typingDelay: 3000 },
+  { sender: 'bot', text: 'Para outros planos, fornecemos recibo detalhado com CRM/CRO para reembolso integral!', typingDelay: 3200 },
+  
+  { sender: 'user', text: 'Ótimo! O Dr. Lucas faz clareamento a laser e radiografia panorâmica? Qual o valor?' },
+  { sender: 'bot', text: 'Sim! Realizamos exames de imagem e raio-X panorâmico aqui mesmo na clínica.', typingDelay: 3200 },
+  { sender: 'bot', text: 'O Dr. Lucas é especialista em estética e o **clareamento a laser** fica por R$ 450,00 por sessão (ou em até 6x no cartão). ✨', typingDelay: 3600 },
+  { sender: 'bot', text: 'Recomendamos apenas chegar com 15 minutos de antecedência e trazer documento com foto.', typingDelay: 3200 },
+  
   { sender: 'user', text: 'Perfeito! E onde fica a clínica? Tem estacionamento no local e ponto de referência?' },
-  { sender: 'bot', text: 'Estamos na Av. Boa Viagem, 1420 - Sala 402, bem em frente ao Segundo Jardim de Boa Viagem.\n\nContamos com **estacionamento privativo e gratuito com manobrista** para nossos pacientes no próprio edifício! 🚗🅿️', typingDelay: 8000 },
-  { sender: 'bot', isMapCard: true, typingDelay: 5000 },
+  { sender: 'bot', text: 'Estamos na Av. Boa Viagem, 1420 - Sala 402, bem em frente ao Segundo Jardim de Boa Viagem.', typingDelay: 3400 },
+  { sender: 'bot', text: 'Contamos com **estacionamento privativo e gratuito com manobrista** para nossos pacientes no próprio edifício! 🚗🅿️', typingDelay: 3500 },
+  { sender: 'bot', isMapCard: true, typingDelay: 2500 },
+  
   { sender: 'user', text: 'Excelente! Quais as formas de pagamento e divide em quantas vezes no cartão?' },
-  { sender: 'bot', text: 'Aceitamos **Pix com 5% de desconto**, dinheiro, cartão de débito e **cartão de crédito em até 10x sem juros** (parcela mínima de R$ 50,00). 💳', typingDelay: 7000 },
+  { sender: 'bot', text: 'Aceitamos **Pix com 5% de desconto**, dinheiro e cartão de débito. 💳', typingDelay: 3000 },
+  { sender: 'bot', text: 'No cartão de crédito, dividimos em **até 10x sem juros** (parcela mínima de R$ 50,00).', typingDelay: 3200 },
+  
   { sender: 'user', text: 'Maravilha! Quero agendar a avaliação e o clareamento com o Dr. Lucas para amanhã.' },
-  { sender: 'bot', text: 'Excelente! Temos horários disponíveis amanhã com o Dr. Lucas às **10:00** e às **15:30**.\n\nQual deles você prefere?', typingDelay: 6500 },
+  { sender: 'bot', text: 'Excelente escolha! Temos horários disponíveis amanhã com o Dr. Lucas às **10:00** e às **15:30**.', typingDelay: 3200 },
+  { sender: 'bot', text: 'Qual desses horários fica melhor para você?', typingDelay: 2600 },
+  
   { sender: 'user', text: 'Pode ser às 10:00, por favor.' },
-  { sender: 'bot', text: 'Perfeito! Para gerar sua ficha e reservar sua vaga na agenda, qual o seu nome completo?', typingDelay: 5500 },
+  { sender: 'bot', text: 'Perfeito! Para gerar sua ficha e reservar sua vaga na agenda, qual o seu nome completo?', typingDelay: 3000 },
+  
   { sender: 'user', text: 'Mariana Souza Alves' },
-  { sender: 'bot', text: 'Agendamento confirmado com sucesso! 🎉', typingDelay: 5000 },
-  { sender: 'bot', text: '**Ficha do Agendamento Odontológico**:\n- Paciente: Mariana Souza Alves\n- Profissional: Dr. Lucas (Estética & Profilaxia)\n- Procedimento: Avaliação + Clareamento\n- Estacionamento: Vaga Gratuita Garantida\n- Data: Amanhã às 10:00h\n- Local: Av. Boa Viagem, 1420 - Sala 402', typingDelay: 8500 },
-  { sender: 'bot', text: 'Já enviei o lembrete para a agenda da equipe médica. Qualquer dúvida antes da consulta, é só chamar por aqui. Até amanhã! 💙🦷', typingDelay: 7500 },
+  { sender: 'bot', text: 'Agendamento confirmado com sucesso! 🎉', typingDelay: 2500 },
+  { sender: 'bot', text: '**Ficha do Agendamento Odontológico**:\n- Paciente: Mariana Souza Alves\n- Profissional: Dr. Lucas (Estética & Profilaxia)\n- Procedimento: Avaliação + Clareamento\n- Estacionamento: Vaga Gratuita Garantida\n- Data: Amanhã às 10:00h\n- Local: Av. Boa Viagem, 1420 - Sala 402', typingDelay: 4000 },
+  { sender: 'bot', text: 'Já enviei o lembrete para a agenda da equipe médica. Qualquer dúvida antes da consulta, é só chamar por aqui. Até amanhã! 💙🦷', typingDelay: 3500 },
 ];
 
 export default function LandingPage() {
@@ -170,19 +185,19 @@ export default function LandingPage() {
           }
 
           if (step.sender === 'user') {
-            // Tempo humano de leitura e resposta do paciente (5.5 segundos)
-            await new Promise(r => setTimeout(r, 5500));
+            // Tempo humano confortável para o visitante ler a pergunta do paciente (5.8 segundos)
+            await new Promise(r => setTimeout(r, 5800));
             if (isCancelled) break;
             setMessages(prev => [...prev, { ...step, text: messageText, time }]);
           } else {
             setIsTyping(true);
-            const delay = step.typingDelay || 8500;
+            const delay = step.typingDelay || 3500;
             await new Promise(r => setTimeout(r, delay));
             if (isCancelled) break;
             setIsTyping(false);
             setMessages(prev => [...prev, { ...step, text: messageText, time }]);
-            // Pausa humana entre mensagens da secretária (3.5 segundos)
-            await new Promise(r => setTimeout(r, 3500));
+            // Pausa humana e confortável para ler cada resposta da clínica (4.5 segundos)
+            await new Promise(r => setTimeout(r, 4500));
           }
         }
 
@@ -434,14 +449,13 @@ export default function LandingPage() {
                       </div>
                     ))}
 
-                    {/* Três Pontinhos de Digitando (Humanizado) */}
+                    {/* Três Pontinhos de Digitando (Idêntico ao WhatsApp Oficial) */}
                     {isTyping && (
-                      <div className="flex justify-start animate-in fade-in duration-300">
-                        <div className="bg-white rounded-2xl rounded-tl-sm px-3.5 py-2.5 shadow-sm border border-slate-100 flex items-center space-x-1.5">
-                          <span className="text-[11px] text-slate-400 font-medium mr-1">Digitando</span>
-                          <div className="w-1.5 h-1.5 bg-teal-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                          <div className="w-1.5 h-1.5 bg-teal-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                          <div className="w-1.5 h-1.5 bg-teal-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      <div className="flex justify-start animate-in fade-in duration-200">
+                        <div className="bg-white rounded-2xl rounded-tl-sm px-3.5 py-3 shadow-sm border border-slate-100 flex items-center space-x-1.5">
+                          <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '180ms' }}></div>
+                          <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '360ms' }}></div>
                         </div>
                       </div>
                     )}
