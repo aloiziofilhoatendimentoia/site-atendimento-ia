@@ -43,27 +43,24 @@ interface ScriptStep {
 
 const CONVERSATION_SCRIPT: ScriptStep[] = [
   { sender: 'user', text: 'Olá! Gostaria de tirar umas dúvidas sobre a clínica.' },
-  { sender: 'bot', text: 'Olá! Seja muito bem-vindo(a) à Clínica Vitae Odontologia. 😊', typingDelay: 7500 },
-  { sender: 'bot', text: 'Sou a **Giovanna**, assistente da equipe. Como posso te ajudar hoje?', typingDelay: 8500 },
-  { sender: 'user', text: 'O Dr. Lucas ainda atende aí? Queria ver se consigo consulta com ele.' },
-  { sender: 'bot', text: 'Sim, com certeza! O Dr. Lucas atende aqui como cirurgião-dentista, cuidando de limpeza profilática, restaurações e próteses dentárias.', typingDelay: 9500 },
-  { sender: 'bot', text: 'Além dele, nossa equipe conta também com a Dra. Camila (especialista em manutenção de aparelhos e ortodontia) e o Dr. Marcelo (cirurgião-dentista especialista em implantes e extrações). Temos excelente disponibilidade com todos eles! 🦷✨', typingDelay: 12000 },
-  { sender: 'user', text: 'Que ótimo! E qual é o valor da avaliação inicial?' },
-  { sender: 'bot', text: 'A consulta de avaliação odontológica com check-up digital completo tem o valor de R$ 120,00. Esse valor já inclui o planejamento detalhado do tratamento, avaliação da gengiva e fotos intraorais.', typingDelay: 11000 },
-  { sender: 'user', text: 'Entendi, perfeito. E quais são os dias e horários de funcionamento de vocês?' },
-  { sender: 'bot', text: 'Nosso horário de funcionamento é de Segunda a Sexta das 08:00 às 19:00, e aos Sábados das 08:00 às 13:00.\n\nFechamos apenas aos domingos e feriados. 😊', typingDelay: 10000 },
-  { sender: 'user', text: 'Onde a clínica fica localizada?' },
-  { sender: 'bot', text: 'Estamos localizados na Av. Boa Viagem, 1420 - Sala 402 - Boa Viagem, Recife/PE.', typingDelay: 8000 },
-  { sender: 'bot', isMapCard: true, typingDelay: 7000 },
-  { sender: 'user', text: 'Perfeito, achei bem perto! Quero marcar com o Dr. Lucas para amanhã.' },
-  { sender: 'bot', text: 'Vou verificar a disponibilidade em nossa agenda, só um instante...', typingDelay: 7500 },
-  { sender: 'bot', text: 'Temos horários disponíveis para amanhã com o Dr. Lucas às 10:00 e às 15:30 horas.\n\nQual destes dois horários fica melhor para você?', typingDelay: 10000 },
+  { sender: 'bot', text: 'Olá! Seja muito bem-vindo(a) à Clínica Vitae Odontologia. 😊\n\nSou a **Giovanna**, assistente virtual. Como posso te ajudar hoje?', typingDelay: 6000 },
+  { sender: 'user', text: 'Vocês atendem crianças e idosos? Queria saber a faixa etária e se aceitam convênios.' },
+  { sender: 'bot', text: 'Sim! Atendemos todas as faixas etárias: odontopediatria para bebês e crianças, jovens, adultos e odontogeriatria especializada para a terceira idade. 👶👵\n\nTrabalhamos com os convênios **Unimed, SulAmérica, Bradesco Saúde e Amil**. Para outros planos, fornecemos recibo detalhado com CRM/CRO para reembolso integral!', typingDelay: 8500 },
+  { sender: 'user', text: 'Ótimo! O Dr. Lucas faz clareamento a laser e radiografia panorâmica? Qual o valor do clareamento?' },
+  { sender: 'bot', text: 'Sim! Realizamos exames de imagem e raio-X panorâmico aqui mesmo na clínica.\n\nO Dr. Lucas é especialista em estética e o **clareamento a laser** fica por R$ 450,00 por sessão (ou em até 6x no cartão). Recomendamos chegar com 15 minutos de antecedência e trazer documento com foto. ✨', typingDelay: 9000 },
+  { sender: 'user', text: 'Perfeito! E onde fica a clínica? Tem estacionamento no local e ponto de referência?' },
+  { sender: 'bot', text: 'Estamos na Av. Boa Viagem, 1420 - Sala 402, bem em frente ao Segundo Jardim de Boa Viagem.\n\nContamos com **estacionamento privativo e gratuito com manobrista** para nossos pacientes no próprio edifício! 🚗🅿️', typingDelay: 8000 },
+  { sender: 'bot', isMapCard: true, typingDelay: 5000 },
+  { sender: 'user', text: 'Excelente! Quais as formas de pagamento e divide em quantas vezes no cartão?' },
+  { sender: 'bot', text: 'Aceitamos **Pix com 5% de desconto**, dinheiro, cartão de débito e **cartão de crédito em até 10x sem juros** (parcela mínima de R$ 50,00). 💳', typingDelay: 7000 },
+  { sender: 'user', text: 'Maravilha! Quero agendar a avaliação e o clareamento com o Dr. Lucas para amanhã.' },
+  { sender: 'bot', text: 'Excelente! Temos horários disponíveis amanhã com o Dr. Lucas às **10:00** e às **15:30**.\n\nQual deles você prefere?', typingDelay: 6500 },
   { sender: 'user', text: 'Pode ser às 10:00, por favor.' },
-  { sender: 'bot', text: 'Combinado! Para finalizar e emitir sua ficha, qual o nome completo do paciente?', typingDelay: 8000 },
+  { sender: 'bot', text: 'Perfeito! Para gerar sua ficha e reservar sua vaga na agenda, qual o seu nome completo?', typingDelay: 5500 },
   { sender: 'user', text: 'Mariana Souza Alves' },
-  { sender: 'bot', text: 'Agendamento confirmado com sucesso! 🎉', typingDelay: 7000 },
-  { sender: 'bot', text: '**Ficha do Agendamento Odontológico**:\n- Paciente: Mariana Souza Alves\n- Cirurgião-Dentista: Dr. Lucas\n- Data: Amanhã às 10:00h\n- Local: Av. Boa Viagem, 1420 - Sala 402', typingDelay: 10500 },
-  { sender: 'bot', text: 'Já reservei a sala e seu horário no sistema. Qualquer dúvida antes da consulta, estamos à disposição por aqui! Tenha um ótimo dia e até breve! 💙🦷', typingDelay: 11000 },
+  { sender: 'bot', text: 'Agendamento confirmado com sucesso! 🎉', typingDelay: 5000 },
+  { sender: 'bot', text: '**Ficha do Agendamento Odontológico**:\n- Paciente: Mariana Souza Alves\n- Profissional: Dr. Lucas (Estética & Profilaxia)\n- Procedimento: Avaliação + Clareamento\n- Estacionamento: Vaga Gratuita Garantida\n- Data: Amanhã às 10:00h\n- Local: Av. Boa Viagem, 1420 - Sala 402', typingDelay: 8500 },
+  { sender: 'bot', text: 'Já enviei o lembrete para a agenda da equipe médica. Qualquer dúvida antes da consulta, é só chamar por aqui. Até amanhã! 💙🦷', typingDelay: 7500 },
 ];
 
 export default function LandingPage() {
@@ -169,7 +166,7 @@ export default function LandingPage() {
             const ano = tomorrow.getFullYear();
             const dataFormatada = `${dia}/${mes}/${ano} às 10:00h`;
 
-            messageText = `**Ficha do Agendamento Odontológico**:\n- Paciente: Mariana Souza Alves\n- Cirurgião-Dentista: Dr. Lucas\n- Data: ${dataFormatada}\n- Local: Av. Boa Viagem, 1420 - Sala 402`;
+            messageText = `**Ficha do Agendamento Odontológico**:\n- Paciente: Mariana Souza Alves\n- Profissional: Dr. Lucas (Estética & Profilaxia)\n- Procedimento: Avaliação + Clareamento\n- Estacionamento: Vaga Gratuita Garantida\n- Data: ${dataFormatada}\n- Local: Av. Boa Viagem, 1420 - Sala 402`;
           }
 
           if (step.sender === 'user') {
