@@ -186,12 +186,6 @@ export async function GET(request: Request) {
           return parsed?.clinica?.faixaEtaria || null;
         } catch(e) { return null; }
       })() : null),
-      formasPagamento: savedPayload?.clinica?.formasPagamento || (siteClinic?.dados_completos_json ? (() => {
-        try {
-          const parsed = typeof siteClinic.dados_completos_json === 'string' ? JSON.parse(siteClinic.dados_completos_json) : siteClinic.dados_completos_json;
-          return parsed?.clinica?.formasPagamento || null;
-        } catch(e) { return null; }
-      })() : null),
       procedimentosExames: savedPayload?.procedimentosExames || (siteClinic?.dados_completos_json ? (() => {
         try {
           const parsed = typeof siteClinic.dados_completos_json === 'string' ? JSON.parse(siteClinic.dados_completos_json) : siteClinic.dados_completos_json;
