@@ -164,6 +164,8 @@ function ConfigurarFormContent() {
   const [examesProcedimentos, setExamesProcedimentos] = useState<ExameProcedimento[]>([
     { nome: '', valor: '', preparo: '' }
   ]);
+  const [formaEntregaResultado, setFormaEntregaResultado] = useState<'whatsapp_recepcao' | 'link_site' | 'presencial_contato'>('whatsapp_recepcao');
+  const [detalheEntregaResultado, setDetalheEntregaResultado] = useState('');
   const [instrucoesGerais, setInstrucoesGerais] = useState('');
 
   const addExameProcedimento = () => {
@@ -309,6 +311,8 @@ function ConfigurarFormContent() {
           if (parsed.parcelamentoMaximo) setParcelamentoMaximo(parsed.parcelamentoMaximo);
           if (parsed.regraJuros) setRegraJuros(parsed.regraJuros);
           if (Array.isArray(parsed.examesProcedimentos) && parsed.examesProcedimentos.length > 0) setExamesProcedimentos(parsed.examesProcedimentos);
+          if (parsed.formaEntregaResultado) setFormaEntregaResultado(parsed.formaEntregaResultado);
+          if (parsed.detalheEntregaResultado !== undefined) setDetalheEntregaResultado(parsed.detalheEntregaResultado);
           if (parsed.instrucoesGerais) setInstrucoesGerais(parsed.instrucoesGerais);
         } catch (e) {
           console.error("Erro ao carregar dados salvos do localStorage:", e);
@@ -358,6 +362,8 @@ function ConfigurarFormContent() {
             if (ob.parcelamentoMaximo) setParcelamentoMaximo(ob.parcelamentoMaximo);
             if (ob.regraJuros) setRegraJuros(ob.regraJuros);
             if (Array.isArray(ob.examesProcedimentos) && ob.examesProcedimentos.length > 0) setExamesProcedimentos(ob.examesProcedimentos);
+            if (ob.formaEntregaResultado) setFormaEntregaResultado(ob.formaEntregaResultado);
+            if (ob.detalheEntregaResultado !== undefined) setDetalheEntregaResultado(ob.detalheEntregaResultado);
             if (ob.instrucoesGerais) setInstrucoesGerais(ob.instrucoesGerais);
           }
         })
@@ -395,6 +401,8 @@ function ConfigurarFormContent() {
         parcelamentoMaximo,
         regraJuros,
         examesProcedimentos,
+        formaEntregaResultado,
+        detalheEntregaResultado,
         instrucoesGerais,
         blocosHorario
       };
@@ -403,7 +411,10 @@ function ConfigurarFormContent() {
   }, [
     nomeClinica, nomeSecretaria, endereco, whatsappClinica, especialistas,
     opcoesAgendamento, emailCalendar, whatsappHumano, whatsappReceberAgendamento,
-    tempoConsulta, valorConsulta, blocosHorario
+    tempoConsulta, valorConsulta, blocosHorario, pontoReferencia, temEstacionamento,
+    detalhesEstacionamento, faixasEtarias, regrasFaixaEtaria, formasPagamento,
+    parcelamentoMaximo, regraJuros, examesProcedimentos, formaEntregaResultado,
+    detalheEntregaResultado, instrucoesGerais
   ]);
 
   const handleGeneratePairingCode = async () => {
@@ -708,6 +719,13 @@ function ConfigurarFormContent() {
       return 'Cadastre pelo menos 1 Exame ou Procedimento oferecido pela clínica (o valor é opcional).';
     }
 
+    if (formaEntregaResultado === 'link_site' && (!detalheEntregaResultado || !detalheEntregaResultado.trim())) {
+      return 'Informe o link do site onde o paciente acessa o resultado do exame.';
+    }
+    if (formaEntregaResultado === 'presencial_contato' && (!detalheEntregaResultado || !detalheEntregaResultado.trim())) {
+      return 'Informe como o paciente retira o resultado (ex: horário na recepção ou telefone do setor).';
+    }
+
     // Instruções gerais obrigatórias
     if (!instrucoesGerais || !instrucoesGerais.trim()) {
       return 'Preencha as Instruções e Recomendações aos Pacientes (Ex: Chegar com 15 min de antecedência, trazer documentos/exames).';
@@ -840,6 +858,12 @@ function ConfigurarFormContent() {
         },
         procedimentosExames: {
           lista: examesProcedimentos.filter(e => e.nome && e.nome.trim()),
+          entregaResultados: {
+            forma: formaEntregaResultado,
+            detalhe: formaEntregaResultado === 'whatsapp_recepcao'
+              ? 'A equipe da recepção envia pelo WhatsApp após o paciente informar Nome Completo e qual exame fez'
+              : detalheEntregaResultado.trim()
+          },
           instrucoesGerais: instrucoesGerais
         },
         googleTokens: googleTokens
@@ -1556,6 +1580,89 @@ function ConfigurarFormContent() {
                   >
                     <Plus className="w-4 h-4" /> <span>Adicionar Outro Exame / Procedimento</span>
                   </button>
+                </div>
+
+                {/* Entrega de Resultados de Exames (Simples, rápido e sem termos técnicos) */}
+                <div className="bg-[#181a1f] p-5 rounded-2xl border border-[#27272a] space-y-3">
+                  <div>
+                    <h4 className="text-sm font-bold text-white flex items-center">
+                      <CheckCircle className="w-4 h-4 mr-2 text-emerald-400" /> Como o paciente recebe o Resultado dos Exames? *
+                    </h4>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Escolha uma opção para a secretária virtual responder quando perguntarem se o exame ficou pronto:
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => { setFormaEntregaResultado('whatsapp_recepcao'); setDetalheEntregaResultado(''); }}
+                      className={`p-3 rounded-xl text-xs font-semibold border text-left transition-all flex items-center gap-2 ${
+                        formaEntregaResultado === 'whatsapp_recepcao'
+                          ? 'bg-emerald-500/15 border-emerald-500 text-emerald-300'
+                          : 'bg-[#121417] border-gray-800 text-gray-400 hover:border-gray-700'
+                      }`}
+                    >
+                      <Check className={`w-4 h-4 shrink-0 ${formaEntregaResultado === 'whatsapp_recepcao' ? 'text-emerald-400' : 'opacity-30'}`} />
+                      <span>Pelo WhatsApp (A recepção envia)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setFormaEntregaResultado('link_site')}
+                      className={`p-3 rounded-xl text-xs font-semibold border text-left transition-all flex items-center gap-2 ${
+                        formaEntregaResultado === 'link_site'
+                          ? 'bg-emerald-500/15 border-emerald-500 text-emerald-300'
+                          : 'bg-[#121417] border-gray-800 text-gray-400 hover:border-gray-700'
+                      }`}
+                    >
+                      <Check className={`w-4 h-4 shrink-0 ${formaEntregaResultado === 'link_site' ? 'text-emerald-400' : 'opacity-30'}`} />
+                      <span>Por um Link / Site da Clínica</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setFormaEntregaResultado('presencial_contato')}
+                      className={`p-3 rounded-xl text-xs font-semibold border text-left transition-all flex items-center gap-2 ${
+                        formaEntregaResultado === 'presencial_contato'
+                          ? 'bg-emerald-500/15 border-emerald-500 text-emerald-300'
+                          : 'bg-[#121417] border-gray-800 text-gray-400 hover:border-gray-700'
+                      }`}
+                    >
+                      <Check className={`w-4 h-4 shrink-0 ${formaEntregaResultado === 'presencial_contato' ? 'text-emerald-400' : 'opacity-30'}`} />
+                      <span>Buscar na Clínica ou Outro Número</span>
+                    </button>
+                  </div>
+
+                  {formaEntregaResultado === 'whatsapp_recepcao' && (
+                    <p className="text-[11px] text-emerald-300/80 bg-[#121417] px-3.5 py-2.5 rounded-xl border border-emerald-900/30">
+                      ✓ A secretária virtual pedirá o Nome Completo e qual exame o paciente fez, e avisará sua recepção para enviar o resultado.
+                    </p>
+                  )}
+
+                  {formaEntregaResultado === 'link_site' && (
+                    <div className="animate-fade-in">
+                      <input
+                        type="text"
+                        value={detalheEntregaResultado}
+                        onChange={(e) => setDetalheEntregaResultado(e.target.value)}
+                        placeholder="Cole aqui o link onde o paciente vê o resultado (Ex: https://resultados.suaclinica.com.br)"
+                        className="w-full bg-[#121417] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  )}
+
+                  {formaEntregaResultado === 'presencial_contato' && (
+                    <div className="animate-fade-in">
+                      <input
+                        type="text"
+                        value={detalheEntregaResultado}
+                        onChange={(e) => setDetalheEntregaResultado(e.target.value)}
+                        placeholder="Ex: Buscar na recepção de seg a sex das 8h às 17h, ou pedir no WhatsApp (11) 99999-9999"
+                        className="w-full bg-[#121417] border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Instruções e Recomendações Gerais aos Pacientes */}

@@ -197,7 +197,19 @@ export async function GET(request: Request) {
           const parsed = typeof siteClinic.dados_completos_json === 'string' ? JSON.parse(siteClinic.dados_completos_json) : siteClinic.dados_completos_json;
           return parsed?.procedimentosExames || null;
         } catch(e) { return null; }
-      })() : null)
+      })() : null),
+      pontoReferencia: savedPayload?.clinica?.localizacaoAcesso?.pontoReferencia || '',
+      temEstacionamento: savedPayload?.clinica?.localizacaoAcesso?.temEstacionamento ?? null,
+      detalhesEstacionamento: savedPayload?.clinica?.localizacaoAcesso?.detalhesEstacionamento || '',
+      faixasEtarias: savedPayload?.clinica?.faixaEtaria?.faixasPermitidas || savedPayload?.clinica?.faixaEtaria?.faixas || null,
+      regrasFaixaEtaria: savedPayload?.clinica?.faixaEtaria?.regrasEspecificas || '',
+      formasPagamento: savedPayload?.horarios?.formasPagamento?.opcoesAceitas || savedPayload?.clinica?.formasPagamento?.metodos || null,
+      parcelamentoMaximo: savedPayload?.horarios?.formasPagamento?.parcelamentoMaximo || '',
+      regraJuros: savedPayload?.horarios?.formasPagamento?.regraJuros || '',
+      examesProcedimentos: savedPayload?.procedimentosExames?.lista || null,
+      formaEntregaResultado: savedPayload?.procedimentosExames?.entregaResultados?.forma || 'whatsapp_recepcao',
+      detalheEntregaResultado: savedPayload?.procedimentosExames?.entregaResultados?.forma === 'whatsapp_recepcao' ? '' : (savedPayload?.procedimentosExames?.entregaResultados?.detalhe || ''),
+      instrucoesGerais: savedPayload?.procedimentosExames?.instrucoesGerais || ''
     };
 
     return NextResponse.json({
@@ -375,7 +387,11 @@ export async function POST(request: Request) {
               },
               procedimentosExames: {
                 lista: (Array.isArray(obj?.procedimentosExames?.lista) ? obj.procedimentosExames.lista : [])
-                  .map((ex: any) => ({ nome: normStr(ex?.nome), valor: normStr(ex?.valor) })),
+                  .map((ex: any) => ({ nome: normStr(ex?.nome), valor: normStr(ex?.valor), preparo: normStr(ex?.preparo) })),
+                entregaResultados: {
+                  forma: normStr(obj?.procedimentosExames?.entregaResultados?.forma),
+                  detalhe: normStr(obj?.procedimentosExames?.entregaResultados?.detalhe)
+                },
                 instrucoesGerais: normStr(obj?.procedimentosExames?.instrucoesGerais)
               },
               opcoesAgendamento: {
@@ -543,10 +559,13 @@ export async function POST(request: Request) {
         const pe = payload?.procedimentosExames;
         if (!pe) return 'Não informado';
         const lista = Array.isArray(pe.lista) && pe.lista.length > 0 
-          ? pe.lista.map((x: any) => `- ${x.nome || 'Exame'}${x.valor ? ` (${x.valor})` : ''}`).join('\n')
+          ? pe.lista.map((x: any) => `- ${x.nome || 'Exame'}${x.valor ? ` (${x.valor})` : ''}${x.preparo ? ` [Preparo: ${x.preparo}]` : ''}`).join('\n')
           : 'Nenhum exame cadastrado';
+        const entrega = pe.entregaResultados?.detalhe
+          ? `\nEntrega de Resultados: ${pe.entregaResultados.detalhe}`
+          : '';
         const instr = pe.instrucoesGerais ? `\nInstruções/Recomendações: ${pe.instrucoesGerais}` : '';
-        return `${lista}${instr}`;
+        return `${lista}${entrega}${instr}`;
       })()
     };
 
@@ -614,13 +633,17 @@ export async function POST(request: Request) {
           instanceName: instanceName,
           qrcode: true,
           integration: "WHATSAPP-BAILEYS",
+          rejectCall: true,
+          msgCall: "",
           groupsIgnore: true,
+          alwaysOnline: true,
+          readMessages: true,
           webhook: {
             enabled: true,
             url: "https://n8n.atendimentoiaclinicas.tech/webhook/demonstracao-webhook",
             byEvents: false,
             base64: false,
-            events: ["MESSAGES_UPSERT"]
+            events: ["MESSAGES_UPSERT", "CALL"]
           }
         })
       });
