@@ -56,30 +56,6 @@ export async function POST(request: Request) {
         } else if (createData.base64) {
           base64 = createData.base64;
         }
-
-        // Configurar o Webhook Definitivo da Instância
-        try {
-          const webhookUrl = customWebhook || process.env.N8N_WEBHOOK_URL_MESSAGES || 'https://n8n.atendimentoiaclinicas.tech/webhook/demonstracao-webhook';
-          await fetch(`${evoUrl}/webhook/set/${instanceName}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': evoKey
-            },
-            body: JSON.stringify({
-              webhook: {
-                enabled: true,
-                url: webhookUrl,
-                webhook_by_events: false,
-                webhook_base64: false,
-                events: ['MESSAGES_UPSERT']
-              }
-            })
-          });
-          console.log(`[QR Code] Webhook configurado com sucesso para a instância ${instanceName}.`);
-        } catch (err) {
-          console.log(`[QR Code] Falha silenciosa ao configurar webhook:`, err);
-        }
       } else {
         // Se a instância já existia e deu 403, tentar connect novamente
         const retryConnect = await fetch(`${evoUrl}/instance/connect/${instanceName}`, {
@@ -91,6 +67,47 @@ export async function POST(request: Request) {
           base64 = rData.base64 || (rData.qrcode && rData.qrcode.base64) || '';
         }
       }
+    }
+
+    // Passo 3: Garantir configurações padrão da instância (recusar ligações sem duplicar mensagem) e Webhook (com evento CALL)
+    try {
+      await fetch(`${evoUrl}/settings/set/${instanceName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': evoKey
+        },
+        body: JSON.stringify({
+          rejectCall: true,
+          msgCall: '',
+          groupsIgnore: true,
+          alwaysOnline: true,
+          readMessages: true,
+          readStatus: false,
+          syncFullHistory: false
+        })
+      });
+
+      const webhookUrl = customWebhook || process.env.N8N_WEBHOOK_URL_MESSAGES || 'https://n8n.atendimentoiaclinicas.tech/webhook/demonstracao-webhook';
+      await fetch(`${evoUrl}/webhook/set/${instanceName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': evoKey
+        },
+        body: JSON.stringify({
+          webhook: {
+            enabled: true,
+            url: webhookUrl,
+            webhook_by_events: false,
+            webhook_base64: false,
+            events: ['MESSAGES_UPSERT', 'CALL']
+          }
+        })
+      });
+      console.log(`[QR Code] Configurações (rejectCall) e Webhook (MESSAGES_UPSERT, CALL) aplicados com sucesso para ${instanceName}.`);
+    } catch (err) {
+      console.log(`[QR Code] Falha silenciosa ao configurar settings/webhook:`, err);
     }
 
     if (!base64) {

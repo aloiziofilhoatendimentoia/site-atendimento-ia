@@ -80,8 +80,25 @@ export async function POST(request: Request) {
       }
     }
 
-    // Passo 2.5: Configurar o Webhook Definitivo da Instância
+    // Passo 2.5: Configurar Settings (recusar ligações sem duplicar mensagem) e Webhook Definitivo (com evento CALL)
     try {
+      await fetch(`${evoUrl}/settings/set/${instanceName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': evoKey
+        },
+        body: JSON.stringify({
+          rejectCall: true,
+          msgCall: '',
+          groupsIgnore: true,
+          alwaysOnline: true,
+          readMessages: true,
+          readStatus: false,
+          syncFullHistory: false
+        })
+      });
+
       const webhookUrl = customWebhook || process.env.N8N_WEBHOOK_URL_MESSAGES || 'https://n8n.atendimentoiaclinicas.tech/webhook/demonstracao-webhook';
       await fetch(`${evoUrl}/webhook/set/${instanceName}`, {
         method: 'POST',
@@ -95,13 +112,13 @@ export async function POST(request: Request) {
             url: webhookUrl,
             webhook_by_events: false,
             webhook_base64: false,
-            events: ['MESSAGES_UPSERT']
+            events: ['MESSAGES_UPSERT', 'CALL']
           }
         })
       });
-      console.log(`[Pairing] Webhook configurado com sucesso para a instância ${instanceName}.`);
+      console.log(`[Pairing] Settings (rejectCall) e Webhook (MESSAGES_UPSERT, CALL) configurados com sucesso para a instância ${instanceName}.`);
     } catch (err) {
-      console.log(`[Pairing] Falha silenciosa ao configurar webhook:`, err);
+      console.log(`[Pairing] Falha silenciosa ao configurar settings/webhook:`, err);
     }
 
     // Passo 3: Solicitar o código de pareamento via GET
