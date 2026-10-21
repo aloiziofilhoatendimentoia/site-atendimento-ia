@@ -227,6 +227,8 @@ function ConfigurarFormContent() {
   // 3. HORÁRIOS
   const [tempoConsulta, setTempoConsulta] = useState('30');
   const [valorConsulta, setValorConsulta] = useState('R$ 0,00');
+  const [prazoRetorno, setPrazoRetorno] = useState('Até 30 dias');
+  const [modalidadeAtendimento, setModalidadeAtendimento] = useState('Apenas Presencial');
   const [blocosHorario, setBlocosHorario] = useState<BlocoHorario[]>([
     { dias: [], inicio: '', fim: '' }
   ]);
@@ -296,6 +298,8 @@ function ConfigurarFormContent() {
           if (parsed.whatsappReceberAgendamento) setWhatsappReceberAgendamento(parsed.whatsappReceberAgendamento);
           if (parsed.tempoConsulta) setTempoConsulta(parsed.tempoConsulta);
           if (parsed.valorConsulta) setValorConsulta(parsed.valorConsulta);
+          if (parsed.prazoRetorno) setPrazoRetorno(parsed.prazoRetorno);
+          if (parsed.modalidadeAtendimento) setModalidadeAtendimento(parsed.modalidadeAtendimento);
           if (parsed.blocosHorario) setBlocosHorario(parsed.blocosHorario);
           if (parsed.convenios) {
             if (parsed.convenios.aceitaConvenio !== undefined) setAceitaConvenio(parsed.convenios.aceitaConvenio);
@@ -347,6 +351,8 @@ function ConfigurarFormContent() {
             if (ob.googleTokens) setGoogleTokens(ob.googleTokens);
             if (ob.tempoConsulta) setTempoConsulta(ob.tempoConsulta);
             if (ob.valorConsulta) setValorConsulta(ob.valorConsulta);
+            if (ob.prazoRetorno) setPrazoRetorno(ob.prazoRetorno);
+            if (ob.modalidadeAtendimento) setModalidadeAtendimento(ob.modalidadeAtendimento);
             if (ob.blocosHorario && ob.blocosHorario.length > 0) setBlocosHorario(ob.blocosHorario);
             if (ob.convenios) {
               if (ob.convenios.aceitaConvenio !== undefined) setAceitaConvenio(ob.convenios.aceitaConvenio);
@@ -387,6 +393,8 @@ function ConfigurarFormContent() {
         whatsappReceberAgendamento,
         tempoConsulta,
         valorConsulta,
+        prazoRetorno,
+        modalidadeAtendimento,
         convenios: {
           aceitaConvenio,
           planos: conveniosSelecionados,
@@ -411,10 +419,10 @@ function ConfigurarFormContent() {
   }, [
     nomeClinica, nomeSecretaria, endereco, whatsappClinica, especialistas,
     opcoesAgendamento, emailCalendar, whatsappHumano, whatsappReceberAgendamento,
-    tempoConsulta, valorConsulta, blocosHorario, pontoReferencia, temEstacionamento,
-    detalhesEstacionamento, faixasEtarias, regrasFaixaEtaria, formasPagamento,
-    parcelamentoMaximo, regraJuros, examesProcedimentos, formaEntregaResultado,
-    detalheEntregaResultado, instrucoesGerais
+    tempoConsulta, valorConsulta, prazoRetorno, modalidadeAtendimento, blocosHorario,
+    pontoReferencia, temEstacionamento, detalhesEstacionamento, faixasEtarias,
+    regrasFaixaEtaria, formasPagamento, parcelamentoMaximo, regraJuros,
+    examesProcedimentos, formaEntregaResultado, detalheEntregaResultado, instrucoesGerais
   ]);
 
   const handleGeneratePairingCode = async () => {
@@ -849,6 +857,8 @@ function ConfigurarFormContent() {
         horarios: { 
           tempoConsulta, 
           valorConsulta, 
+          prazoRetorno,
+          modalidadeAtendimento,
           blocosHorario,
           formasPagamento: {
             opcoesAceitas: formasPagamento,
@@ -1387,6 +1397,22 @@ function ConfigurarFormContent() {
                   <div className="bg-[#181a1f] p-5 rounded-2xl border border-[#27272a]">
                     <label className="block text-sm font-semibold text-gray-300 mb-2 flex items-center"><DollarSign className="w-4 h-4 mr-2 text-green-400" /> Valor da Consulta</label>
                     <input type="text" value={valorConsulta} onChange={handleValorChange} placeholder="R$ 150,00" className="w-full bg-[#121417] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500" />
+                  </div>
+                  <div className="bg-[#181a1f] p-5 rounded-2xl border border-[#27272a]">
+                    <label className="block text-sm font-semibold text-gray-300 mb-2 flex items-center"><RefreshCw className="w-4 h-4 mr-2 text-blue-400" /> Direito a Retorno da Consulta</label>
+                    <select value={prazoRetorno} onChange={(e) => setPrazoRetorno(e.target.value)} className="w-full bg-[#121417] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+                      <option value="Até 15 dias">Até 15 dias</option>
+                      <option value="Até 30 dias">Até 30 dias</option>
+                      <option value="A definir com o médico">A definir com o médico</option>
+                      <option value="Sem retorno gratuito incluso">Sem retorno gratuito incluso</option>
+                    </select>
+                  </div>
+                  <div className="bg-[#181a1f] p-5 rounded-2xl border border-[#27272a]">
+                    <label className="block text-sm font-semibold text-gray-300 mb-2 flex items-center"><Stethoscope className="w-4 h-4 mr-2 text-teal-400" /> Tipo de Atendimento</label>
+                    <select value={modalidadeAtendimento} onChange={(e) => setModalidadeAtendimento(e.target.value)} className="w-full bg-[#121417] border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-teal-500">
+                      <option value="Apenas Presencial">Apenas Presencial</option>
+                      <option value="Presencial e Online (Vídeo)">Presencial e Online (Vídeo)</option>
+                    </select>
                   </div>
                 </div>
 

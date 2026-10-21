@@ -135,6 +135,8 @@ export async function GET(request: Request) {
 
     const tempoConsulta = savedPayload?.horarios?.tempoConsulta || '30';
     const valorConsulta = savedPayload?.horarios?.valorConsulta || '';
+    const prazoRetorno = savedPayload?.horarios?.prazoRetorno || 'Até 30 dias';
+    const modalidadeAtendimento = savedPayload?.horarios?.modalidadeAtendimento || 'Apenas Presencial';
     const blocosHorario = savedPayload?.horarios?.blocosHorario || [{ dias: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'], inicio: '08:00', fim: '18:00' }];
 
 
@@ -167,6 +169,8 @@ export async function GET(request: Request) {
       googleTokens: existingGoogleTokens,
       tempoConsulta,
       valorConsulta,
+      prazoRetorno,
+      modalidadeAtendimento,
       blocosHorario,
       convenios: savedPayload?.clinica?.convenios || (siteClinic?.dados_completos_json ? (() => {
         try {
@@ -396,6 +400,8 @@ export async function POST(request: Request) {
               whatsappReceberAgendamento: normPhone(i.whatsappReceberAgendamento),
               tempoConsulta: normMoney(h.tempoConsulta),
               valorConsulta: normMoney(h.valorConsulta),
+              prazoRetorno: normStr(h.prazoRetorno),
+              modalidadeAtendimento: normStr(h.modalidadeAtendimento),
               blocosHorario: blocosList
             });
           };
@@ -519,6 +525,8 @@ export async function POST(request: Request) {
       horarios_atendimento: horarioStr,
       intervalo_consulta: tempoConsulta,
       valor_consulta: valorConsulta,
+      prazo_retorno: payload?.horarios?.prazoRetorno || 'Até 30 dias',
+      modalidade_atendimento: payload?.horarios?.modalidadeAtendimento || 'Apenas Presencial',
       convenios_formatados: (() => {
         const conv = payload?.clinica?.convenios;
         if (!conv) return 'Não informado';
