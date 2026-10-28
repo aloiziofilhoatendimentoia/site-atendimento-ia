@@ -44,7 +44,7 @@ interface ScriptStep {
 const CONVERSATION_SCRIPT: ScriptStep[] = [
   { sender: 'user', text: 'Olá! Gostaria de tirar umas dúvidas sobre a clínica.' },
   { sender: 'bot', text: 'Olá! Seja muito bem-vindo(a) à Clínica Vitae Odontologia. 😊' },
-  { sender: 'bot', text: 'Sou a **Giovanna**, assistente virtual da equipe. Como posso te ajudar hoje?' },
+  { sender: 'bot', text: 'Sou a **Giovanna**, assistente da equipe. Como posso te ajudar hoje?' },
   
   { sender: 'user', text: 'Vocês atendem crianças e idosos? Queria saber a faixa etária e se aceitam convênios.' },
   { sender: 'bot', text: 'Sim! Atendemos todas as faixas etárias: odontopediatria para bebês e crianças, jovens, adultos e odontogeriatria especializada para a terceira idade. 👶👵' },
