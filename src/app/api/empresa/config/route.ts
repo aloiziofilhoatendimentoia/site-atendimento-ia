@@ -152,6 +152,11 @@ export async function GET(request: Request) {
       }
     } catch(e) {}
     const onboardingData = {
+      tipoClinica: savedPayload?.clinica?.tipoClinica || (() => {
+        const hint = `${nomeClinica} ${JSON.stringify(especialistasArr)}`.toLowerCase();
+        if (/odonto|dent|sorriso|ortodont|implant|endodont/.test(hint)) return 'odontologica';
+        return 'medica';
+      })(),
       nomeClinica,
       nomeSecretaria,
       endereco,
@@ -331,6 +336,7 @@ export async function POST(request: Request) {
           } catch(e){}
         }
         payload.is_active = currentIsActive;
+        payload.nome_atendente = nomeSecretaria;
         const fullJsonString = JSON.stringify(payload);
 
 
@@ -359,6 +365,7 @@ export async function POST(request: Request) {
               }));
 
             return JSON.stringify({
+              tipoClinica: normStr(c.tipoClinica),
               nomeClinica: normStr(c.nomeClinica),
               nomeSecretaria: normStr(c.nomeSecretaria),
               endereco: normStr(c.endereco),
@@ -371,17 +378,17 @@ export async function POST(request: Request) {
               },
               localizacaoAcesso: {
                 pontoReferencia: normStr(c.localizacaoAcesso?.pontoReferencia),
-                possuiEstacionamento: Boolean(c.localizacaoAcesso?.possuiEstacionamento),
+                possuiEstacionamento: Boolean(c.localizacaoAcesso?.temEstacionamento ?? c.localizacaoAcesso?.possuiEstacionamento),
                 detalhesEstacionamento: normStr(c.localizacaoAcesso?.detalhesEstacionamento)
               },
               faixaEtaria: {
-                faixas: (Array.isArray(c.faixaEtaria?.faixas) ? c.faixaEtaria.faixas : []).map(normStr).sort(),
+                faixas: (Array.isArray(c.faixaEtaria?.faixasPermitidas) ? c.faixaEtaria.faixasPermitidas : (Array.isArray(c.faixaEtaria?.faixas) ? c.faixaEtaria.faixas : [])).map(normStr).sort(),
                 regrasEspecificas: normStr(c.faixaEtaria?.regrasEspecificas)
               },
               formasPagamento: {
-                metodos: (Array.isArray(c.formasPagamento?.metodos) ? c.formasPagamento.metodos : []).map(normStr).sort(),
-                parcelamentoCartao: normStr(c.formasPagamento?.parcelamentoCartao),
-                observacoes: normStr(c.formasPagamento?.observacoes)
+                metodos: (Array.isArray(h.formasPagamento?.opcoesAceitas) ? h.formasPagamento.opcoesAceitas : (Array.isArray(c.formasPagamento?.metodos) ? c.formasPagamento.metodos : [])).map(normStr).sort(),
+                parcelamentoCartao: normStr(h.formasPagamento?.parcelamentoMaximo || c.formasPagamento?.parcelamentoCartao),
+                observacoes: normStr(h.formasPagamento?.regraJuros || c.formasPagamento?.observacoes)
               },
               procedimentosExames: {
                 lista: (Array.isArray(obj?.procedimentosExames?.lista) ? obj.procedimentosExames.lista : [])
@@ -539,22 +546,27 @@ export async function POST(request: Request) {
         const loc = payload?.clinica?.localizacaoAcesso;
         if (!loc) return 'Não informado';
         const ref = loc.pontoReferencia ? `Ponto de Referência: ${loc.pontoReferencia}` : 'Sem ponto de referência';
-        const est = loc.possuiEstacionamento ? `Estacionamento: Sim (${loc.detalhesEstacionamento || 'Disponível no local'})` : 'Estacionamento: Não possui no local';
+        const hasPark = loc.temEstacionamento ?? loc.possuiEstacionamento;
+        const est = hasPark ? `Estacionamento: Sim (${loc.detalhesEstacionamento || 'Disponível no local'})` : 'Estacionamento: Não possui no local';
         return `${ref} | ${est}`;
       })(),
       faixa_etaria_formatada: (() => {
         const fa = payload?.clinica?.faixaEtaria;
         if (!fa) return 'Não informado';
-        const fStr = Array.isArray(fa.faixas) && fa.faixas.length > 0 ? fa.faixas.join(', ') : 'Todas as idades';
+        const arr = Array.isArray(fa.faixasPermitidas) ? fa.faixasPermitidas : (Array.isArray(fa.faixas) ? fa.faixas : []);
+        const fStr = arr.length > 0 ? arr.join(', ') : 'Todas as idades';
         const regras = fa.regrasEspecificas ? ` (Regras: ${fa.regrasEspecificas})` : '';
         return `${fStr}${regras}`;
       })(),
       formas_pagamento_formatadas: (() => {
-        const fp = payload?.clinica?.formasPagamento;
+        const fp = payload?.horarios?.formasPagamento || payload?.clinica?.formasPagamento;
         if (!fp) return 'Não informado';
-        const met = Array.isArray(fp.metodos) && fp.metodos.length > 0 ? fp.metodos.join(', ') : 'A combinar';
-        const parc = fp.parcelamentoCartao ? ` | Parcelamento: ${fp.parcelamentoCartao}` : '';
-        const obs = fp.observacoes ? ` | Obs: ${fp.observacoes}` : '';
+        const arr = Array.isArray(fp.opcoesAceitas) ? fp.opcoesAceitas : (Array.isArray(fp.metodos) ? fp.metodos : []);
+        const met = arr.length > 0 ? arr.join(', ') : 'A combinar';
+        const parcVal = fp.parcelamentoMaximo || fp.parcelamentoCartao;
+        const obsVal = fp.regraJuros || fp.observacoes;
+        const parc = (parcVal && parcVal !== 'Não se aplica') ? ` | Parcelamento: ${parcVal}` : '';
+        const obs = (obsVal && obsVal !== 'Não se aplica') ? ` | Obs: ${obsVal}` : '';
         return `${met}${parc}${obs}`;
       })(),
       procedimentos_formatados: (() => {
