@@ -980,6 +980,19 @@ export default function DashboardPage() {
                 </div>
               )}
 
+              <div className="bg-amber-500/10 border border-amber-500/20 px-3.5 py-2.5 rounded-xl text-left w-full space-y-1 mb-3">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-400">
+                  <Shield className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>Lembretes rápidos antes de usar:</span>
+                </div>
+                <p className="text-[11px] text-amber-100/85 leading-snug">
+                  • <strong className="text-amber-300">Desative mensagens automáticas</strong> do WhatsApp Business (Saudação/Ausência) e outros robôs.
+                </p>
+                <p className="text-[11px] text-amber-100/85 leading-snug">
+                  • <strong className="text-amber-300">Não faça disparos em massa (spam)</strong> neste chip para evitar bloqueios pelo WhatsApp.
+                </p>
+              </div>
+
               <div className="w-full bg-gray-800 text-gray-400 p-3 rounded-xl text-xs flex items-center justify-center space-x-2">
                 <span>Aguardando leitura ou pareamento no celular...</span>
                 <RefreshCw className="w-4 h-4 animate-spin text-teal-500" />
