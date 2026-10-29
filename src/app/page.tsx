@@ -29,7 +29,10 @@ import {
   Smile,
   Paperclip,
   Camera,
-  Mic
+  Mic,
+  Zap,
+  QrCode,
+  MousePointerClick
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -312,7 +315,25 @@ export default function LandingPage() {
                   </span>
                 </p>
 
-                <div className="flex flex-col lg:flex-row items-center space-y-2 lg:space-y-0 lg:space-x-3 text-teal-800 font-bold text-lg sm:text-xl pt-4 lg:pt-2 justify-center lg:justify-start">
+                {/* DESTAQUE ATIVAÇÃO IMEDIATA EM MENOS DE 5 MINUTOS */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#003B66] via-[#004A7F] to-teal-700 p-4 sm:p-5 text-left shadow-lg border border-teal-400/40">
+                  <div className="absolute -right-6 -top-6 w-24 h-24 bg-teal-300/20 rounded-full blur-xl pointer-events-none"></div>
+                  <div className="flex items-start gap-3.5 relative z-10">
+                    <div className="bg-amber-400/20 border border-amber-300/50 p-2.5 rounded-xl shrink-0 mt-0.5 shadow-sm">
+                      <Zap className="w-6 h-6 text-amber-300 fill-amber-300" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-white font-extrabold text-base sm:text-lg leading-snug">
+                        Em menos de <span className="text-amber-300">5 minutos</span> sua secretária estará online 24h por dia.
+                      </p>
+                      <p className="text-teal-100 text-xs sm:text-sm font-medium leading-relaxed">
+                        Configure agora mesmo direto no site — sem agendar reuniões e sem esperar técnicos.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col lg:flex-row items-center space-y-2 lg:space-y-0 lg:space-x-3 text-teal-800 font-bold text-lg sm:text-xl pt-2 lg:pt-1 justify-center lg:justify-start">
                   <span className="bg-gradient-to-r from-teal-500/15 to-emerald-500/15 border border-teal-300 text-teal-800 px-5 py-2.5 rounded-full shadow-sm flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-teal-600 animate-spin" style={{ animationDuration: '4s' }} />
                     Veja a nossa Secretária em Ação
@@ -609,6 +630,86 @@ export default function LandingPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SEÇÃO COMO FUNCIONA EM MENOS DE 5 MINUTOS */}
+      <section className="py-24 bg-gradient-to-b from-white via-slate-50 to-teal-50/40 relative overflow-hidden border-t border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center max-w-4xl mx-auto mb-16">
+            <div className="inline-flex items-center justify-center space-x-2 px-5 py-2 mb-5 rounded-full bg-amber-50 text-amber-800 font-extrabold text-xs sm:text-sm tracking-wider uppercase border border-amber-200 shadow-sm">
+              <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
+              <span>ATIVAÇÃO 100% AUTOMÁTICA DIRETO NO SITE</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 mb-5 leading-tight">
+              Em menos de <span className="text-teal-600">5 minutos</span> sua secretária estará online <span className="text-[#004A7F]">24h por dia.</span>
+            </h2>
+            <p className="text-lg sm:text-xl text-slate-600 font-medium max-w-3xl mx-auto">
+              Configure agora mesmo direto no site — sem agendar reuniões, sem burocracia e sem esperar técnicos.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {/* Passo 1 */}
+            <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-200/80 hover:border-teal-300 transition-all hover:-translate-y-1.5 duration-300 flex flex-col justify-between relative">
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#004A7F] to-teal-600 flex items-center justify-center text-white shadow-md">
+                    <MousePointerClick className="w-7 h-7" />
+                  </div>
+                  <span className="px-3.5 py-1.5 rounded-full bg-teal-50 text-teal-700 font-extrabold text-xs uppercase tracking-wider border border-teal-200">
+                    Passo 1 • 1 min
+                  </span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 mb-3">
+                  Escolha o Perfil da Clínica
+                </h3>
+                <p className="text-slate-600 leading-relaxed font-medium text-base">
+                  Clique em <strong className="text-slate-800">Clínica Médica</strong> ou <strong className="text-slate-800">Clínica Odontológica</strong> com opções já pré-definidas em 1 clique — ou personalize qualquer detalhe da sua rotina.
+                </p>
+              </div>
+            </div>
+
+            {/* Passo 2 */}
+            <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-200/80 hover:border-teal-300 transition-all hover:-translate-y-1.5 duration-300 flex flex-col justify-between relative">
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center shadow-sm">
+                    <img src="/google-agenda.svg" className="w-8 h-8 object-contain" alt="Google Agenda" />
+                  </div>
+                  <span className="px-3.5 py-1.5 rounded-full bg-blue-50 text-blue-700 font-extrabold text-xs uppercase tracking-wider border border-blue-200">
+                    Passo 2 • 1 min
+                  </span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 mb-3">
+                  Conecte sua Google Agenda
+                </h3>
+                <p className="text-slate-600 leading-relaxed font-medium text-base">
+                  Autorize sua agenda com apenas <strong className="text-slate-800">1 clique direto na tela</strong> para sincronizar horários disponíveis, agendamentos e reagendamentos em tempo real.
+                </p>
+              </div>
+            </div>
+
+            {/* Passo 3 */}
+            <div className="bg-white rounded-3xl p-8 shadow-xl border border-slate-200/80 hover:border-teal-300 transition-all hover:-translate-y-1.5 duration-300 flex flex-col justify-between relative">
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md">
+                    <QrCode className="w-7 h-7" />
+                  </div>
+                  <span className="px-3.5 py-1.5 rounded-full bg-emerald-50 text-emerald-700 font-extrabold text-xs uppercase tracking-wider border border-emerald-200">
+                    Passo 3 • 30 seg
+                  </span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 mb-3">
+                  Leia o QR Code do WhatsApp
+                </h3>
+                <p className="text-slate-600 leading-relaxed font-medium text-base">
+                  Escaneie o código na tela e <strong className="text-emerald-700">pronto!</strong> Sua secretária entra no ar imediatamente, respondendo pacientes e agendando consultas 24h por dia.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
