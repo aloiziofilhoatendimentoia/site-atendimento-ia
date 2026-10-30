@@ -122,11 +122,22 @@ export async function POST(req: Request) {
         if (!payload.start || !payload.end || !payload.summary) {
           return NextResponse.json({ error: 'start, end e summary requeridos para Criar Evento' }, { status: 200 });
         }
+        const cleanCreatePhone = payload.patientPhone ? String(payload.patientPhone).replace(/\D/g, '') : '';
+        const createPrivateProps: Record<string, string> = {
+          reminder24hSent: 'false',
+          source: 'atendimento_ia'
+        };
+        if (cleanCreatePhone) {
+          createPrivateProps.patientPhone = cleanCreatePhone;
+        }
         const createData = {
           summary: payload.summary,
           description: payload.description || '',
           start: typeof payload.start === 'string' ? { dateTime: payload.start } : payload.start,
-          end: typeof payload.end === 'string' ? { dateTime: payload.end } : payload.end
+          end: typeof payload.end === 'string' ? { dateTime: payload.end } : payload.end,
+          extendedProperties: {
+            private: createPrivateProps
+          }
         };
         result = await googleApiCall(baseUrl, 'POST', createData);
         break;
@@ -135,14 +146,42 @@ export async function POST(req: Request) {
         if (!payload.eventId || !payload.start || !payload.end) {
           return NextResponse.json({ error: 'eventId, start e end requeridos para Reagendar Evento' }, { status: 200 });
         }
+        const cleanReschedPhone = payload.patientPhone ? String(payload.patientPhone).replace(/\D/g, '') : '';
+        const reschedPrivateProps: Record<string, string> = {
+          reminder24hSent: 'false'
+        };
+        if (cleanReschedPhone) {
+          reschedPrivateProps.patientPhone = cleanReschedPhone;
+        }
         const patchData: any = {
           start: typeof payload.start === 'string' ? { dateTime: payload.start } : payload.start,
-          end: typeof payload.end === 'string' ? { dateTime: payload.end } : payload.end
+          end: typeof payload.end === 'string' ? { dateTime: payload.end } : payload.end,
+          extendedProperties: {
+            private: reschedPrivateProps
+          }
         };
         if (payload.description) {
           patchData.description = payload.description;
         }
         result = await googleApiCall(`${baseUrl}/${payload.eventId}`, 'PATCH', patchData);
+        break;
+
+      case 'Marcar Lembrete Enviado':
+        if (!payload.eventId) {
+          return NextResponse.json({ error: 'eventId requerido para Marcar Lembrete Enviado' }, { status: 200 });
+        }
+        const markPrivateProps: Record<string, string> = {
+          reminder24hSent: 'true',
+          reminderSentAt: new Date().toISOString()
+        };
+        if (payload.patientPhone) {
+          markPrivateProps.patientPhone = String(payload.patientPhone).replace(/\D/g, '');
+        }
+        result = await googleApiCall(`${baseUrl}/${payload.eventId}`, 'PATCH', {
+          extendedProperties: {
+            private: markPrivateProps
+          }
+        });
         break;
 
       case 'Cancelar Evento':
