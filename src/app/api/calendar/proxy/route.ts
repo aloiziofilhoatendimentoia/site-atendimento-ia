@@ -125,6 +125,7 @@ export async function POST(req: Request) {
         const cleanCreatePhone = payload.patientPhone ? String(payload.patientPhone).replace(/\D/g, '') : '';
         const createPrivateProps: Record<string, string> = {
           reminder24hSent: 'false',
+          bookedAt: payload.bookedAt || new Date().toISOString(),
           source: 'atendimento_ia'
         };
         if (cleanCreatePhone) {
@@ -148,7 +149,9 @@ export async function POST(req: Request) {
         }
         const cleanReschedPhone = payload.patientPhone ? String(payload.patientPhone).replace(/\D/g, '') : '';
         const reschedPrivateProps: Record<string, string> = {
-          reminder24hSent: 'false'
+          reminder24hSent: 'false',
+          reminderSentForStart: '',
+          bookedAt: payload.bookedAt || new Date().toISOString()
         };
         if (cleanReschedPhone) {
           reschedPrivateProps.patientPhone = cleanReschedPhone;
@@ -174,6 +177,9 @@ export async function POST(req: Request) {
           reminder24hSent: 'true',
           reminderSentAt: new Date().toISOString()
         };
+        if (payload.startMinuteIso) {
+          markPrivateProps.reminderSentForStart = String(payload.startMinuteIso);
+        }
         if (payload.patientPhone) {
           markPrivateProps.patientPhone = String(payload.patientPhone).replace(/\D/g, '');
         }
