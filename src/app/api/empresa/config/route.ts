@@ -637,69 +637,111 @@ export async function POST(request: Request) {
         }
       }
       
-      const evoRes = await fetch(`${evoUrl}/instance/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': evoKey
-        },
-        body: JSON.stringify({
-          instanceName: instanceName,
-          qrcode: true,
-          integration: "WHATSAPP-BAILEYS",
-          rejectCall: true,
-          msgCall: "",
-          groupsIgnore: true,
-          alwaysOnline: true,
-          readMessages: true,
-          webhook: {
-            enabled: true,
-            url: "https://n8n.atendimentoiaclinicas.tech/webhook/demonstracao-webhook",
-            byEvents: false,
-            base64: false,
-            events: ["MESSAGES_UPSERT", "CALL"]
-          }
-        })
-      });
+      // Verificar se a instância já existe: se já estiver conectada ('open'), não derrubar;
+      // se estiver desconectada ou com erro 401/device_removed (sessão zumbi), deletar para recriar limpa!
+      let alreadyConnected = false;
+      let shouldRecreate = true;
 
-      if (evoRes.ok) {
-        const evoData = await evoRes.json();
-        evolutionStatus = 'Sucesso';
-        if (evoData.qrcode && evoData.qrcode.base64) {
-           evolutionQrCode = evoData.qrcode.base64;
-        } else if (evoData.base64) {
-           evolutionQrCode = evoData.base64;
-        }
-      } else {
-        evolutionStatus = `Falha: ${evoRes.statusText}`;
-      }
-
-      if (!evolutionQrCode) {
-        try {
-          const connectRes = await fetch(`${evoUrl}/instance/connect/${instanceName}`, {
-            headers: { 'apikey': evoKey }
-          });
-          if (connectRes.ok) {
-            const connectData = await connectRes.json();
-            if (connectData.base64) {
-              evolutionQrCode = connectData.base64;
-            } else if (connectData.qrcode && connectData.qrcode.base64) {
-              evolutionQrCode = connectData.qrcode.base64;
-            } else if (connectData.code) {
-              evolutionQrCode = connectData.code;
+      try {
+        const listRes = await fetch(`${evoUrl}/instance/fetchInstances`, {
+          headers: { 'apikey': evoKey },
+          cache: 'no-store'
+        });
+        if (listRes.ok) {
+          const instances = await listRes.json();
+          if (Array.isArray(instances)) {
+            const curInst = instances.find((i: any) => i.name === instanceName);
+            if (curInst) {
+              const st = String(curInst.connectionStatus || '').toLowerCase();
+              if (st === 'open' || st === 'connected') {
+                alreadyConnected = true;
+                shouldRecreate = false;
+                evolutionStatus = 'Conectado';
+              } else {
+                // Instância existe mas está desconectada/zumbi (ex: 401 device_removed): deletar antes de recriar limpa
+                console.log(`[config] Instância ${instanceName} desconectada (status=${st}, reason=${curInst.disconnectionReasonCode}). Resetando para gerar QR limpo...`);
+                await fetch(`${evoUrl}/instance/delete/${instanceName}`, {
+                  method: 'DELETE',
+                  headers: { 'apikey': evoKey }
+                });
+                await new Promise(r => setTimeout(r, 900));
+                shouldRecreate = true;
+              }
             }
           }
-        } catch (eConnect) {
-          console.error('Erro connect Evolution:', eConnect);
+        }
+      } catch (checkErr) {
+        console.warn('[config] Aviso ao checar estado da instância na Evolution:', checkErr);
+      }
+
+      if (shouldRecreate) {
+        const evoRes = await fetch(`${evoUrl}/instance/create`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': evoKey
+          },
+          body: JSON.stringify({
+            instanceName: instanceName,
+            qrcode: true,
+            integration: "WHATSAPP-BAILEYS",
+            rejectCall: true,
+            msgCall: "",
+            groupsIgnore: true,
+            alwaysOnline: true,
+            readMessages: true,
+            readStatus: false,
+            syncFullHistory: false,
+            webhook: {
+              enabled: true,
+              url: "https://n8n.atendimentoiaclinicas.tech/webhook/demonstracao-webhook",
+              byEvents: false,
+              base64: false,
+              events: ["MESSAGES_UPSERT", "CALL"]
+            }
+          })
+        });
+
+        if (evoRes.ok) {
+          const evoData = await evoRes.json();
+          evolutionStatus = 'Sucesso';
+          if (evoData.qrcode && evoData.qrcode.base64) {
+            evolutionQrCode = evoData.qrcode.base64;
+          } else if (evoData.base64) {
+            evolutionQrCode = evoData.base64;
+          }
+        } else {
+          evolutionStatus = `Falha: ${evoRes.statusText}`;
+        }
+
+        if (!evolutionQrCode) {
+          for (let attempt = 0; attempt < 2 && !evolutionQrCode; attempt++) {
+            await new Promise(r => setTimeout(r, 900));
+            try {
+              const connectRes = await fetch(`${evoUrl}/instance/connect/${instanceName}`, {
+                headers: { 'apikey': evoKey },
+                cache: 'no-store'
+              });
+              if (connectRes.ok) {
+                const connectData = await connectRes.json();
+                if (connectData.base64) {
+                  evolutionQrCode = connectData.base64;
+                } else if (connectData.qrcode && connectData.qrcode.base64) {
+                  evolutionQrCode = connectData.qrcode.base64;
+                }
+              }
+            } catch (eConnect) {
+              console.error('Erro connect Evolution:', eConnect);
+            }
+          }
         }
       }
 
-      if (!evolutionQrCode) {
-        evolutionQrCode = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://api-whatsapp.atendimentoiaclinicas.tech/manager`;
+      if (alreadyConnected) {
+        evolutionStatus = 'JaConectado';
       }
     } catch (err: any) {
       evolutionStatus = `Crash: ${err.message}`;
-      evolutionQrCode = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://api-whatsapp.atendimentoiaclinicas.tech/manager`;
     }
 
     return NextResponse.json({

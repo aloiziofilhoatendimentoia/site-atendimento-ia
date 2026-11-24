@@ -158,7 +158,7 @@ function ConfigurarFormContent() {
   const [showQrModal, setShowQrModal] = useState(false);
   const [qrBase64, setQrBase64] = useState('');
   const [instanceName, setInstanceName] = useState('');
-  const [qrLoading] = useState(false);
+  const [qrLoading, setQrLoading] = useState(false);
 
   // ESTADOS DE PAREAMENTO / DEVICE DETECTION
   const [, setIsMobileDevice] = useState(false);
@@ -738,12 +738,45 @@ function ConfigurarFormContent() {
 
   const [isConnected, setIsConnected] = useState(false);
 
-  // Polling para verificar se o QR Code foi lido + Refresh Automático do QR
+  const handleRefreshQr = async (forceReset = false, overrideInstance?: string) => {
+    const targetInst = overrideInstance || instanceName || whatsappClinica.replace(/\D/g, '');
+    if (!targetInst) return;
+    if (forceReset) {
+      setQrLoading(true);
+      setErrorMessage('');
+    }
+    try {
+      const res = await fetch('/api/empresa/gerar-qr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instanceName: targetInst, forceReset })
+      });
+      const data = await res.json();
+      if (res.ok && data.alreadyConnected) {
+        setIsConnected(true);
+        return;
+      }
+      if (res.ok && data.evolutionQrCode) {
+        setQrBase64(data.evolutionQrCode);
+      } else if (forceReset) {
+        setErrorMessage(data.error || 'Não foi possível gerar um novo QR Code. Tente novamente.');
+      }
+    } catch (e) {
+      console.error('Falha ao atualizar QR Code:', e);
+      if (forceReset) {
+        setErrorMessage('Erro de conexão ao gerar novo QR Code. Tente novamente.');
+      }
+    } finally {
+      if (forceReset) setQrLoading(false);
+    }
+  };
+
+  // Polling para verificar se o QR Code foi lido + Refresh Automático do QR (APENAS na aba QR!)
   useEffect(() => {
     let statusInterval: NodeJS.Timeout;
     let qrRefreshInterval: NodeJS.Timeout;
 
-    if (showQrModal && instanceName) {
+    if (showQrModal && instanceName && !isConnected) {
       statusInterval = setInterval(async () => {
         try {
           const res = await fetch(`/api/empresa/status-conexao?instance=${instanceName}`);
@@ -758,27 +791,19 @@ function ConfigurarFormContent() {
         }
       }, 3000);
 
-      qrRefreshInterval = setInterval(async () => {
-        try {
-          const res = await fetch('/api/empresa/gerar-qr', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ instanceName })
-          });
-          const data = await res.json();
-          if (res.ok && data.evolutionQrCode) {
-            setQrBase64(data.evolutionQrCode);
-          }
-        } catch (e) {
-          console.error('Falha ao dar refresh automático no QR:', e);
-        }
-      }, 35000);
+      // Só atualiza o QR Code automaticamente quando o usuário está na aba QR Code
+      // (evita sobrescrever/invalidar o código de 8 dígitos quando estiver na aba Conexão Direta!)
+      if (connectionMode === 'qr') {
+        qrRefreshInterval = setInterval(() => {
+          handleRefreshQr(false, instanceName);
+        }, 20000);
+      }
     }
     return () => {
       if (statusInterval) clearInterval(statusInterval);
       if (qrRefreshInterval) clearInterval(qrRefreshInterval);
     };
-  }, [showQrModal, instanceName]);
+  }, [showQrModal, instanceName, connectionMode, isConnected]);
 
   const handleGoogleLogin = () => {
     window.open('/api/auth/google', '_blank', 'width=500,height=600');
@@ -1130,15 +1155,25 @@ function ConfigurarFormContent() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erro ao conectar com o banco de dados.');
 
-      const defaultQr = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://api-whatsapp.atendimentoiaclinicas.tech/manager`;
-      setQrBase64(data.evolutionQrCode || defaultQr);
       const targetInstance = whatsappClinica.replace(/\D/g, '') || 'NumeroDeTestes';
       setInstanceName(targetInstance);
       const cleanPhone = whatsappClinica.replace(/\D/g, '');
       const defaultPhone = cleanPhone ? (cleanPhone.startsWith('55') ? cleanPhone : '55' + cleanPhone) : '55';
       setPairingPhone(defaultPhone);
       setPairingCode('');
-      setShowQrModal(true);
+      setConnectionMode('qr');
+
+      if (data.evolutionStatus === 'JaConectado') {
+        setIsConnected(true);
+        setShowQrModal(true);
+      } else {
+        setIsConnected(false);
+        setQrBase64(data.evolutionQrCode || '');
+        setShowQrModal(true);
+        if (!data.evolutionQrCode) {
+          handleRefreshQr(true, targetInstance);
+        }
+      }
     } catch (err: any) {
       showError(err.message || 'Falha ao salvar as configurações no servidor.');
     } finally {
@@ -2776,7 +2811,14 @@ function ConfigurarFormContent() {
                 <div className="flex border-b border-[#27272a] mb-4 w-full">
                   <button
                     type="button"
-                    onClick={() => setConnectionMode('qr')}
+                    onClick={() => {
+                      const comingFromPairing = connectionMode === 'pairing';
+                      setConnectionMode('qr');
+                      setErrorMessage('');
+                      if (comingFromPairing || !qrBase64) {
+                        handleRefreshQr(true);
+                      }
+                    }}
                     className={`flex-1 pb-2.5 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
                       connectionMode === 'qr'
                         ? 'border-teal-500 text-teal-400'
@@ -2787,7 +2829,10 @@ function ConfigurarFormContent() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setConnectionMode('pairing')}
+                    onClick={() => {
+                      setConnectionMode('pairing');
+                      setErrorMessage('');
+                    }}
                     className={`flex-1 pb-2.5 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
                       connectionMode === 'pairing'
                         ? 'border-teal-500 text-teal-400'
@@ -2812,9 +2857,9 @@ function ConfigurarFormContent() {
                     </p>
 
                     <div className="bg-white p-3.5 rounded-xl shadow-inner mb-2.5 relative min-h-[210px] min-w-[210px] flex items-center justify-center">
-                      {qrLoading ? (
+                      {qrLoading || !qrBase64 ? (
                         <div className="flex flex-col items-center justify-center text-gray-500">
-                          <RefreshCw className="w-8 h-8 animate-spin mb-2" />
+                          <RefreshCw className="w-8 h-8 animate-spin mb-2 text-teal-600" />
                           <span className="text-sm font-semibold">Gerando novo código...</span>
                         </div>
                       ) : (
@@ -2822,9 +2867,20 @@ function ConfigurarFormContent() {
                       )}
                     </div>
 
-                    <p className="text-center text-[11px] text-gray-500 mb-4 italic">
-                      Atualização automática ativa por segurança.
-                    </p>
+                    <div className="flex items-center justify-center gap-3 mb-4">
+                      <p className="text-[11px] text-gray-500 italic">
+                        Atualização automática a cada 20s
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleRefreshQr(true)}
+                        disabled={qrLoading}
+                        className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-teal-400 hover:text-teal-300 bg-teal-500/10 border border-teal-500/25 px-2.5 py-1 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${qrLoading ? 'animate-spin' : ''}`} />
+                        <span>Gerar novo QR Code</span>
+                      </button>
+                    </div>
                   </>
                 ) : (
                   <>

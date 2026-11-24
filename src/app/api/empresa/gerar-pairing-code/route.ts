@@ -121,34 +121,51 @@ export async function POST(request: Request) {
       console.log(`[Pairing] Falha silenciosa ao configurar settings/webhook:`, err);
     }
 
-    // Passo 3: Solicitar o código de pareamento via GET
+    // Passo 3: Aguardar estabilização do socket Baileys e solicitar o código de pareamento via GET (com retry automático)
+    await new Promise(r => setTimeout(r, 800));
     console.log(`[Pairing] Solicitando código de pareamento para ${instanceName}?number=${cleanPhone}`);
-    let res = await fetch(`${evoUrl}/instance/connect/${instanceName}?number=${cleanPhone}`, {
-      method: 'GET',
-      headers: {
-        'apikey': evoKey,
-      }
-    });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      let friendlyError = 'Erro ao gerar pareamento.';
-      try {
-        const errJson = JSON.parse(errText);
-        friendlyError = errJson.message || errJson.error || friendlyError;
-      } catch (e) {}
-      return NextResponse.json({ error: friendlyError }, { status: res.status });
+    let code: any = null;
+    let lastError = 'Erro ao gerar pareamento.';
+    let lastStatus = 400;
+
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const res = await fetch(`${evoUrl}/instance/connect/${instanceName}?number=${cleanPhone}`, {
+        method: 'GET',
+        headers: {
+          apikey: evoKey,
+        },
+        cache: 'no-store'
+      });
+
+      if (!res.ok) {
+        lastStatus = res.status;
+        const errText = await res.text();
+        try {
+          const errJson = JSON.parse(errText);
+          lastError = errJson.message || errJson.error || lastError;
+        } catch (e) {}
+      } else {
+        const data = await res.json();
+        console.log(`[Pairing] Resposta da Evolution API (tentativa ${attempt}):`, data);
+        const candidate = data.pairingCode || data.code || data.pairing_code || (data.qrcode && data.qrcode.pairingCode);
+        if (candidate && typeof candidate === 'string' && !candidate.includes('@')) {
+          code = candidate;
+          break;
+        }
+      }
+
+      if (attempt < 2) {
+        await new Promise(r => setTimeout(r, 1200));
+      }
     }
 
-    const data = await res.json();
-    console.log('[Pairing] Resposta da Evolution API:', data);
-
-    const code = data.pairingCode || data.code || data.pairing_code || (data.qrcode && data.qrcode.pairingCode);
-
-    if (!code || (typeof code === 'string' && code.includes('@'))) {
-      return NextResponse.json({ 
-        error: 'A Evolution API não retornou o código de pareamento de 8 dígitos. Verifique se o número possui WhatsApp ativo.' 
-      }, { status: 400 });
+    if (!code) {
+      return NextResponse.json({
+        error: lastError !== 'Erro ao gerar pareamento.'
+          ? lastError
+          : 'A Evolution API não retornou o código de pareamento de 8 dígitos. Verifique se o número está correto (55 + DDD + número) e tente novamente.'
+      }, { status: lastStatus });
     }
 
     return NextResponse.json({ success: true, pairingCode: code }, { status: 200 });
