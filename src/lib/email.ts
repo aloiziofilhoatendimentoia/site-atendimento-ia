@@ -50,7 +50,7 @@ export async function sendWelcomeEmail(toEmail: string, customerName?: string, p
         <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px 18px; margin: 22px 0; border-radius: 4px;">
           <h3 style="margin-top: 0; margin-bottom: 6px; color: #92400e; font-size: 14px;">IMPORTANTE SOBRE A CONEXÃO DO WHATSAPP:</h3>
           <p style="margin: 0; color: #92400e; font-size: 13px; line-height: 1.5;">
-            A IA funciona diretamente ligada ao WhatsApp da clínica. Caso o aparelho desconecte por queda de energia ou internet, basta acessar <a href="https://atendimentoiaclinicas.tech" style="color: #0d9488; font-weight: bold;">https://atendimentoiaclinicas.tech</a>, clicar em <strong>"Acesse sua Clínica"</strong>, entrar com este e-mail e ler o QR Code novamente.
+            A IA funciona diretamente ligada ao WhatsApp da clínica. Caso o WhatsApp da clínica desconecte por algum motivo, basta acessar <a href="https://atendimentoiaclinicas.tech" style="color: #0d9488; font-weight: bold;">https://atendimentoiaclinicas.tech</a>, clicar em <strong>"Acesse sua Clínica"</strong>, entrar com este e-mail e ler o QR Code novamente.
           </p>
         </div>
 

@@ -34,8 +34,8 @@ interface Clinica {
 }
 
 function getSuspendedReasonLabel(reason?: string | null): string {
-  if (reason === 'stripe_payment_failed') return 'Suspensa • Inadimplente';
-  if (reason === 'stripe_subscription_canceled') return 'Suspensa • Cancelada';
+  if (reason === 'stripe_payment_failed' || reason === 'inadimplencia_stripe') return 'Suspensa • Inadimplente';
+  if (reason === 'stripe_subscription_canceled' || reason === 'cancelamento_stripe') return 'Suspensa • Cancelada';
   if (reason === 'manual_admin') return 'Suspensa • Manual';
   return 'Suspensa';
 }
@@ -45,7 +45,7 @@ function renderStripeBadge(clinica: Clinica) {
   const method =
     clinica.stripe_payment_method === 'pix'
       ? 'PIX'
-      : clinica.stripe_payment_method === 'cartao'
+      : clinica.stripe_payment_method === 'card' || clinica.stripe_payment_method === 'cartao'
       ? 'Cartão'
       : '';
   const suffix = method ? ` • ${method}` : '';
