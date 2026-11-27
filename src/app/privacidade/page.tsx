@@ -17,7 +17,7 @@ export default function Privacidade() {
         <div className="space-y-8 text-slate-700 leading-relaxed">
           <section>
             <h2 className="text-2xl font-semibold text-slate-900 mb-4">1. Introdução</h2>
-            <p>O <strong>Atendimento IA</strong> valoriza a privacidade dos seus clientes (clínicas, consultórios e profissionais de saúde). Esta Política de Privacidade explica como coletamos, usamos, compartilhamos, protegemos e excluímos as informações da sua clínica e dos seus pacientes.</p>
+            <p>A <strong>Atendimento IA Clínicas Tecnologia Ltda</strong> (CNPJ: <strong>70.233.704/0001-90</strong>, sediada na Av. Paulista, 2073, Sala 2220, Bela Vista, São Paulo - SP), operadora da plataforma <strong>Atendimento IA Clínicas</strong>, valoriza a privacidade dos seus clientes (clínicas, consultórios e profissionais de saúde). Esta Política de Privacidade explica como coletamos, usamos, compartilhamos, protegemos e excluímos as informações da sua clínica e dos seus pacientes.</p>
           </section>
 
           <section>

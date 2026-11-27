@@ -251,17 +251,12 @@ export default function LandingPage() {
               <span className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider font-semibold">Pós pagamento</span>
             </div>
             
-            <button 
-              onClick={(e) => { e.preventDefault(); alert("🚀 EM BREVE! A plataforma estará disponível nos próximos dias."); }}
-              className="relative group overflow-hidden bg-teal-600 text-white px-5 py-2.5 rounded-full font-bold transition-colors shadow-lg whitespace-nowrap text-sm min-w-[130px]"
+            <Link 
+              href="/pagamento"
+              className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-full font-bold transition-colors shadow-lg whitespace-nowrap text-sm min-w-[130px] flex items-center justify-center"
             >
-              <span className="group-hover:opacity-0 transition-opacity duration-300 flex items-center justify-center">
-                Assinar Plano
-              </span>
-              <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-red-100 font-black text-lg tracking-widest bg-red-600 z-10">
-                EM BREVE
-              </span>
-            </button>
+              Assinar Plano
+            </Link>
           </div>
           
         </div>
@@ -513,18 +508,13 @@ export default function LandingPage() {
 
               {/* BOTÃO DE ALTA CONVERSÃO: LOCALIZADO LOGO ABAIXO DO CELULAR */}
               <div className="w-full max-w-[340px] sm:max-w-[360px] pt-5 flex justify-center">
-                <button 
-                  onClick={(e) => { e.preventDefault(); alert("🚀 EM BREVE! A plataforma estará disponível nos próximos dias."); }}
-                  className="relative group overflow-hidden w-full py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-0.5 flex items-center justify-center cursor-pointer border border-teal-500"
+                <Link 
+                  href="/pagamento"
+                  className="w-full py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-0.5 flex items-center justify-center cursor-pointer border border-teal-500"
                 >
-                  <span className="group-hover:opacity-0 transition-opacity duration-300 flex items-center justify-center">
-                    <Calendar className="w-5 h-5 mr-2" />
-                    Saiba Mais e Assine
-                  </span>
-                  <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-red-100 font-black text-2xl tracking-widest bg-red-600 z-10">
-                    EM BREVE
-                  </span>
-                </button>
+                  <Calendar className="w-5 h-5 mr-2" />
+                  Saiba Mais e Assine
+                </Link>
               </div>
 
             </div>
@@ -723,7 +713,6 @@ export default function LandingPage() {
           <p className="text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
             Impressione seus pacientes e transforme o atendimento da sua clínica agora mesmo.
           </p>
-          {/*
           <Link 
             href="/pagamento"
             className="inline-flex items-center px-8 py-4 bg-white text-[#004A7F] rounded-full font-bold text-lg hover:bg-slate-50 transition-colors shadow-xl"
@@ -731,19 +720,6 @@ export default function LandingPage() {
             Saiba Mais e Assine
             <ArrowRight className="w-5 h-5 ml-2" />
           </Link>
-          */}
-          <button 
-            onClick={(e) => { e.preventDefault(); alert("🚀 EM BREVE! A plataforma estará disponível nos próximos dias."); }}
-            className="relative group overflow-hidden inline-flex items-center px-8 py-4 bg-white text-[#004A7F] rounded-full font-bold text-lg shadow-xl min-w-[250px]"
-          >
-            <span className="group-hover:opacity-0 transition-opacity duration-300 flex items-center justify-center w-full">
-              Saiba Mais e Assine
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </span>
-            <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-red-600 font-black text-2xl tracking-widest bg-white z-10">
-              EM BREVE
-            </span>
-          </button>
         </div>
       </section>
 
@@ -774,14 +750,27 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Coluna Direita: Copyright e Privacidade */}
+          {/* Coluna Direita: Copyright, CNPJ e Privacidade */}
           <div className="flex flex-col md:items-end items-start space-y-2 mt-8 md:mt-0">
             <p className="text-slate-500 text-sm">
               © {new Date().getFullYear()} Atendimento IA. Inteligência Artificial para Clínicas.
             </p>
-            <Link href="/privacidade" className="text-slate-500 text-sm hover:text-white transition-colors underline">
-              Política de Privacidade
-            </Link>
+            <p className="text-slate-300 text-xs md:text-right font-medium">
+              Atendimento IA Clínicas Tecnologia Ltda — CNPJ: 70.233.704/0001-90
+            </p>
+            <div className="flex items-center space-x-4 text-sm">
+              <a
+                href="/Termos_de_Uso.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-500 hover:text-white transition-colors underline"
+              >
+                Termos de Uso
+              </a>
+              <Link href="/privacidade" className="text-slate-500 hover:text-white transition-colors underline">
+                Política de Privacidade
+              </Link>
+            </div>
           </div>
           
         </div>

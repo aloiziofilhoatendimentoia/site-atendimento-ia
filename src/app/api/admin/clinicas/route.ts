@@ -99,10 +99,15 @@ export async function GET() {
         email: clinica.email || json.ownerEmail || '',
         telefone: telefoneIA,
         especialistas: especialistasStr,
-        status: 'verificando', // serǭ testado no frontend
+        status: 'verificando', // será testado no frontend
         created_at: clinica.created_at,
         is_active: json.is_active !== false,
-        is_deleted: json.is_deleted === true
+        is_deleted: json.is_deleted === true,
+        stripe_status: json.stripe_status || (json.stripe_subscription_id || json.stripe_customer_id ? 'active' : 'manual'),
+        stripe_payment_method: json.stripe_payment_method || null,
+        stripe_subscription_id: json.stripe_subscription_id || null,
+        suspended_reason: json.suspended_reason || null,
+        manual_override_suspended: json.manual_override_suspended === true
       };
     }).filter((c: any) => !c.is_deleted);
 

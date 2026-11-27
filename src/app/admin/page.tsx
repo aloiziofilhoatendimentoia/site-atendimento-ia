@@ -10,7 +10,8 @@ import {
   Search,
   CheckCircle,
   XCircle,
-  ShieldAlert
+  ShieldAlert,
+  CreditCard
 } from 'lucide-react';
 import Logo from '@/components/Logo';
 import BotMasterConnection from '@/components/BotMasterConnection';
@@ -23,8 +24,73 @@ interface Clinica {
   telefone: string;
   especialistas: string;
   status: 'verificando' | 'online' | 'offline';
-    is_active?: boolean;
+  is_active?: boolean;
+  stripe_status?: string | null;
+  stripe_payment_method?: string | null;
+  stripe_subscription_id?: string | null;
+  suspended_reason?: string | null;
+  manual_override_suspended?: boolean;
   created_at: string;
+}
+
+function getSuspendedReasonLabel(reason?: string | null): string {
+  if (reason === 'stripe_payment_failed') return 'Suspensa • Inadimplente';
+  if (reason === 'stripe_subscription_canceled') return 'Suspensa • Cancelada';
+  if (reason === 'manual_admin') return 'Suspensa • Manual';
+  return 'Suspensa';
+}
+
+function renderStripeBadge(clinica: Clinica) {
+  const status = (clinica.stripe_status || '').toLowerCase();
+  const method =
+    clinica.stripe_payment_method === 'pix'
+      ? 'PIX'
+      : clinica.stripe_payment_method === 'cartao'
+      ? 'Cartão'
+      : '';
+  const suffix = method ? ` • ${method}` : '';
+
+  if (status === 'active' || status === 'trialing') {
+    return (
+      <span className="inline-flex items-center space-x-1.5 text-emerald-400 bg-emerald-950/30 px-2.5 py-1 rounded-full text-[11px] font-bold border border-emerald-900/50 w-max">
+        <CreditCard className="w-3 h-3" />
+        <span>{status === 'trialing' ? `Stripe Ativa${suffix}` : `Stripe Ativa${suffix}`}</span>
+      </span>
+    );
+  }
+
+  if (status === 'paid_pix') {
+    return (
+      <span className="inline-flex items-center space-x-1.5 text-emerald-400 bg-emerald-950/30 px-2.5 py-1 rounded-full text-[11px] font-bold border border-emerald-900/50 w-max">
+        <CreditCard className="w-3 h-3" />
+        <span>PIX Confirmado</span>
+      </span>
+    );
+  }
+
+  if (status === 'past_due' || status === 'unpaid' || status === 'incomplete' || status === 'incomplete_expired') {
+    return (
+      <span className="inline-flex items-center space-x-1.5 text-amber-400 bg-amber-950/30 px-2.5 py-1 rounded-full text-[11px] font-bold border border-amber-900/50 w-max">
+        <CreditCard className="w-3 h-3" />
+        <span>{`Inadimplente${suffix}`}</span>
+      </span>
+    );
+  }
+
+  if (status === 'canceled') {
+    return (
+      <span className="inline-flex items-center space-x-1.5 text-red-400 bg-red-950/30 px-2.5 py-1 rounded-full text-[11px] font-bold border border-red-900/50 w-max">
+        <CreditCard className="w-3 h-3" />
+        <span>{`Cancelada${suffix}`}</span>
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center space-x-1.5 text-gray-400 bg-zinc-900 px-2.5 py-1 rounded-full text-[11px] font-medium border border-zinc-800 w-max">
+      <span>Controle Manual</span>
+    </span>
+  );
 }
 
 export default function AdminDashboardPage() {
@@ -43,7 +109,7 @@ export default function AdminDashboardPage() {
       // Verificar sessão admin
       const sessionRes = await fetch('/api/auth/session');
       const sessionData = await sessionRes.json();
-      
+
       if (!sessionRes.ok || !sessionData.authenticated || !sessionData.isAdmin) {
         window.location.replace('/');
         return;
@@ -56,9 +122,15 @@ export default function AdminDashboardPage() {
     }
   }
 
-  async function handleToggleStatus(clinica: any) {
-    const currentActive = clinica.is_active !== false; // if undefined, it's true
-    if (!confirm(`Tem certeza que deseja ${currentActive ? 'SUSPENDER' : 'ATIVAR'} a clnica ${clinica.nome_empresa}?`)) return;
+  async function handleToggleStatus(clinica: Clinica) {
+    const currentActive = clinica.is_active !== false;
+    const acao = currentActive ? 'SUSPENDER' : 'ATIVAR';
+    const avisoExtra = currentActive
+      ? '\n\nO WhatsApp da IA será desconectado imediatamente e o cliente perderá o acesso até ser reativado.'
+      : '\n\nA clínica voltará a ter acesso imediato ao sistema.';
+
+    if (!confirm(`Tem certeza que deseja ${acao} a clínica ${clinica.nome_empresa}?${avisoExtra}`)) return;
+
     try {
       setLoading(true);
       const instanceName = clinica.telefone ? clinica.telefone.replace(/\D/g, '') : null;
@@ -73,9 +145,21 @@ export default function AdminDashboardPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erro ao alterar status');
-      
+
       // Update local state
-      setClinicas(prev => prev.map(c => c.id === clinica.id ? { ...c, is_active: !currentActive } : c));
+      setClinicas(prev =>
+        prev.map(c =>
+          c.id === clinica.id
+            ? {
+                ...c,
+                is_active: !currentActive,
+                status: currentActive ? 'offline' : c.status,
+                manual_override_suspended: currentActive,
+                suspended_reason: currentActive ? 'manual_admin' : null
+              }
+            : c
+        )
+      );
       alert(data.message);
     } catch (e: any) {
       alert(e.message);
@@ -84,8 +168,14 @@ export default function AdminDashboardPage() {
     }
   }
 
-  async function handleDeleteClinica(clinica: any) {
-    if (!confirm(`Tem certeza absoluta que deseja EXCLUIR a clínica ${clinica.nome_empresa}? O WhatsApp será desconectado e o usuário perderá o acesso.`)) return;
+  async function handleDeleteClinica(clinica: Clinica) {
+    const temAssinaturaStripe = Boolean(clinica.stripe_subscription_id);
+    const confirmMsg = temAssinaturaStripe
+      ? `Tem certeza absoluta que deseja EXCLUIR a clínica ${clinica.nome_empresa}?\n\n• O WhatsApp será desconectado e removido.\n• O usuário perderá o acesso.\n• A assinatura recorrente na Stripe será CANCELADA automaticamente.`
+      : `Tem certeza absoluta que deseja EXCLUIR a clínica ${clinica.nome_empresa}? O WhatsApp será desconectado e o usuário perderá o acesso.`;
+
+    if (!confirm(confirmMsg)) return;
+
     try {
       setLoading(true);
       const instanceName = clinica.telefone ? clinica.telefone.replace(/\D/g, '') : null;
@@ -94,12 +184,13 @@ export default function AdminDashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           clinicaId: clinica.id,
-          instanceName
+          instanceName,
+          cancelStripeSubscription: true
         })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erro ao excluir clínica');
-      
+
       // Remove from local state
       setClinicas(prev => prev.filter(c => c.id !== clinica.id));
       alert(data.message);
@@ -121,10 +212,9 @@ export default function AdminDashboardPage() {
       }
 
       setClinicas(data.clinicas);
-      
+
       // Assincronamente checar status de WhatsApp de cada uma
       checkAllWhatsappStatuses(data.clinicas);
-      
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -133,7 +223,6 @@ export default function AdminDashboardPage() {
   }
 
   async function checkAllWhatsappStatuses(lista: Clinica[]) {
-    // Inicializar stats
     let total = lista.length;
     let on = 0;
     let off = 0;
@@ -141,7 +230,6 @@ export default function AdminDashboardPage() {
 
     const newList = [...lista];
 
-    // Fazer requisições em paralelo para checar status
     for (let i = 0; i < newList.length; i++) {
       const c = newList[i];
       if (!c.telefone) {
@@ -171,8 +259,7 @@ export default function AdminDashboardPage() {
         c.status = 'offline';
         off++;
       }
-      
-      // Update reativo a cada clinica testada
+
       updateStats(total, on, off, newList);
     }
   }
@@ -191,9 +278,10 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const filteredClinicas = clinicas.filter(c => 
-    c.nome_empresa.toLowerCase().includes(search.toLowerCase()) || 
-    c.email.toLowerCase().includes(search.toLowerCase())
+  const filteredClinicas = clinicas.filter(
+    c =>
+      c.nome_empresa.toLowerCase().includes(search.toLowerCase()) ||
+      c.email.toLowerCase().includes(search.toLowerCase())
   );
 
   if (loading && clinicas.length === 0) {
@@ -207,7 +295,6 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#09090b] text-gray-100 flex flex-col font-sans">
-      
       {/* HEADER MASTER */}
       <header className="h-20 border-b border-[#27272a] bg-[#0c0d0f] flex items-center justify-between px-8 z-10 sticky top-0">
         <div className="flex items-center space-x-4">
@@ -230,7 +317,13 @@ export default function AdminDashboardPage() {
 
       <main className="flex-1 p-8 max-w-7xl mx-auto w-full space-y-8">
         <BotMasterConnection />
-        
+
+        {error && (
+          <div className="bg-red-950/30 border border-red-900/50 text-red-400 px-4 py-3 rounded-xl text-sm">
+            {error}
+          </div>
+        )}
+
         {/* CARDS HEADER */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-[#121417] border border-[#27272a] p-6 rounded-2xl shadow-xl flex items-center justify-between">
@@ -279,12 +372,12 @@ export default function AdminDashboardPage() {
                 <span>Atualizar</span>
               </button>
             </div>
-            
+
             <div className="relative max-w-sm w-full">
               <Search className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
-              <input 
-                type="text" 
-                placeholder="Buscar por nome ou e-mail..." 
+              <input
+                type="text"
+                placeholder="Buscar por nome ou e-mail..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="w-full bg-[#0c0d0f] border border-[#27272a] text-white text-sm rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-purple-500 transition-colors"
@@ -296,15 +389,16 @@ export default function AdminDashboardPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-[#0c0d0f] border-b border-[#27272a]">
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider w-36">Status</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider w-32">WhatsApp</th>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider w-64">Clínica</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider w-44">Assinatura</th>
                   <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Especialistas</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider w-48">WhatsApp da IA</th>
-                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider w-36">Acoes</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider w-44">Número IA</th>
+                  <th className="py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider w-40">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#27272a]/50">
-                {filteredClinicas.map((clinica) => (
+                {filteredClinicas.map(clinica => (
                   <tr key={clinica.id} className="hover:bg-[#18181b] transition-colors">
                     <td className="py-4 px-6">
                       {clinica.status === 'verificando' && (
@@ -326,15 +420,23 @@ export default function AdminDashboardPage() {
                       )}
                     </td>
                     <td className="py-4 px-6">
-                      <span className="font-bold text-white block">{clinica.nome_empresa} {clinica.is_active === false && <span className="text-red-500 text-[10px] uppercase ml-2 bg-red-950/50 px-2 py-0.5 rounded border border-red-900">(Suspensa)</span>}</span>
+                      <span className="font-bold text-white block">
+                        {clinica.nome_empresa}
+                        {clinica.is_active === false && (
+                          <span className="text-red-400 text-[10px] uppercase ml-2 bg-red-950/50 px-2 py-0.5 rounded border border-red-900 inline-block">
+                            {getSuspendedReasonLabel(clinica.suspended_reason)}
+                          </span>
+                        )}
+                      </span>
                       <span className="text-xs text-gray-500">{clinica.email}</span>
                     </td>
+                    <td className="py-4 px-6">{renderStripeBadge(clinica)}</td>
                     <td className="py-4 px-6">
-                      <div className="flex flex-wrap gap-1.5 max-w-2xl">
+                      <div className="flex flex-wrap gap-1.5 max-w-xl">
                         {clinica.especialistas && clinica.especialistas !== 'Não informado' ? (
                           clinica.especialistas.split(', ').map((esp, i) => (
-                            <span 
-                              key={i} 
+                            <span
+                              key={i}
                               className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-950/40 text-blue-300 border border-blue-900/40"
                             >
                               {esp}
@@ -347,11 +449,12 @@ export default function AdminDashboardPage() {
                     </td>
                     <td className="py-4 px-6 font-mono text-sm text-purple-300">
                       {clinica.telefone || 'Não Configurado'}
-                      </td>
-                      <td className="py-4 px-6 flex items-center space-x-2">
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-2">
                         <button
                           onClick={() => handleToggleStatus(clinica)}
-                          className={`px-3 py-1 rounded text-xs font-bold uppercase transition-colors border ${
+                          className={`px-3 py-1 rounded text-xs font-bold uppercase transition-colors border cursor-pointer ${
                             clinica.is_active !== false
                               ? 'bg-orange-950/30 text-orange-400 border-orange-900/50 hover:bg-orange-900/50'
                               : 'bg-green-950/30 text-green-400 border-green-900/50 hover:bg-green-900/50'
@@ -361,17 +464,18 @@ export default function AdminDashboardPage() {
                         </button>
                         <button
                           onClick={() => handleDeleteClinica(clinica)}
-                          className="px-3 py-1 rounded text-xs font-bold uppercase transition-colors border bg-red-950/30 text-red-500 border-red-900/50 hover:bg-red-900/80"
+                          className="px-3 py-1 rounded text-xs font-bold uppercase transition-colors border bg-red-950/30 text-red-500 border-red-900/50 hover:bg-red-900/80 cursor-pointer"
                         >
                           Excluir
                         </button>
-                      </td>
-                    </tr>
+                      </div>
+                    </td>
+                  </tr>
                 ))}
 
                 {filteredClinicas.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="py-12 text-center text-gray-500">
+                    <td colSpan={6} className="py-12 text-center text-gray-500">
                       Nenhuma clínica encontrada.
                     </td>
                   </tr>
@@ -380,7 +484,6 @@ export default function AdminDashboardPage() {
             </table>
           </div>
         </div>
-
       </main>
     </div>
   );

@@ -314,16 +314,16 @@ export async function POST(request: Request) {
         const norm = (v: any) => (v === null || v === undefined) ? '' : String(v).trim();
         const normDigits = (v: any) => String(v || '').replace(/\D/g, '');
 
-        // Localizar registro existente por telefone (com ou sem 55) ou por nome exato da clínica
+        // Localizar registro existente por telefone (com ou sem 55), por e-mail ou por nome exato da clínica
+        const normOwnerEmail = norm(ownerEmail).toLowerCase();
         existing = (allRows || []).find((r: any) => {
           const rDigits = normDigits(r.telefone_principal);
-          if (!rDigits && !cleanPhone) return false;
-          if (rDigits === cleanPhone || rDigits.endsWith(cleanPhone) || cleanPhone.endsWith(rDigits)) return true;
-          if (norm(r.nome_clinica).toLowerCase() === norm(nomeClinica).toLowerCase()) return true;
+          if (rDigits && cleanPhone && (rDigits === cleanPhone || rDigits.endsWith(cleanPhone) || cleanPhone.endsWith(rDigits))) return true;
+          if (normOwnerEmail && norm(r.email).toLowerCase() === normOwnerEmail) return true;
+          if (norm(r.nome_clinica).toLowerCase() && norm(r.nome_clinica).toLowerCase() === norm(nomeClinica).toLowerCase()) return true;
           return false;
         });
 
-        
         let currentIsActive = true;
         if (existing?.dados_completos_json) {
           try {
@@ -333,9 +333,32 @@ export async function POST(request: Request) {
             if ((!payload.googleTokens || payload.googleTokens === null) && parsed.googleTokens && !payload.forceDisconnect) {
               payload.googleTokens = parsed.googleTokens;
             }
+            // PRESERVE METADADOS DA STRIPE E CONTROLE DE CICLO DE VIDA (nunca perder vínculo ao editar cadastro!)
+            const stripeKeys = [
+              'stripe_customer_id',
+              'stripe_subscription_id',
+              'stripe_status',
+              'stripe_payment_method',
+              'stripe_last_session_id',
+              'stripe_email',
+              'stripe_updated_at',
+              'terms_accepted_at',
+              'welcome_email_sessions',
+              'welcome_email_last_sent_at',
+              'is_deleted',
+              'suspended_reason',
+              'suspended_at',
+              'manual_override_suspended'
+            ];
+            for (const key of stripeKeys) {
+              if (parsed[key] !== undefined && payload[key] === undefined) {
+                payload[key] = parsed[key];
+              }
+            }
           } catch(e){}
         }
         payload.is_active = currentIsActive;
+        if (payload.is_deleted === undefined) payload.is_deleted = false;
         payload.nome_atendente = nomeSecretaria;
         const fullJsonString = JSON.stringify(payload);
 

@@ -125,9 +125,32 @@ function ConfigurarFormContent() {
       }
 
       const isPaid = window.localStorage.getItem('licenca_paga') === 'true';
-      const hasEmpresaId = searchParams.get('empresa_id') || searchParams.get('session_id');
+      const urlEmail = searchParams.get('email');
+      const sessionId = searchParams.get('session_id');
+      const hasEmpresaId = searchParams.get('empresa_id') || sessionId;
 
-      if (hasEmpresaId) {
+      if (urlEmail) {
+        window.localStorage.setItem('onboarding_email', urlEmail);
+      }
+
+      if (sessionId && sessionId.startsWith('cs_')) {
+        window.localStorage.setItem('onboarding_empresa_id', sessionId);
+        fetch(`/api/stripe/verify-session?session_id=${encodeURIComponent(sessionId)}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.paid) {
+              window.localStorage.setItem('licenca_paga', 'true');
+              if (data.email) {
+                window.localStorage.setItem('onboarding_email', data.email);
+              }
+            } else if (!isPaid && !fromDash) {
+              router.replace('/pagamento');
+            }
+          })
+          .catch(() => {
+            window.localStorage.setItem('licenca_paga', 'true');
+          });
+      } else if (hasEmpresaId) {
         window.localStorage.setItem('licenca_paga', 'true');
         window.localStorage.setItem('onboarding_empresa_id', hasEmpresaId);
       } else if (!isPaid && !fromDash) {
@@ -536,6 +559,7 @@ function ConfigurarFormContent() {
       }
 
       const email =
+        searchParams.get('email') ||
         localStorage.getItem('onboarding_email') ||
         localStorage.getItem('user_email') ||
         localStorage.getItem('email') ||
